@@ -1,0 +1,6 @@
+
+data/raw/
+
+notebooks/preprocessing/\.ipynb_checkpoints/
+
+references/__pycache__/
