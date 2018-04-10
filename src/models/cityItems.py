@@ -29,9 +29,10 @@ class AgeGroup(Enum):
     
     
 class ServiceArea(Enum):
-    Education = 1
+    EducationCulture = 1
     PublicSafety = 2
     Health = 3
+    
     
     
 class SummaryNorm(Enum):
@@ -41,11 +42,14 @@ class SummaryNorm(Enum):
     
 
 class ServiceType(Enum):
-    School = (1, ServiceArea.Education, SummaryNorm.l2)
+    School = (1, ServiceArea.EducationCulture, SummaryNorm.l2)
     #
     SocialSupport = (2, ServiceArea.Health, SummaryNorm.l2)
     #
-    PoliceStation = (2, ServiceArea.PublicSafety, SummaryNorm.l2)
+    PoliceStation = (3, ServiceArea.PublicSafety, SummaryNorm.l2)
+    #
+    Library = (4, ServiceArea.EducationCulture, SummaryNorm.l2)
+    
     #etc
     def __init__(self, _, areaOfService, aggrNormInput=SummaryNorm.l2):
         self.aggrNorm = aggrNormInput
