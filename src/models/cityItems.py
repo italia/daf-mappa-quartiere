@@ -8,15 +8,16 @@ import os.path
 ## Enum classes
 class AgeGroup(Enum):
     Newborn= (0, 3)
+    Kinder = (3,6)
     ChildPrimary= (6,10)
-    ChildMid= (11,13)
-    ChildHigh= (14,18) 
+    ChildMid= (10,15)
+    ChildHigh= (15,19) 
     Young= (19,25)
-    Junior= (26,35)
-    Senior= (36, 50)
-    Over50= (50, 64)
-    Over65= (66, 80)
-    Over80= (81, 200)
+    Junior= (25,35)
+    Senior= (35, 50) 
+    Over50= (50, 65)
+    Over65= (65, 74)
+    Over74= (74, 200)
     def __init__(self, startAge, endAge):
         self.start = startAge
         self.end = endAge
@@ -25,7 +26,7 @@ class AgeGroup(Enum):
     def all():
         return([g for g in AgeGroup])
     @property
-    def range(self): return self.end - self.start
+    def range(self): return self.end - self.start 
     
     
 class ServiceArea(Enum):
