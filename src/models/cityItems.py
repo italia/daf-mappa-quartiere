@@ -8,30 +8,47 @@ import os.path
 ## Enum classes
 class AgeGroup(Enum):
     Newborn= (0, 3)
+    Kinder = (3,6)
     ChildPrimary= (6,10)
-    ChildMid= (11,13)
-    ChildHigh= (14,18) 
+    ChildMid= (10,15)
+    ChildHigh= (15,19) 
     Young= (19,25)
-    Junior= (26,35)
-    Senior= (36, 50)
-    Over50= (50, 64)
-    Over65= (66, 80)
-    Over80= (81, 200)
+    Junior= (25,35)
+    Senior= (35, 50) 
+    Over50= (50, 65)
+    Over65= (65, 74)
+    Over74= (74, 200)
+    
     def __init__(self, startAge, endAge):
         self.start = startAge
         self.end = endAge
     
+    def comprehends(self, valueIn):
+        return self.start <= valueIn < self.end
+    
     @staticmethod
     def all():
         return([g for g in AgeGroup])
+
+    @staticmethod
+    def classify_array(arrayIn):
+        out = []
+        def assign_group(x):
+            for g in AgeGroup.all():
+                if g.comprehends(x):
+                    return g
+            raise 'Classes are not adiacent, failed to classify %s' % x
+        return [assign_group(y) for y in arrayIn]
+    
     @property
-    def range(self): return self.end - self.start
+    def range(self): return self.end - self.start 
     
     
 class ServiceArea(Enum):
-    Education = 1
+    EducationCulture = 1
     PublicSafety = 2
     Health = 3
+    
     
     
 class SummaryNorm(Enum):
@@ -41,11 +58,14 @@ class SummaryNorm(Enum):
     
 
 class ServiceType(Enum):
-    School = (1, ServiceArea.Education, SummaryNorm.l2)
+    School = (1, ServiceArea.EducationCulture, SummaryNorm.l2)
     #
     SocialSupport = (2, ServiceArea.Health, SummaryNorm.l2)
     #
-    PoliceStation = (2, ServiceArea.PublicSafety, SummaryNorm.l2)
+    PoliceStation = (3, ServiceArea.PublicSafety, SummaryNorm.l2)
+    #
+    Library = (4, ServiceArea.EducationCulture, SummaryNorm.l2)
+    
     #etc
     def __init__(self, _, areaOfService, aggrNormInput=SummaryNorm.l2):
         self.aggrNorm = aggrNormInput
