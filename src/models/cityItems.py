@@ -18,13 +18,28 @@ class AgeGroup(Enum):
     Over50= (50, 65)
     Over65= (65, 74)
     Over74= (74, 200)
+    
     def __init__(self, startAge, endAge):
         self.start = startAge
         self.end = endAge
     
+    def comprehends(self, valueIn):
+        return self.start <= valueIn < self.end
+    
     @staticmethod
     def all():
         return([g for g in AgeGroup])
+
+    @staticmethod
+    def classify_array(arrayIn):
+        out = []
+        def assign_group(x):
+            for g in AgeGroup.all():
+                if g.comprehends(x):
+                    return g
+            raise 'Classes are not adiacent, failed to classify %s' % x
+        return [assign_group(y) for y in arrayIn]
+    
     @property
     def range(self): return self.end - self.start 
     
