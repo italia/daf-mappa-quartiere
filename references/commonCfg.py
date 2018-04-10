@@ -11,6 +11,7 @@ cityList = ['Milano', 'Torino', 'Roma']
 cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
 sezioneColName = 'SEZ2011'
 IdQuartiereColName = 'IDquartiere'
+quartiereDescColName = 'quartiere'
 
 ## Loading tools
 def get_istat_cpa_data(cityName):
