@@ -13,6 +13,7 @@ sezioneColName = 'SEZ2011'
 IdQuartiereColName = 'IDquartiere'
 quartiereDescColName = 'quartiere'
 
+
 ## Loading tools
 def get_istat_cpa_data(cityName):
     # hardcoded filename standard
@@ -23,6 +24,7 @@ def get_istat_cpa_data(cityName):
         'Missing expected standard columns for city %s' % cityName
     return loaded.set_index(sezioneColName)
 
+
 def get_istat_filelist():
     return [f for f in os.listdir(cpaPath) if f.startswith('R')]
 
@@ -31,4 +33,13 @@ cached_metadata = pd.read_csv(os.path.join(cpaPath, 'tracciato_2011_sezioni.csv'
 
 def get_istat_metadata():
     return cached_metadata
+
+
+def fill_sample_ages_in_cpa_columns(frameIn):
+    '''Extract a representative age for hardcoded age-band columns in standard istat data'''
+    assert isinstance(frameIn, pd.DataFrame), 'Series expected in input'
+    istatAgeDict = {'P%i'%(i+14): 3+5*i for i in range(16)}
+    istatAges = frameIn.loc[:, list(istatAgeDict.keys())].copy()
+    
+    return istatAges.rename(istatAgeDict, axis='columns')
 
