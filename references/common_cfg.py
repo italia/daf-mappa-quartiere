@@ -17,10 +17,11 @@ quartiereDescColName = 'quartiere'
 def get_istat_cpa_data(cityName):
     # hardcoded filename standard
     loaded = gpd.read_file(os.path.join(projRoot, 'data/processed/'+cityName+'_sezioni.geojson'))
+    # check coordinate system (we use epsg 4326)
+    assert loaded.crs['init'] == 'epsg:4326', 'Please make sure the input coordinate ref system is epsg:4326'
     assert set([sezioneColName, IdQuartiereColName]) <= set(loaded.columns), \
         'Missing expected standard columns for city %s' % cityName
     return loaded.set_index(sezioneColName)
-
 
 def get_istat_filelist():
     return [f for f in os.listdir(cpaPath) if f.startswith('R')]
