@@ -32,14 +32,15 @@ class AgeGroup(Enum):
 
     @staticmethod
     def classify_array(arrayIn):
-        out = []
-        def assign_group(x):
+        return [AgeGroup.find_AgeGroup(y) for y in arrayIn]
+    
+    @staticmethod
+    def find_AgeGroup(x):
             for g in AgeGroup.all():
                 if g.comprehends(x):
                     return g
             raise 'Classes are not adiacent, failed to classify %s' % x
-        return [assign_group(y) for y in arrayIn]
-    
+            
     @property
     def range(self): return self.end - self.start 
     
