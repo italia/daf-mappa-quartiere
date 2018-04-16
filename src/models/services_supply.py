@@ -18,7 +18,7 @@ if rootDir not in sys.path:
 from references import common_cfg
 
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
-from src.models.process_tools import MappedPositionsFrame
+from src.models.process_tools import MappedPositionsFrame, ServiceValues
 
 gaussKern = gaussian_process.kernels.RBF
 # useful conversion function 
@@ -82,7 +82,7 @@ class ServiceUnit:
     @property
     def users(self): return list(self.propagation.keys())
 
-
+    
 class ServiceEvaluator:
     '''A class to evaluate a given list of service units'''
     
@@ -96,10 +96,8 @@ class ServiceEvaluator:
         assert isinstance(mappedPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
         # set all age groups as output default
         outputAgeGroups = AgeGroup.all()
-        # initialise output
-        outScores = {service: pd.DataFrame(np.zeros([len(mappedPositions.shape[0]), len(AgeGroup.all())]), 
-                                 index=[tuple(t) for t in positions], columns=AgeGroup.all()) 
-                 for service in self.outputServices}
+        # initialise output with dedicated class
+        valuesStore = ServiceValues(mappedPositions)
         
         # loop over different services
         for thisServType in self.outputServices:
@@ -109,10 +107,11 @@ class ServiceEvaluator:
             else:
                 for thisAgeGroup in outputAgeGroups:
                     unitValues = np.stack(list(map(
-                        lambda x: x.evaluate(mappedPositions.Positions.values, thisAgeGroup), serviceUnits)), axis=-1)
+                        lambda x: x.evaluate(
+                            valuesStore.positions, thisAgeGroup), serviceUnits)), axis=-1)
                     # aggregate unit contributions according to the service type norm
-                    outScores[thisServType][thisAgeGroup] = thisServType.aggregate_units(unitValues)
-        return outScores           
+                    valuesStore[thisServType][thisAgeGroup] = thisServType.aggregate_units(unitValues)
+        return valuesStore     
 
     
 ## UnitFactory father class
