@@ -25,6 +25,9 @@ def get_istat_cpa_data(cityName):
     assert loaded.crs['init'] == 'epsg:4326', 'Please make sure the input coordinate ref system is epsg:4326'
     assert set([sezioneColName, IdQuartiereColName]) <= set(loaded.columns), \
         'Missing expected standard columns for city %s' % cityName
+    # cast sezione ID as int
+    loaded[sezioneColName] = loaded[sezioneColName].astype(int)
+    
     return loaded.set_index(sezioneColName)
 
 
