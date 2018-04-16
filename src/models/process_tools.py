@@ -8,6 +8,10 @@ import geopy, geopy.distance
 import shapely
 from sklearn import gaussian_process
 
+from matplotlib import pyplot as plt 
+import seaborn as sns
+plt.rcParams['figure.figsize']= (20,14)
+
 ## TODO: find way to put this into some global settings
 import os
 import sys
