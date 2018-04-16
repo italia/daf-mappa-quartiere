@@ -7,6 +7,9 @@ projRoot = os.path.dirname(os.path.dirname(__file__)) # expected to be in root/r
 # cities included in the project
 cityList = ['Milano', 'Torino', 'Roma']
 
+# Location conventions
+coordColNames = ['Long', 'Lat']
+
 # Istat parameters
 cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
 sezioneColName = 'SEZ2011'
