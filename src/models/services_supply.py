@@ -16,8 +16,9 @@ if rootDir not in sys.path:
     sys.path.append(rootDir)
 
 from references import common_cfg
-from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
 
+from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
+from src.models.process_tools import MappedPositionsFrame
 
 gaussKern = gaussian_process.kernels.RBF
 # useful conversion function 
@@ -91,14 +92,15 @@ class ServiceEvaluator:
         self.units = unitList
         self.outputServices = outputServicesIn
     
-    def evaluate_services_at(self, positions):
-        assert all([isinstance(t, geopy.Point) for t in positions]),'Geopy Points expected'
+    def evaluate_services_at(self, mappedPositions):
+        assert isinstance(mappedPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
         # set all age groups as output default
         outputAgeGroups = AgeGroup.all()
         # initialise output
-        outScores = {service: pd.DataFrame(np.zeros([len(positions), len(AgeGroup.all())]), 
+        outScores = {service: pd.DataFrame(np.zeros([len(mappedPositions.shape[0]), len(AgeGroup.all())]), 
                                  index=[tuple(t) for t in positions], columns=AgeGroup.all()) 
                  for service in self.outputServices}
+        
         # loop over different services
         for thisServType in self.outputServices:
             serviceUnits = [u for u in self.units if u.service == thisServType]
@@ -107,7 +109,7 @@ class ServiceEvaluator:
             else:
                 for thisAgeGroup in outputAgeGroups:
                     unitValues = np.stack(list(map(
-                        lambda x: x.evaluate(positions, thisAgeGroup), serviceUnits)), axis=-1)
+                        lambda x: x.evaluate(mappedPositions.Positions.values, thisAgeGroup), serviceUnits)), axis=-1)
                     # aggregate unit contributions according to the service type norm
                     outScores[thisServType][thisAgeGroup] = thisServType.aggregate_units(unitValues)
         return outScores           

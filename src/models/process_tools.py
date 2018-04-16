@@ -44,7 +44,7 @@ class MappedPositionsFrame(pd.DataFrame):
             mappingDict['Positions'] = geopyPoints
             
         else:
-            assert all([isinstance(t, geopy.Point) for t in positionsIn]),'Geopy Points expected'
+            assert all([isinstance(t, geopy.Point) for t in positions]),'Geopy Points expected'
             assert not long, 'Long input not expected if positions provided'
             assert not lat, 'Lat input not expected if positions provided'
             mappingDict = {
@@ -106,7 +106,7 @@ class GridMaker():
         mappingDict = {
             common_cfg.coordColNames[0]:self.xPlot[self.bInPerimeter].flatten(), #long
             common_cfg.coordColNames[1]:self.yPlot[self.bInPerimeter].flatten(), #lat
-            common_cfg.IdQuartiereColName: self.IDquartiere[self.bInPerimeter],       #quartiere aggregation
+            common_cfg.IdQuartiereColName: self.IDquartiere[self.bInPerimeter],  #quartiere aggregation
                         } 
         # call common format constructor
         self.mappedPositions = MappedPositionsFrame(long=self.xPlot[self.bInPerimeter].flatten(),
