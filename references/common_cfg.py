@@ -33,6 +33,8 @@ tplRouteType = {"0":"Tram, Streetcar, Light rail",
 def get_istat_cpa_data(cityName):
     # hardcoded filename standard
     loaded = gpd.read_file(os.path.join(projRoot, 'data/processed/'+cityName+'_sezioni.geojson'))
+    # check coordinate system (we use epsg 4326) 
+    assert loaded.crs['init'] == 'epsg:4326', 'Please make sure the input coordinate ref system is epsg:4326' 
     assert set([sezioneColName, IdQuartiereColName]) <= set(loaded.columns), \
         'Missing expected standard columns for city %s' % cityName
     # cast sezione ID as int
@@ -50,6 +52,16 @@ cached_metadata = pd.read_csv(os.path.join(cpaPath, 'tracciato_2011_sezioni.csv'
 def get_istat_metadata():
     return cached_metadata
 
+
+def fill_sample_ages_in_cpa_columns(frameIn): 
+    '''Extract a representative age for hardcoded age-band columns in standard istat data''' 
+    assert isinstance(frameIn, pd.DataFrame), 'Series expected in input' 
+    istatAgeDict = {'P%i'%(i+14): 3+5*i for i in range(16)} 
+    istatAges = frameIn.loc[:, list(istatAgeDict.keys())].copy() 
+     
+    return istatAges.rename(istatAgeDict, axis='columns') 
+
+
 def df_to_gdf(input_df):
     """
     Convert a DataFrame with longitude and latitude columns
@@ -60,6 +72,7 @@ def df_to_gdf(input_df):
     geo = gpd.GeoDataFrame(df, crs=4326, geometry=geometry)
     geo.crs = {'init' :'epsg:4326'}
     return geo
+
 
 def csv_to_geojson(input_fp, output_fp):
     """
