@@ -9,6 +9,9 @@ projRoot = os.path.dirname(os.path.dirname(__file__)) # expected to be in root/r
 # cities included in the project
 cityList = ['Milano', 'Torino', 'Roma']
 
+# Location conventions
+coordColNames = ['Long', 'Lat']
+
 # Istat parameters
 cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
 sezioneColName = 'SEZ2011'
@@ -32,6 +35,9 @@ def get_istat_cpa_data(cityName):
     loaded = gpd.read_file(os.path.join(projRoot, 'data/processed/'+cityName+'_sezioni.geojson'))
     assert set([sezioneColName, IdQuartiereColName]) <= set(loaded.columns), \
         'Missing expected standard columns for city %s' % cityName
+    # cast sezione ID as int
+    loaded[sezioneColName] = loaded[sezioneColName].astype(int)
+    
     return loaded.set_index(sezioneColName)
 
 
