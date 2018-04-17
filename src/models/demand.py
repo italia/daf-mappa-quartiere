@@ -38,7 +38,7 @@ class DemandUnit:
         self.polygon = attributesIn.get('geometry', [])
         self.attributes = attributesIn
         # precompute export format for speed
-        self.export = pd.DataFrame(self.ages, index=(tuple(self.position)))
+        self.export = pd.DataFrame(self.ages, index=([tuple(self.position)]))
     
     @property
     def totalPeople(self):

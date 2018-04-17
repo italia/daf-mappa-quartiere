@@ -84,6 +84,11 @@ class ServiceValues(dict):
     def positions(self):
         return list(self.mappedPositions.Positions.values)
         
+## Main KPI calculator, for both istat and position based services
+
+        
+        
+        
 ## Grid maker
 class GridMaker():
     '''
@@ -143,23 +148,26 @@ class GridMaker():
     def latitudeRangeKm(self):
         return geopy.distance.great_circle(
             (self.latRange[0], self.longRange[0]), (self.latRange[1], self.longRange[0])).km
-    
+
     
 ## Plot tools
 from descartes import PolygonPatch
 
+from scipy.interpolate import griddata
+                
 class ValuesPlotter:
     '''
     A class that plots various types of output from a UnitAggregator
     '''
     def __init__(self, serviceValues):
-        assert isinstance(serviceValues, ServiceValues), 'UnitAggregator class expected'
+        assert isinstance(serviceValues, ServiceValues), 'ServiceValues class expected'
         self.values = serviceValues
         #self.ua = unitAggregatorIn
         
+        
     def plot_locations(self):
         '''
-        Plots the loaded ServiceUnits according to their locations and rescale them by the relative sizes
+        Plots the locations of the initialized ServiceValues'
         '''
         plotScales = self.ua.scale/np.mean(self.ua.scale)
         plt.figure()
@@ -167,17 +175,9 @@ class ValuesPlotter:
         plt.axis('equal')
         plt.show()
         return None
+    
         
-    def plot_grid_and_boundary(self):
-        fig = plt.figure()
-        ax = fig.gca()
-        plt.scatter(self.ua.xPlot[self.ua.bInPerimeter], self.ua.yPlot[self.ua.bInPerimeter], cmap='k', s=1)
-        ax.add_patch(PolygonPatch(self.ua.cityBoundary, fc='None',zorder=5))
-        plt.axis('equal')
-        plt.show()
-        return None
-        
-    def plot_service_levels(self, servType):
+    def plot_service_levels(self, servType, gridDensity=40):
         '''
         Plots a contour graph of the results for each ageGroup.
         '''
@@ -189,9 +189,16 @@ class ValuesPlotter:
             xPlot = coordsList[1]
             yPlot = coordsList[0]
             if np.count_nonzero(valuesArray) > 0:
+                # grid the data using natural neighbour interpolation
+                xi = np.linspace(min(xPlot), max(xPlot), gridDensity)
+                yi = np.linspace(min(yPlot), max(yPlot), gridDensity)
+                zi = griddata((xPlot, yPlot), valuesArray, (xi[None,:], yi[:,None]), 'linear')
+                # clip to zero
+                bNeg = ~np.isnan(zi) & (zi<0)
+                #zi[bNeg] = 0
                 plt.figure()
                 plt.title(ageGroup)
-                CS = plt.tricontourf(xPlot, yPlot, valuesArray, 50)
+                CS = plt.contourf(xi, yi, zi, 20)
                 cbar = plt.colorbar(CS)
                 cbar.ax.set_ylabel('Service level')
                 plt.show()
