@@ -61,11 +61,11 @@ class MappedPositionsFrame(pd.DataFrame):
                 common_cfg.coordColNames[0]: [x.longitude for x in positions], #long
                 common_cfg.coordColNames[1]: [x.latitude for x in positions], #lat
                 common_cfg.IdQuartiereColName: idQuartiere,    #quartiere aggregation
-                'Positions': positions, 'PositionTuples': [tuple(p) for p in positions]}
+                'Positions': positions, common_cfg.tupleIndexName: [tuple(p) for p in positions]}
         
         # finally call DataFrame constructor
         super().__init__(mappingDict)
-        self.set_index([common_cfg.IdQuartiereColName, 'PositionTuples'], inplace=True)
+        self.set_index([common_cfg.IdQuartiereColName, common_cfg.tupleIndexName], inplace=True)
 
 class ServiceValues(dict):
     '''A class to store, make available for aggregation and easily export estimated service values'''

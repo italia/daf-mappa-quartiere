@@ -38,8 +38,13 @@ class DemandUnit:
         self.polygon = attributesIn.get('geometry', [])
         self.attributes = attributesIn
         # precompute export format for speed
-        self.export = pd.DataFrame(self.ages, index=([tuple(self.position)]))
-    
+        unitIndex = [[attributesIn.get(common_cfg.IdQuartiereColName, np.nan)],\
+                     [tuple(self.position)]]
+     
+        self.export = pd.DataFrame(self.ages, index = pd.MultiIndex.from_tuples(
+                               [(attributesIn.get(common_cfg.IdQuartiereColName, np.nan), tuple(self.position))],
+                               names=[common_cfg.IdQuartiereColName, common_cfg.tupleIndexName]))
+        
     @property
     def totalPeople(self):
         return sum(self.ages.values())
