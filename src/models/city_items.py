@@ -46,10 +46,9 @@ class AgeGroup(Enum):
     
     
 class ServiceArea(Enum):
-    EducationCulture = 1
-    PublicSafety = 2
-    Health = 3
-    
+    EducationCulture = 'EducazioneCultura'
+    PublicSafety = 'Sicurezza'
+    Health = 'Salute'
     
     
 class SummaryNorm(Enum):
@@ -59,18 +58,16 @@ class SummaryNorm(Enum):
     
 
 class ServiceType(Enum):
-    School = (1, ServiceArea.EducationCulture, SummaryNorm.l2)
+    School = (1, ServiceArea.EducationCulture, SummaryNorm.l2, 'Scuole')
     #
-    SocialSupport = (2, ServiceArea.Health, SummaryNorm.l2)
-    #
-    PoliceStation = (3, ServiceArea.PublicSafety, SummaryNorm.l2)
-    #
-    Library = (4, ServiceArea.EducationCulture, SummaryNorm.l2)
+    Library = (2, ServiceArea.EducationCulture, SummaryNorm.l2, 'Biblioteche')
     
     #etc
-    def __init__(self, _, areaOfService, aggrNormInput=SummaryNorm.l2):
+    def __init__(self, _, areaOfService,
+                 aggrNormInput=SummaryNorm.l2, label=''):
         self.aggrNorm = aggrNormInput
         self.serviceArea = areaOfService
+        self.label = label
         # initialise demand factors for each age group
         print('WARNING: mock demand factors initalised for ServiceTypes')
         self.demandFactors = pd.Series({a: np.random.uniform() for a in AgeGroup.all()}) #TODO: import this from input
