@@ -13,15 +13,66 @@ cityList = ['Milano', 'Torino', 'Roma']
 coordColNames = ['Long', 'Lat']
 tupleIndexName = 'PositionTuples'
 
-# Json/GeoJson path parameters
-outputPath = 'data/output'
-
-
 # Istat parameters
 cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
 sezioneColName = 'SEZ2011'
 IdQuartiereColName = 'IDquartiere'
 quartiereDescColName = 'quartiere'
+
+# Json/GeoJson path parameters
+outputPath = 'data/output'
+
+menuGroupTemplate = { 
+                'id' : '',
+                'city' : '', # es: 'Torino'
+                'type' : "source", #or 'layer'
+                'url' : '',
+                'center' : [],
+                'zoom' : [],
+                'joinField' : IdQuartiereColName,
+                'sourceId' : '', # id of the source geojson
+                'indicators':[  #list of different indicators
+                    {'category' : '',
+                    'label' : '',
+                    'id' : '',
+                    'default' : False
+                     }]
+                 }
+
+
+def make_output_menu(cityName, services, sourceUrl=''):
+    '''Creates a list of dictionaries that is ready to be saved as a json'''
+    outList = []
+    
+    # source element
+    sourceId = cityName + '_quartieri' 
+    sourceItem = menuGroupTemplate.copy()
+    sourceItem['city'] = cityName
+    sourceItem['url'] = sourceUrl
+    sourceItem['id'] = sourceId
+    outList.append(sourceItem)
+    
+    # layer items   
+    areas = set(s.serviceArea for s in services)
+    for area in areas:
+        thisServices = [s for s in services if s.serviceArea == area] 
+        layerItem = menuGroupTemplate.copy()
+        layerItem['type'] = 'layer'
+        layerItem['city'] = cityName
+        layerItem['id'] = cityName + '_' + area.value
+        layerItem['url'] = '' # default empty url
+        layerItem['sourceId'] = sourceId # link to defined source
+        #
+        layerItem['indicators']=(
+            [{'category': service.serviceArea.value,
+             'label': service.label,
+             'id': service.name,
+            } for service in thisServices]),
+        outList.append(layerItem)
+        
+    # TODO append istat layer
+    return outList
+
 
 #*** TPL parameters *****
 tplPath = os.path.join(projRoot,'data/raw/tpl/')
