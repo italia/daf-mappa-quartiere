@@ -10,3 +10,20 @@ src/__pycache__/
 src/models/__pycache__/
 
 notebooks/\.ipynb_checkpoints/
+
+# dependencies
+src/visualization/node_modules
+
+# misc
+.DS_Store
+*~
+src/visualization/README.txt
+
+#ignore shapefiles
+*.prj
+*.sbn
+*.shx
+*.sbx
+*.shp
+*.dbf
+*.xml
