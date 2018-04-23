@@ -21,6 +21,7 @@ quartiereDescColName = 'quartiere'
 
 # Json/GeoJson path parameters
 outputPath = 'data/output'
+vizOutputPath = 'data/output'
 
 menuGroupTemplate = { 
                 'id' : '',
@@ -38,7 +39,6 @@ menuGroupTemplate = {
                     'default' : False
                      }]
                  }
-
 
 def make_output_menu(cityName, services, sourceUrl=''):
     '''Creates a list of dictionaries that is ready to be saved as a json'''
