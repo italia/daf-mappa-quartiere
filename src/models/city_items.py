@@ -58,16 +58,17 @@ class SummaryNorm(Enum):
     
 
 class ServiceType(Enum):
-    School = (1, ServiceArea.EducationCulture, SummaryNorm.l2, 'Scuole')
+    School = (1, ServiceArea.EducationCulture, SummaryNorm.l2, 'Scuole', 'MIUR')
     #
-    Library = (2, ServiceArea.EducationCulture, SummaryNorm.l2, 'Biblioteche')
+    Library = (2, ServiceArea.EducationCulture, SummaryNorm.l2, 'Biblioteche', 'MIBACT')
     
     #etc
     def __init__(self, _, areaOfService,
-                 aggrNormInput=SummaryNorm.l2, label=''):
+                 aggrNormInput=SummaryNorm.l2, label='', dataSource=''):
         self.aggrNorm = aggrNormInput
         self.serviceArea = areaOfService
         self.label = label
+        self.dataSource = dataSource
         # initialise demand factors for each age group
         print('WARNING: mock demand factors initalised for ServiceTypes')
         self.demandFactors = pd.Series({a: np.random.uniform() for a in AgeGroup.all()}) #TODO: import this from input

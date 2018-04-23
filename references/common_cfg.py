@@ -36,7 +36,8 @@ menuGroupTemplate = {
                     {'category' : '',
                     'label' : '',
                     'id' : '',
-                    'default' : False
+                    'default' : False,
+                    'dataSource': '',
                      }]
                  }
 
@@ -67,6 +68,7 @@ def make_output_menu(cityName, services, sourceUrl=''):
             [{'category': service.serviceArea.value,
              'label': service.label,
              'id': service.name,
+             'dataSource': service.dataSource,
             } for service in thisServices]),
         outList.append(layerItem)
         
