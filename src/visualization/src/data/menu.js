@@ -1,12 +1,12 @@
 export default [
 {
-    id : "quartieriMilano",
+    id : "Milano_quartieri",
     city : "Milano",
     type : "source",
     url : "localhost:3000/Milano/NILZone.EPSG4326.json",
     center : [9.191383, 45.464211],
     zoom : 11,
-    joinField : "NIL",
+    joinField : "ID_NIL",
     dataSource : "Comune di Milano",
     default : true,
     indicators : [{
@@ -15,10 +15,30 @@ export default [
 	id : "AreaMQ"
     }]
 },{
-    id : "vitalitaMilano",
+    id : "Milano_EducazioneCultura",
+    indicators : [
+        
+            {
+                category : "Educazione e Cultura",
+                id : "School",
+                label : "Scuole"
+            },
+            {
+                category : "Educazione e Cultura",
+                id : "Library",
+                label : "Biblioteche"
+            }
+        
+    ],
+    city : "Milano",
+    sourceId : "Milano_quartieri",
+    type : "layer",
+    url : ""
+},{
+    id : "Milano_istat",
     city : "Milano",
     type : "layer",
-    sourceId : "quartieriMilano",
+    sourceId : "Milano_quartieri",
     dataSource : "ISTAT (censimento 2011 della popolazione e delle abitazioni)",
     url : "localhost:3000/Milano/results.json",
     indicators : [{
@@ -32,7 +52,7 @@ export default [
 	default: true
     }]
 },{
-    id : "quartieriTorino",
+    id : "Torino_quartieri",
     city: "Torino",
     type : "source",
     url : "localhost:3000/Torino/0_geo_zone_circoscrizioni_wgs84.json",
@@ -43,10 +63,10 @@ export default [
     indicators : [],
     default : true
 },{
-    id : "istatTorino",
+    id : "Torino_istat",
     city : "Torino",
     type : "layer",
-    sourceId : "quartieriTorino",
+    sourceId : "Torino_quartieri",
     dataSource : "ISTAT (censimento 2011 della popolazione e delle abitazioni)",
     url : "localhost:3000/Torino/results.json",
     indicators : [{
@@ -68,10 +88,10 @@ export default [
 	id : "residenti"
     }]
 },{
-    id : "istruzioneTorino",
+    id : "Torino_istruzione",
     city : "Torino",
     type : "layer",
-    sourceId : "quartieriTorino",
+    sourceId : "Torino_quartieri",
     dataSource : "dati simulati",
     url : "localhost:3000/Torino/istruzione.json",
     indicators : [{

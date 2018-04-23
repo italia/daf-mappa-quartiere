@@ -7,6 +7,7 @@ import Button from './Button';
 import Menu from './Menu';
 import results from './data/Milano/results.js';
 import resultsTorino from './data/Torino/results.js';
+import educazioneCulturaMilano from './data/Milano/Milano_EducazioneCultura.js';
 import istruzioneTorino from './data/Torino/istruzione.js';
 import geojsonMilano from './data/Milano/NILZone.EPSG4326.js';
 import geojsonTorino from './data/Torino/0_geo_zone_circoscrizioni_wgs84.js';
@@ -98,6 +99,7 @@ class App extends Component {
                 }))
             }
         });
+	console.log(layers)
 	return layers;
     };
     
@@ -160,7 +162,6 @@ class App extends Component {
 	    //console.log(quartieri)
 	    //console.log(this.features.map(d => d.properties[this.joinField]))
 	    this.features.forEach(d => {
-		
 		var index = quartieri.indexOf(d.properties[this.joinField]);
 		d.properties[l.id] = data[index][l.id];
 	    });
@@ -279,12 +280,14 @@ function getGeojson(city) {
 
 function resultsJson(city, id) {
     var toreturn;
-    if (city === "Milano") 
+    if (city === "Milano" && id === "Milano_istat") 
 	toreturn = results;
+    if (city === "Milano" && id === "Milano_EducazioneCultura")
+	toreturn = educazioneCulturaMilano;
     
-    if (city === "Torino" && id === "istatTorino")
+    if (city === "Torino" && id === "Torino_istat")
 	toreturn = resultsTorino;
-    if (city === "Torino" && id === "istruzioneTorino")
+    if (city === "Torino" && id === "Torino_istruzione")
 	toreturn = istruzioneTorino;
     
     return toreturn;
