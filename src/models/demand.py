@@ -20,92 +20,50 @@ from references import common_cfg
 from src.models.city_items import AgeGroup
 from src.models.process_tools import MappedPositionsFrame
 
-gaussKern = gaussian_process.kernels.RBF
-
-### Demand modeling
-class DemandUnit:
-    def __init__(self, name, position, agesIn, attributesIn={}):
-        assert isinstance(name, (str, np.int64)), 'Name must be string or int64'
-        assert isinstance(agesIn, dict), 'AgesInput should be a dict'
-        assert set(agesIn.keys()) <= set(AgeGroup.all()), 'Ages input keys should be AgeGroups'
-        assert isinstance(position, geopy.Point), 'Position must be a geopy Point'
-        assert isinstance(attributesIn, dict), 'Attributes can be provided in a dict'
-        
-        # expand input to all age group keys and assign default 0 to missing ones
-        self.ages = {a: agesIn.get(a, 0) for a in AgeGroup.all()}
-        self.name = name
-        self.position = position
-        self.polygon = attributesIn.get('geometry', [])
-        self.attributes = attributesIn
-        # precompute export format for speed
-        unitIndex = [[attributesIn.get(common_cfg.IdQuartiereColName, np.nan)],\
-                     [tuple(self.position)]]
-     
-        self.export = pd.DataFrame(self.ages, index = pd.MultiIndex.from_tuples(
-                               [(attributesIn.get(common_cfg.IdQuartiereColName, np.nan), tuple(self.position))],
-                               names=[common_cfg.IdQuartiereColName, common_cfg.tupleIndexName]))
-        
-    @property
-    def totalPeople(self):
-        return sum(self.ages.values())
+### Demand modelling
+class DemandFrame(pd.DataFrame):
+    '''A class to store demand units in row and 
+    make them available for aggregation'''
     
-## Factory class
-class DemandUnitFactory:
-    '''
-    A class to istantiate DemandUnits
-    '''
-    def __init__(self, cityNameIn):
-        assert cityNameIn in common_cfg.cityList, 'Unrecognised city name "%s"' % cityNameIn
-        self.data = common_cfg.get_istat_cpa_data(cityNameIn)
-        self.nSections = self.data.shape[0]
-        self.unitList = [] # initialise
+    def __init__(self, dfIn, bDuplicatesCheck=True):
+        assert isinstance(dfIn, pd.DataFrame), 'Input DataFrame expected'
+        self.__dict__.update(dfIn.copy().__dict__)
         
         # prepare the AgeGroups cardinalities
         groupsCol = 'ageGroup'
-        peopleBySampleAge = common_cfg.fill_sample_ages_in_cpa_columns(self.data)
+        peopleBySampleAge = common_cfg.fill_sample_ages_in_cpa_columns(self)
         dataByGroup = peopleBySampleAge.rename(AgeGroup.find_AgeGroup, axis='columns').T
         dataByGroup.index.name = groupsCol # index is now given by AgeGroup items
         dataByGroup = dataByGroup.reset_index() # extract to convert to categorical and groupby
         dataByGroup[groupsCol] = dataByGroup[groupsCol].astype('category')
-        # finally assign in dict form where data.index are the keys
-        self.peopleByGroup = dataByGroup.groupby(groupsCol).sum().to_dict()
+        agesBySection = dataByGroup.groupby(groupsCol).sum().T
+        #self['Ages'] = pd.Series(agesBySection.T.to_dict()) # assign dict to each section
+        self['PeopleTot'] = agesBySection.sum(axis=1)
+        # report all ages
+        for col in AgeGroup.all():
+            self[col] = agesBySection.get(col, np.zeros_like(self.iloc[:,0]))
         
-    def make_units_at_centroids(self):
-        unitList = []
-        positionList = []
-        # make units
-        for iUnit in range(self.nSections):
-            rowData = self.data.iloc[iUnit,:]
-            sezId = self.data.index[iUnit]
-            attrDict = {'geometry':rowData['geometry'], 
-                        common_cfg.IdQuartiereColName: rowData[common_cfg.IdQuartiereColName]}
-            # get polygon centroid and use that as position
-            sezCentroid =rowData['geometry'].centroid
-            sezPosition = geopy.Point(sezCentroid.y, sezCentroid.x)
-            
-            # check no location is repeated
-            assert not any([x==sezPosition for x in positionList]), 'Repeated position found'
-            positionList.append(sezPosition)
-            
-            thisUnit = DemandUnit(name=sezId, 
-                        position=sezPosition, 
-                        agesIn=self.peopleByGroup[sezId], 
-                        attributesIn=attrDict)
-            
-            unitList.append(thisUnit)
-        print('Imported a total population of %i' % sum([t.totalPeople for t in unitList]))
-        self.unitList = unitList
+        # assign centroid as position
+        geopyValues = self['geometry'].apply(
+            lambda pos: geopy.Point(pos.centroid.y, pos.centroid.x))
+        self[common_cfg.positionsCol] = geopyValues
         
-        return unitList
-  
-    def export_mapped_positions(self):
-        '''Get mapped positions for the computed list of DemandUnits'''
-        
-        assert self.unitList, 'Units not available, have you made them?'
-        # initialise export
-        mappedPositionsOut = MappedPositionsFrame(
-            positions = [u.position for u in self.unitList],
-            idQuartiere= [u.attributes.get(
-                common_cfg.IdQuartiereColName, [np.nan]) for u in self.unitList])
+        if bDuplicatesCheck:
+            # check no location is repeated - takes a while
+            assert not any(self[common_cfg.positionsCol].duplicated()), 'Repeated position found'
             
-        return mappedPositionsOut
+            
+    @property
+    def mappedPositions(self):
+        return MappedPositionsFrame(positions=self[common_cfg.positionsCol].tolist(),
+            idQuartiere=self[common_cfg.IdQuartiereColName].tolist())
+    
+    
+    @staticmethod
+    def create_from_istat_cpa(cityName):
+        '''Constructor caller for DemandFrame'''
+        assert cityName in common_cfg.cityList, \
+            'Unrecognised city name "%s"' % cityName
+        frame = DemandFrame(common_cfg.get_istat_cpa_data(cityName),
+                          bDuplicatesCheck=False)
+        return frame

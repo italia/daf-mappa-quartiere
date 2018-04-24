@@ -47,8 +47,8 @@ class MappedPositionsFrame(pd.DataFrame):
                             }
             # istantiate geopy positions
             geopyPoints = list(map(lambda y,x: geopy.Point(y,x), lat, long))
-            mappingDict['Positions'] = geopyPoints
-            mappingDict['PositionTuples'] = [tuple(p) for p in geopyPoints] 
+            mappingDict[common_cfg.positionsCol] = geopyPoints
+            mappingDict[common_cfg.tupleIndexName] = [tuple(p) for p in geopyPoints] 
             
         else:
             assert all([isinstance(t, geopy.Point) for t in positions]),'Geopy Points expected'
@@ -61,7 +61,8 @@ class MappedPositionsFrame(pd.DataFrame):
                 common_cfg.coordColNames[0]: [x.longitude for x in positions], #long
                 common_cfg.coordColNames[1]: [x.latitude for x in positions], #lat
                 common_cfg.IdQuartiereColName: idQuartiere,    #quartiere aggregation
-                'Positions': positions, common_cfg.tupleIndexName: [tuple(p) for p in positions]}
+                common_cfg.positionsCol: positions, 
+                common_cfg.tupleIndexName: [tuple(p) for p in positions]}
         
         # finally call DataFrame constructor
         super().__init__(mappingDict)
@@ -83,10 +84,6 @@ class ServiceValues(dict):
     @property    
     def positions(self):
         return list(self.mappedPositions.Positions.values)
-        
-## Main KPI calculator, for both istat and position based services
-
-        
         
         
 ## Grid maker

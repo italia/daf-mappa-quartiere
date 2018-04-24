@@ -12,6 +12,7 @@ cityList = ['Milano', 'Torino', 'Roma']
 # Location conventions
 coordColNames = ['Long', 'Lat']
 tupleIndexName = 'PositionTuples'
+positionsCol = 'Positions'
 
 # Istat parameters
 cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
