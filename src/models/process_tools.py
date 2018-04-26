@@ -76,15 +76,27 @@ class ServiceValues(dict):
         self.mappedPositions = mappedPositions
         
         # initialise for all service types
-        super().__init__(
-            {service: pd.DataFrame(np.zeros([mappedPositions.shape[0], len(AgeGroup.all())]),  
-                                 index=mappedPositions.index, columns=AgeGroup.all()) 
-                 for service in ServiceType})
-    
-    @property    
-    def positions(self):
-        return list(self.mappedPositions.Positions.values)
+        super().__init__({service: pd.DataFrame(
+            np.zeros([mappedPositions.shape[0], len(AgeGroup.all())]),  
+            index=mappedPositions.index, columns=AgeGroup.all()) 
+                            for service in ServiceType})
         
+    def plot_output(self, servType, ageGroup):
+        '''Make output for plotting for a given serviceType and ageGroup'''
+        # extract values
+        valuesSeries = self[servType][ageGroup]
+        # TODO: this is quite inefficient though still fast, optimise it
+        joined = pd.concat([valuesSeries,self.mappedPositions], axis=1)
+
+        # format output as (x,y,z) surface
+        z = valuesSeries.values
+        x = joined[common_cfg.coordColNames[0]].values
+        y = joined[common_cfg.coordColNames[1]].values
+        return x,y,z
+        
+    @property     
+    def positions(self): 
+        return list(self.mappedPositions.Positions.values) 
         
 ## Grid maker
 class GridMaker():
@@ -131,11 +143,18 @@ class GridMaker():
                         bFound = True
                         break # skip remanining zones
                 assert bFound, 'Point within city boundary was not assigned to any zone'
-        
+            
+            else: # assign default value for points outside city perimeter
+                self._IDquartiere[i,j] = np.nan
+                
         # call common format constructor
         self.grid = MappedPositionsFrame(long=self._xPlot[self._bInPerimeter].flatten(),
                                                    lat=self._yPlot[self._bInPerimeter].flatten(),
-                                                   idQuartiere=self._IDquartiere[self._bInPerimeter])
+                                                   idQuartiere=self._IDquartiere[self._bInPerimeter].flatten())
+        
+        self.fullGrid = MappedPositionsFrame(long=self._xPlot.flatten(), lat=self._yPlot.flatten(),
+                                                   idQuartiere=self._IDquartiere.flatten())
+      
       
     @property
     def longitudeRangeKm(self):
