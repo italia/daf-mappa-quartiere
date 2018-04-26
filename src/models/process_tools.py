@@ -29,6 +29,7 @@ make_shapely_point = lambda geoPoint: shapely.geometry.Point((geoPoint.longitude
 get_random_pos = lambda n: list(map(geopy.Point, list(zip(np.round(np.random.uniform(45.40, 45.50, n), 5), 
                                 np.round(np.random.uniform(9.1, 9.3, n), 5)))))
 
+
 ## Mapped positions frame class
 class MappedPositionsFrame(pd.DataFrame):
     '''A class to collect an array of positions alongside areas labels'''
@@ -67,6 +68,7 @@ class MappedPositionsFrame(pd.DataFrame):
         # finally call DataFrame constructor
         super().__init__(mappingDict)
         self.set_index([common_cfg.IdQuartiereColName, common_cfg.tupleIndexName], inplace=True)
+        
 
 class ServiceValues(dict):
     '''A class to store, make available for aggregation and easily export estimated service values'''
@@ -96,7 +98,8 @@ class ServiceValues(dict):
         
     @property     
     def positions(self): 
-        return list(self.mappedPositions.Positions.values) 
+        return list(self.mappedPositions.Positions.values)
+        
         
 ## Grid maker
 class GridMaker():
@@ -167,54 +170,60 @@ class GridMaker():
 
     
 ## Plot tools
-from descartes import PolygonPatch
-
 from scipy.interpolate import griddata
                 
 class ValuesPlotter:
     '''
-    A class that plots various types of output from a UnitAggregator
+    A class that plots various types of output from ServiceValues
     '''
-    def __init__(self, serviceValues):
+    def __init__(self, serviceValues, bOnGrid=False):
         assert isinstance(serviceValues, ServiceValues), 'ServiceValues class expected'
         self.values = serviceValues
-        #self.ua = unitAggregatorIn
+        self.bOnGrid = bOnGrid
         
         
     def plot_locations(self):
         '''
-        Plots the locations of the initialized ServiceValues'
+        Plots the locations of the provided ServiceValues'
         '''
-        plotScales = self.ua.scale/np.mean(self.ua.scale)
+        coordNames = common_cfg.coordColNames
         plt.figure()
-        plt.scatter(self.ua.longitude, self.ua.latitude, s=plotScales)
+        plt.scatter(self.values.mappedPositions[coordNames[0]],
+                    self.values.mappedPositions[coordNames[1]])
+        plt.xlabel(coordNames[0])
+        plt.ylabel(coordNames[1])
         plt.axis('equal')
         plt.show()
         return None
     
         
-    def plot_service_levels(self, servType, gridDensity=40):
+    def plot_service_levels(self, servType, gridDensity=40, nLevels=50):
         '''
         Plots a contour graph of the results for each ageGroup.
         '''
         assert isinstance(servType, ServiceType), 'ServiceType expected in input'
         
-        for ageGroup, valuesSeries in self.values[servType].items():
-            valuesArray = valuesSeries.values
-            coordsList = list(zip(*valuesSeries.index.levels[1]))
-            xPlot = coordsList[1]
-            yPlot = coordsList[0]
-            if np.count_nonzero(valuesArray) > 0:
-                # grid the data using natural neighbour interpolation
-                xi = np.linspace(min(xPlot), max(xPlot), gridDensity)
-                yi = np.linspace(min(yPlot), max(yPlot), gridDensity)
-                zi = griddata((xPlot, yPlot), valuesArray, (xi[None,:], yi[:,None]), 'linear')
-                # clip to zero
-                bNeg = ~np.isnan(zi) & (zi<0)
-                #zi[bNeg] = 0
+        for ageGroup in self.values[servType].keys():
+            
+            xPlot,yPlot,z = self.values.plot_output(servType, ageGroup)
+            
+            if np.count_nonzero(z) > 0:
+                if self.bOnGrid:
+                    gridShape = (len(set(xPlot)), len(set(yPlot.flatten())))
+                    assert len(xPlot) == gridShape[0]*gridShape[1], 'X values do not seem on a grid'
+                    assert len(yPlot) == gridShape[0]*gridShape[1], 'Y values do not seem on a grid'
+                    xi = np.array(xPlot).reshape(gridShape)
+                    yi = np.array(yPlot).reshape(gridShape)
+                    zi = z.reshape(gridShape)
+                else:
+                    # grid the data using natural neighbour interpolation
+                    xi = np.linspace(min(xPlot), max(xPlot), gridDensity)
+                    yi = np.linspace(min(yPlot), max(yPlot), gridDensity)
+                    zi = griddata((xPlot, yPlot), z, (xi[None,:], yi[:,None]), 'linear')
+                    
                 plt.figure()
                 plt.title(ageGroup)
-                CS = plt.contourf(xi, yi, zi, 20)
+                CS = plt.contourf(xi, yi, zi, nLevels)
                 cbar = plt.colorbar(CS)
                 cbar.ax.set_ylabel('Service level')
                 plt.show()
