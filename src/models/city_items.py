@@ -4,6 +4,7 @@ from sklearn import gaussian_process
 from matplotlib import pyplot as plt 
 from enum import Enum
 import os.path
+import geopy
 
 ## Enum classes
 class AgeGroup(Enum):
@@ -83,3 +84,10 @@ class ServiceType(Enum):
     
 #demandFactors = pd.DataFrame(np.ones([len(AgeGroup.all()), len(ServiceType.all())]), 
 #                             index=AgeGroup.all(), columns=ServiceType.all())
+# test utility 
+def get_random_pos(n):
+    out = list(map(geopy.Point, list(zip(np.round(
+                                np.random.uniform(45.40, 45.50, n), 5),  
+                                np.round(np.random.uniform(9.1, 9.3, n), 5)
+                                )))) 
+    return out

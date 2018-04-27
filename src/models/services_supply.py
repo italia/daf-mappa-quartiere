@@ -16,16 +16,10 @@ if rootDir not in sys.path:
     sys.path.append(rootDir)
 
 from references import common_cfg
-
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
-from src.models.process_tools import MappedPositionsFrame, ServiceValues
 
 gaussKern = gaussian_process.kernels.RBF
-# useful conversion function 
-make_shapely_point = lambda geoPoint: shapely.geometry.Point((geoPoint.longitude, geoPoint.latitude))
-# test utility
-get_random_pos = lambda n: list(map(geopy.Point, list(zip(np.round(np.random.uniform(45.40, 45.50, n), 5), 
-                                np.round(np.random.uniform(9.1, 9.3, n), 5)))))
+
 
 ## ServiceUnit class
 class ServiceUnit:
@@ -83,6 +77,77 @@ class ServiceUnit:
     def users(self): return list(self.propagation.keys())
 
     
+## Mapped positions frame class
+class MappedPositionsFrame(pd.DataFrame):
+    '''A class to collect an array of positions alongside areas labels'''
+
+    def __init__(self, positions=None, long=None, lat=None, idQuartiere=None):
+        
+        # build positions data
+        if not positions:
+            if idQuartiere is None:
+                idQuartiere = np.full(long.shape, np.nan)
+            # create mapping dict from coordinates
+            mappingDict = {
+                common_cfg.coordColNames[0]:long, #long
+                common_cfg.coordColNames[1]:lat, #lat
+                common_cfg.IdQuartiereColName: idQuartiere,    #quartiere aggregation
+                            }
+            # istantiate geopy positions
+            geopyPoints = list(map(lambda y,x: geopy.Point(y,x), lat, long))
+            mappingDict[common_cfg.positionsCol] = geopyPoints
+            mappingDict[common_cfg.tupleIndexName] = [tuple(p) for p in geopyPoints] 
+            
+        else:
+            assert all([isinstance(t, geopy.Point) for t in positions]),'Geopy Points expected'
+            assert not long, 'Long input not expected if positions provided'
+            assert not lat, 'Lat input not expected if positions provided'
+            if idQuartiere is None:
+                idQuartiere = np.full(len(positions), np.nan)
+            # create mapping dict from positions    
+            mappingDict = {
+                common_cfg.coordColNames[0]: [x.longitude for x in positions], #long
+                common_cfg.coordColNames[1]: [x.latitude for x in positions], #lat
+                common_cfg.IdQuartiereColName: idQuartiere,    #quartiere aggregation
+                common_cfg.positionsCol: positions, 
+                common_cfg.tupleIndexName: [tuple(p) for p in positions]}
+        
+        # finally call DataFrame constructor
+        super().__init__(mappingDict)
+        self.set_index([common_cfg.IdQuartiereColName, common_cfg.tupleIndexName], inplace=True)    
+    
+    
+class ServiceValues(dict):
+    '''A class to store, make available for aggregation and easily export estimated service values'''
+    
+    def __init__(self, mappedPositions):
+        assert isinstance(mappedPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
+        self.mappedPositions = mappedPositions
+        
+        # initialise for all service types
+        super().__init__({service: pd.DataFrame(
+            np.zeros([mappedPositions.shape[0], len(AgeGroup.all())]),  
+            index=mappedPositions.index, columns=AgeGroup.all()) 
+                            for service in ServiceType})
+        
+    def plot_output(self, servType, ageGroup):
+        '''Make output for plotting for a given serviceType and ageGroup'''
+        # extract values
+        valuesSeries = self[servType][ageGroup]
+        # TODO: this is quite inefficient though still fast, optimise it
+        joined = pd.concat([valuesSeries,self.mappedPositions], axis=1)
+
+        # format output as (x,y,z) surface
+        z = valuesSeries.values
+        x = joined[common_cfg.coordColNames[0]].values
+        y = joined[common_cfg.coordColNames[1]].values
+        return x,y,z
+        
+    @property     
+    def positions(self): 
+        return list(self.mappedPositions.Positions.values)    
+    
+    
 class ServiceEvaluator:
     '''A class to evaluate a given list of service units'''
     
@@ -114,135 +179,3 @@ class ServiceEvaluator:
                     # aggregate unit contributions according to the service type norm
                     valuesStore[thisServType][thisAgeGroup] = thisServType.aggregate_units(unitValues)
         return valuesStore     
-
-    
-## UnitFactory father class
-class UnitFactory:
-    def __init__(self, path):
-        assert os.path.isfile(path), 'File "%s" not found' % path
-        self.filepath = path
-        self.rawData = []
-        
-    def load(self):
-           
-        defaultLocationColumns = ['Lat', 'Long']
-        if set(defaultLocationColumns).issubset(set(self.rawData.columns)):
-            print('Location data found')
-            # store geolocations as geopy Point
-            locations = [geopy.Point(self.rawData.loc[i, defaultLocationColumns]) for i in range(self.nUnits)]
-            propertData = self.rawData.drop(defaultLocationColumns, axis=1)
-        else:
-            propertData = self.rawData
-            locations = []
-            
-        return propertData, locations
-
-    @staticmethod
-    def createLoader(serviceType, path):
-        if serviceType == ServiceType.School:
-            return SchoolFactory(path)
-        elif serviceType == ServiceType.Library:
-            return LibraryFactory(path)
-        else:
-            print ("We're sorry, this service han not been implemented yet!")
-
-            
-## UnitFactory children classes
-class SchoolFactory(UnitFactory):
-    
-    def __init__(self, path):
-        super().__init__(path)
-        self.servicetype = ServiceType.School
-        
-    def load(self, meanRadius):
-        
-        self.rawData = pd.read_csv(self.filepath, sep=';', decimal=',')
-        self.nUnits = self.rawData.shape[0]
-        
-        
-        assert meanRadius, 'Please provide a reference radius for the mean school size'
-        (propertData, locations) = super().load()
-        
-        nameCol = 'DENOMINAZIONESCUOLA'
-        typeCol = 'ORDINESCUOLA'
-        scaleCol = 'ALUNNI'
-        
-        typeAgeDict = {'SCUOLA PRIMARIA': {AgeGroup.ChildPrimary:1},
-                      'SCUOLA SECONDARIA I GRADO': {AgeGroup.ChildMid:1},
-                      'SCUOLA SECONDARIA II GRADO': {AgeGroup.ChildHigh:1},}
-        
-        schoolTypes = propertData[typeCol].unique()
-        assert set(schoolTypes) <= set(typeAgeDict.keys()), 'Unrecognized types in input'
-        
-        # set the scale to be proportional to the square root of number of children
-        scaleData = propertData[scaleCol]**.5
-        scaleData = scaleData/scaleData.mean() * meanRadius #mean value is mapped to input parameter
-        propertData[scaleCol] = scaleData 
-        unitList = []
-                
-        for scType in schoolTypes:
-            bThisGroup = propertData[typeCol]==scType
-            typeData = propertData[bThisGroup]
-            typeLocations = [l for i,l in enumerate(locations) if bThisGroup[i]]
-
-            for iUnit in range(typeData.shape[0]):
-                rowData = typeData.iloc[iUnit,:]
-                attrDict = {'level':scType}
-                thisUnit = ServiceUnit(self.servicetype, 
-                        name=rowData[nameCol], 
-                        position=typeLocations[iUnit], 
-                        ageDiffusionIn=typeAgeDict[scType], 
-                        scaleIn=rowData[scaleCol],
-                        attributesIn=attrDict)
-                unitList.append(thisUnit)
-        
-        return unitList
-
-
-class LibraryFactory(UnitFactory):
-    
-    def __init__(self, path):
-        super().__init__(path)
-        self.servicetype = ServiceType.Library
-        
-    def load(self, meanRadius):
-        
-        self.rawData = pd.read_csv(self.filepath, sep=';', decimal='.')
-        self.nUnits = self.rawData.shape[0]
-        
-        assert meanRadius, 'Please provide a reference radius for the mean library size'
-        (propertData, locations) = super().load()
-        
-        nameCol = 'denominazioni.ufficiale'
-        typeCol = 'tipologia-funzionale'
-        
-        # Modifica e specifica che per le fasce d'età
-        typeAgeDict = {'Specializzata': {group:1 for group in AgeGroup.all()},
-                      'Importante non specializzata': {group:1 for group in AgeGroup.all()},
-                      'Pubblica': {group:1 for group in AgeGroup.all()},
-                      'NON SPECIFICATA': {AgeGroup.ChildPrimary:1},
-                      'Scolastica': {AgeGroup.ChildPrimary:1},
-                      'Istituto di insegnamento superiore': {AgeGroup.ChildPrimary:1},
-                      'Nazionale': {AgeGroup.ChildPrimary:1},}
-        
-        libraryTypes = propertData[typeCol].unique()
-        assert set(libraryTypes) <= set(typeAgeDict.keys()), 'Unrecognized types in input'
-        
-        unitList = []
-                
-        for libType in libraryTypes:
-            bThisGroup = propertData[typeCol]==libType
-            typeData = propertData[bThisGroup]
-            typeLocations = [l for i,l in enumerate(locations) if bThisGroup[i]]
-
-            for iUnit in range(typeData.shape[0]):
-                rowData = typeData.iloc[iUnit,:]
-                attrDict = {'level':libType}
-                thisUnit = ServiceUnit(self.servicetype, 
-                        name=rowData[nameCol], 
-                        position=typeLocations[iUnit], 
-                        ageDiffusionIn=typeAgeDict[libType], 
-                        attributesIn=attrDict)
-                unitList.append(thisUnit)
-        
-        return unitList

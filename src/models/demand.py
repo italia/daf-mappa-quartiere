@@ -59,11 +59,13 @@ class DemandFrame(pd.DataFrame):
         return MappedPositionsFrame(positions=self[common_cfg.positionsCol].tolist(),
             idQuartiere=self[common_cfg.IdQuartiereColName].tolist())
     
+    
     @property
     def agesFrame(self):
         ageMIndex = [self[common_cfg.IdQuartiereColName],
                          self[common_cfg.positionsCol].apply(tuple)]
         return self[AgeGroup.all()].set_index(ageMIndex)
+    
     
     def get_age_sample(self, ageGroup=None, nSample=1000):
         
@@ -75,6 +77,7 @@ class DemandFrame(pd.DataFrame):
         coord = coord[common_cfg.coordColNames].iloc[idx]
         sample = coord.sample(int(nSample)).as_matrix()
         return sample[:,0], sample[:,1]
+    
     
     @staticmethod
     def create_from_istat_cpa(cityName):
