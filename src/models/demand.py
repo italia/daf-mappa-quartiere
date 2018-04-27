@@ -20,6 +20,7 @@ from references import common_cfg
 from src.models.city_items import AgeGroup
 from src.models.process_tools import MappedPositionsFrame
 
+
 ### Demand modelling
 class DemandFrame(pd.DataFrame):
     '''A class to store demand units in row and 
@@ -58,6 +59,22 @@ class DemandFrame(pd.DataFrame):
         return MappedPositionsFrame(positions=self[common_cfg.positionsCol].tolist(),
             idQuartiere=self[common_cfg.IdQuartiereColName].tolist())
     
+    @property
+    def agesFrame(self):
+        ageMIndex = [self[common_cfg.IdQuartiereColName],
+                         self[common_cfg.positionsCol].apply(tuple)]
+        return self[AgeGroup.all()].set_index(ageMIndex)
+    
+    def get_age_sample(self, ageGroup=None, nSample=1000):
+        
+        if ageGroup is not None:
+            coord, nRep = self.mappedPositions.align(self.agesFrame[ageGroup], axis=0)
+        else:
+            coord, nRep = self.mappedPositions.align(self.agesFrame.sum(axis=1), axis=0)
+        idx = np.repeat(range(coord.shape[0]), nRep)
+        coord = coord[common_cfg.coordColNames].iloc[idx]
+        sample = coord.sample(int(nSample)).as_matrix()
+        return sample[:,0], sample[:,1]
     
     @staticmethod
     def create_from_istat_cpa(cityName):
