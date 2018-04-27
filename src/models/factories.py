@@ -27,9 +27,9 @@ class UnitFactory:
     def __init__(self, path):
         assert os.path.isfile(path), 'File "%s" not found' % path
         self.filepath = path
-        self.rawData = []
+        self.rawData = pd.DataFrame()
         
-    def load(self):
+    def load_from_path(self):
            
         defaultLocationColumns = ['Lat', 'Long']
         if set(defaultLocationColumns).issubset(set(self.rawData.columns)):
@@ -67,7 +67,7 @@ class SchoolFactory(UnitFactory):
         
         
         assert meanRadius, 'Please provide a reference radius for the mean school size'
-        (propertData, locations) = super().load()
+        (propertData, locations) = super().load_from_path()
         
         nameCol = 'DENOMINAZIONESCUOLA'
         typeCol = 'ORDINESCUOLA'
@@ -117,7 +117,7 @@ class LibraryFactory(UnitFactory):
         self.nUnits = self.rawData.shape[0]
         
         assert meanRadius, 'Please provide a reference radius for the mean library size'
-        (propertData, locations) = super().load()
+        (propertData, locations) = super().load_from_path()
         
         nameCol = 'denominazioni.ufficiale'
         typeCol = 'tipologia-funzionale'
