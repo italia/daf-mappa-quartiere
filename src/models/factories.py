@@ -18,8 +18,7 @@ if rootDir not in sys.path:
 from references import common_cfg
 
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
-from src.models.process_tools import MappedPositionsFrame
-from src.models.services_supply import ServiceUnit, ServiceEvaluator, ServiceValues
+from src.models.core import ServiceUnit, ServiceEvaluator, ServiceValues, MappedPositionsFrame
 
     
 ## UnitFactory father class

@@ -19,7 +19,7 @@ if rootDir not in sys.path:
 
 from references import common_cfg
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
-from src.models.services_supply import ServiceValues, MappedPositionsFrame
+from src.models.core import ServiceValues, MappedPositionsFrame
         
         
 ## Grid maker
@@ -92,17 +92,20 @@ class GridMaker():
     
 ## Plot tools
 from scipy.interpolate import griddata
-                
+
+from scipy.interpolate import griddata
+
+
 class ValuesPlotter:
     '''
     A class that plots various types of output from ServiceValues
     '''
+
     def __init__(self, serviceValues, bOnGrid=False):
         assert isinstance(serviceValues, ServiceValues), 'ServiceValues class expected'
         self.values = serviceValues
         self.bOnGrid = bOnGrid
-        
-        
+
     def plot_locations(self):
         '''
         Plots the locations of the provided ServiceValues'
@@ -116,23 +119,24 @@ class ValuesPlotter:
         plt.axis('equal')
         plt.show()
         return None
-    
-        
+
     def plot_service_levels(self, servType, gridDensity=40, nLevels=50):
         '''
         Plots a contour graph of the results for each ageGroup.
         '''
         assert isinstance(servType, ServiceType), 'ServiceType expected in input'
-        
+
         for ageGroup in self.values[servType].keys():
-            
-            xPlot,yPlot,z = self.values.plot_output(servType, ageGroup)
-            
+
+            xPlot, yPlot, z = self.values.plot_output(servType, ageGroup)
+
             if np.count_nonzero(z) > 0:
                 if self.bOnGrid:
                     gridShape = (len(set(xPlot)), len(set(yPlot.flatten())))
-                    assert len(xPlot) == gridShape[0]*gridShape[1], 'X values do not seem on a grid'
-                    assert len(yPlot) == gridShape[0]*gridShape[1], 'Y values do not seem on a grid'
+                    assert len(xPlot) == gridShape[0] * gridShape[
+                        1], 'X values do not seem on a grid'
+                    assert len(yPlot) == gridShape[0] * gridShape[
+                        1], 'Y values do not seem on a grid'
                     xi = np.array(xPlot).reshape(gridShape)
                     yi = np.array(yPlot).reshape(gridShape)
                     zi = z.reshape(gridShape)
@@ -140,13 +144,13 @@ class ValuesPlotter:
                     # grid the data using natural neighbour interpolation
                     xi = np.linspace(min(xPlot), max(xPlot), gridDensity)
                     yi = np.linspace(min(yPlot), max(yPlot), gridDensity)
-                    zi = griddata((xPlot, yPlot), z, (xi[None,:], yi[:,None]), 'linear')
-                    
+                    zi = griddata((xPlot, yPlot), z, (xi[None, :], yi[:, None]), 'nearest')
+
                 plt.figure()
                 plt.title(ageGroup)
                 CS = plt.contourf(xi, yi, zi, nLevels)
                 cbar = plt.colorbar(CS)
                 cbar.ax.set_ylabel('Service level')
                 plt.show()
-            
+
         return None

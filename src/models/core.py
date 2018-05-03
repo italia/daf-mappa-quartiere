@@ -175,4 +175,139 @@ class ServiceEvaluator:
                             valuesStore.positions, thisAgeGroup), serviceUnits)), axis=-1)
                     # aggregate unit contributions according to the service type norm
                     valuesStore[thisServType][thisAgeGroup] = thisServType.aggregate_units(unitValues)
-        return valuesStore     
+        return valuesStore
+
+
+### Demand modelling
+class DemandFrame(pd.DataFrame):
+    '''A class to store demand units in row and
+    make them available for aggregation'''
+
+    def __init__(self, dfIn, bDuplicatesCheck=True):
+        assert isinstance(dfIn, pd.DataFrame), 'Input DataFrame expected'
+        # initialise and assign base DataFrame properties
+        super().__init__()
+        self.__dict__.update(dfIn.copy().__dict__)
+
+        # prepare the AgeGroups cardinalities
+        groupsCol = 'ageGroup'
+        peopleBySampleAge = common_cfg.fill_sample_ages_in_cpa_columns(self)
+        dataByGroup = peopleBySampleAge.rename(AgeGroup.find_AgeGroup, axis='columns').T
+        dataByGroup.index.name = groupsCol  # index is now given by AgeGroup items
+        dataByGroup = dataByGroup.reset_index()  # extract to convert to categorical and groupby
+        dataByGroup[groupsCol] = dataByGroup[groupsCol].astype('category')
+        agesBySection = dataByGroup.groupby(groupsCol).sum().T
+        # self['Ages'] = pd.Series(agesBySection.T.to_dict()) # assign dict to each section
+        self['PeopleTot'] = agesBySection.sum(axis=1)
+        # report all ages
+        for col in AgeGroup.all():
+            self[col] = agesBySection.get(col, np.zeros_like(self.iloc[:, 0]))
+
+        # assign centroid as position
+        geopyValues = self['geometry'].apply(
+            lambda pos: geopy.Point(pos.centroid.y, pos.centroid.x))
+        self[common_cfg.positionsCol] = geopyValues
+
+        if bDuplicatesCheck:
+            # check no location is repeated - takes a while
+            assert not any(self[common_cfg.positionsCol].duplicated()), 'Repeated position found'
+
+    @property
+    def mappedPositions(self):
+        return MappedPositionsFrame(positions=self[common_cfg.positionsCol].tolist(),
+                                    idQuartiere=self[common_cfg.IdQuartiereColName].tolist())
+
+    @property
+    def agesFrame(self):
+        ageMIndex = [self[common_cfg.IdQuartiereColName],
+                     self[common_cfg.positionsCol].apply(tuple)]
+        return self[AgeGroup.all()].set_index(ageMIndex)
+
+    def get_age_sample(self, ageGroup=None, nSample=1000):
+
+        if ageGroup is not None:
+            coord, nRep = self.mappedPositions.align(self.agesFrame[ageGroup], axis=0)
+        else:
+            coord, nRep = self.mappedPositions.align(self.agesFrame.sum(axis=1), axis=0)
+        idx = np.repeat(range(coord.shape[0]), nRep)
+        coord = coord[common_cfg.coordColNames].iloc[idx]
+        sample = coord.sample(int(nSample)).as_matrix()
+        return sample[:, 0], sample[:, 1]
+
+    @staticmethod
+    def create_from_istat_cpa(cityName):
+        '''Constructor caller for DemandFrame'''
+        assert cityName in common_cfg.cityList, \
+            'Unrecognised city name "%s"' % cityName
+        frame = DemandFrame(common_cfg.get_istat_cpa_data(cityName),
+                            bDuplicatesCheck=False)
+        return frame
+
+### KPI calculation
+
+class KPICalculator:
+    '''Class to aggregate demand and evaluate section based and position based KPIs'''
+
+    def __init__(self, demandFrame, serviceUnits, cityName):
+        assert cityName in common_cfg.cityList, 'Unrecognized city name %s' % cityName
+        assert isinstance(demandFrame, DemandFrame), 'Demand frame expected'
+        assert all(
+            [isinstance(su, ServiceUnit) for su in serviceUnits]), 'Demand unit list expected'
+
+        self.city = cityName
+        self.demand = demandFrame
+        self.sources = serviceUnits
+        # initialise the service evaluator
+        self.evaluator = ServiceEvaluator(serviceUnits)
+        self.servicePositions = self.evaluator.servicePositions
+        # initialise output values
+        self.serviceValues = ServiceValues(self.demand.mappedPositions)
+        self.weightedValues = ServiceValues(self.demand.mappedPositions)
+        self.quartiereKPI = {}
+        self.istatKPI = {}
+
+        # derive Ages frame
+        ageMIndex = [demandFrame[common_cfg.IdQuartiereColName],
+                     demandFrame[common_cfg.positionsCol].apply(tuple)]
+        self.agesFrame = demandFrame[AgeGroup.all()].set_index(ageMIndex)
+        self.agesTotals = self.agesFrame.groupby(level=0).sum()
+
+    def evaluate_services_at_demand(self):
+        self.serviceValues = self.evaluator.evaluate_services_at(
+            self.demand.mappedPositions)
+        return self.serviceValues
+
+    def compute_kpi_for_localized_services(self):
+        assert self.serviceValues, 'Service values not available, have you computed them?'
+        # get mean service levels by quartiere, weighting according to the number of citizens
+        for service, data in self.serviceValues.items():
+            checkRange = {}
+            for col in self.agesFrame.columns:  # iterate over columns as Enums are not orderable...
+
+                self.weightedValues[service][col] = pd.Series.multiply(
+                    data[col], self.agesFrame[col])  # /self.agesTotals[col]
+                # TODO: introduce Demand Factors to set to NaN the cases
+                # where a service is not needed by a certain AgeGroup
+
+            # sum weighted fractions and assign to output
+            checkRange = (data.groupby(common_cfg.IdQuartiereColName).min() - np.finfo(float).eps,
+                          data.groupby(common_cfg.IdQuartiereColName).max() + np.finfo(float).eps)
+            self.quartiereKPI[service] = (self.weightedValues[service].groupby(
+                common_cfg.IdQuartiereColName).sum() / self.agesTotals).reindex(
+                columns=AgeGroup.all(), copy=False)
+
+            # check that the weighted mean lies between min and max in the neighbourhood
+            for col in self.quartiereKPI[service].columns:
+                bGood = (self.quartiereKPI[service][col].between(
+                    checkRange[0][col], checkRange[1][col]) | self.quartiereKPI[service][
+                             col].isnull())
+                assert all(bGood), 'Unexpected error in mean computation'
+
+        return self.quartiereKPI
+
+    def compute_kpi_for_istat_values(self):
+        kpiFrame = istat_kpi.wrangle_istat_cpa2011(
+            self.demand.groupby(common_cfg.IdQuartiereColName).sum(),
+            self.city)
+        self.istatKPI = kpiFrame.to_dict()
+        return self.istatKPI
