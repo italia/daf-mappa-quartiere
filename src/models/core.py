@@ -247,13 +247,12 @@ class DemandFrame(pd.DataFrame):
 
 class KPICalculator:
     '''Class to aggregate demand and evaluate section based and position based KPIs'''
-
+    
     def __init__(self, demandFrame, serviceUnits, cityName):
         assert cityName in common_cfg.cityList, 'Unrecognized city name %s' % cityName
-        assert isinstance(demandFrame, DemandFrame), 'Demand frame expected'
-        assert all(
-            [isinstance(su, ServiceUnit) for su in serviceUnits]), 'Demand unit list expected'
-
+        assert isinstance(demandFrame, DemandFrame),'Demand frame expected'
+        assert all([isinstance(su, ServiceUnit) for su in serviceUnits]),'Service units list expected'
+        
         self.city = cityName
         self.demand = demandFrame
         self.sources = serviceUnits
@@ -262,47 +261,54 @@ class KPICalculator:
         self.servicePositions = self.evaluator.servicePositions
         # initialise output values
         self.serviceValues = ServiceValues(self.demand.mappedPositions)
+        self.bEvaluated = False
         self.weightedValues = ServiceValues(self.demand.mappedPositions)
         self.quartiereKPI = {}
-        self.istatKPI = {}
+        self.istatKPI = pd.DataFrame()
 
         # derive Ages frame
         ageMIndex = [demandFrame[common_cfg.IdQuartiereColName],
-                     demandFrame[common_cfg.positionsCol].apply(tuple)]
+                         demandFrame[common_cfg.positionsCol].apply(tuple)]
         self.agesFrame = demandFrame[AgeGroup.all()].set_index(ageMIndex)
         self.agesTotals = self.agesFrame.groupby(level=0).sum()
-
+        
     def evaluate_services_at_demand(self):
         self.serviceValues = self.evaluator.evaluate_services_at(
             self.demand.mappedPositions)
+        # set the evaluation flag to True
+        self.bEvaluated = True
         return self.serviceValues
-
+    
     def compute_kpi_for_localized_services(self):
-        assert self.serviceValues, 'Service values not available, have you computed them?'
+        assert self.bEvaluated, 'Have you evaluated service values before making averages for KPIs?'
         # get mean service levels by quartiere, weighting according to the number of citizens
         for service, data in self.serviceValues.items():
             checkRange = {}
-            for col in self.agesFrame.columns:  # iterate over columns as Enums are not orderable...
-
-                self.weightedValues[service][col] = pd.Series.multiply(
-                    data[col], self.agesFrame[col])  # /self.agesTotals[col]
-                # TODO: introduce Demand Factors to set to NaN the cases
-                # where a service is not needed by a certain AgeGroup
-
-            # sum weighted fractions and assign to output
-            checkRange = (data.groupby(common_cfg.IdQuartiereColName).min() - np.finfo(float).eps,
-                          data.groupby(common_cfg.IdQuartiereColName).max() + np.finfo(float).eps)
-            self.quartiereKPI[service] = (self.weightedValues[service].groupby(
-                common_cfg.IdQuartiereColName).sum() / self.agesTotals).reindex(
+            for col in self.agesFrame.columns: # iterate over columns as Enums are not orderable...
+                if col in service.demandAges:
+                    self.weightedValues[service][col] = pd.Series.multiply(
+                        data[col], self.agesFrame[col])
+                else:
+                    self.weightedValues[service][col] = np.nan*data[col]
+            
+            checkRange = (data.groupby(common_cfg.IdQuartiereColName).min()-np.finfo(float).eps,
+                              data.groupby(common_cfg.IdQuartiereColName).max()+np.finfo(float).eps)
+            
+            # sum weighted fractions by neighbourhood
+            weightedSums = self.weightedValues[service].groupby(common_cfg.IdQuartiereColName).sum()
+            # set to NaN value the AgeGroups that have no people or there is no demand for the service
+            weightedSums[self.agesTotals == 0] = np.nan
+            weightedSums.iloc[:, ~weightedSums.columns.isin(service.demandAges)] = np.nan
+            
+            self.quartiereKPI[service] = (weightedSums/self.agesTotals).reindex(
                 columns=AgeGroup.all(), copy=False)
-
+            
             # check that the weighted mean lies between min and max in the neighbourhood
             for col in self.quartiereKPI[service].columns:
                 bGood = (self.quartiereKPI[service][col].between(
-                    checkRange[0][col], checkRange[1][col]) | self.quartiereKPI[service][
-                             col].isnull())
+                    checkRange[0][col], checkRange[1][col]) | self.quartiereKPI[service][col].isnull())
                 assert all(bGood), 'Unexpected error in mean computation'
-
+            
         return self.quartiereKPI
 
     def compute_kpi_for_istat_values(self):

@@ -128,7 +128,7 @@ class ValuesPlotter:
 
             xPlot, yPlot, z = self.values.plot_output(servType, ageGroup)
 
-            if np.count_nonzero(z) > 0:
+            if (~all(np.isnan(z))) & (np.count_nonzero(z)>0):
                 if self.bOnGrid:
                     gridShape = (len(set(xPlot)), len(set(yPlot.flatten())))
                     assert len(xPlot) == gridShape[0] * gridShape[
