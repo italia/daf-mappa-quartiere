@@ -29,6 +29,10 @@ class AgeGroup(Enum):
         return([g for g in AgeGroup])
 
     @staticmethod
+    def all_but(excluded):
+        return([g for g in AgeGroup if g not in excluded])
+
+    @staticmethod
     def classify_array(arrayIn):
         return [AgeGroup.find_AgeGroup(y) for y in arrayIn]
     
@@ -56,20 +60,33 @@ class SummaryNorm(Enum):
     
 
 class ServiceType(Enum):
-    School = (1, ServiceArea.EducationCulture, SummaryNorm.l2, 'Scuole', 'MIUR')
+    School = (1, #enum id 
+              ServiceArea.EducationCulture, 
+              SummaryNorm.l2,
+              [AgeGroup.ChildPrimary, AgeGroup.ChildMid, AgeGroup.ChildHigh],
+              'Scuole', 
+              'MIUR')
     #
-    Library = (2, ServiceArea.EducationCulture, SummaryNorm.l2, 'Biblioteche', 'MIBACT')
-    
+    Library = (2, #enum id
+               ServiceArea.EducationCulture, 
+               SummaryNorm.l2,
+               AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
+               'Biblioteche', 
+               'MIBACT')
     #etc
+    
+    
     def __init__(self, _, areaOfService,
-                 aggrNormInput=SummaryNorm.l2, label='', dataSource=''):
+                 aggrNormInput=SummaryNorm.l2, demandAgesInput=AgeGroup.all(),
+                 label='', dataSource=''):
         self.aggrNorm = aggrNormInput
         self.serviceArea = areaOfService
         self.label = label
         self.dataSource = dataSource
-        # initialise demand factors for each age group
-        print('WARNING: mock demand factors initalised for ServiceTypes')
-        self.demandFactors = pd.Series({a: np.random.uniform() for a in AgeGroup.all()}) #TODO: import this from input
+        # declare the AgeGroups that make use of this service
+        assert isinstance(demandAgesInput, list), 'list expected for demand ages'
+        assert all([isinstance(g, AgeGroup) for g in demandAgesInput]), 'AgeGroups expected'
+        self.demandAges = demandAgesInput
     
     def aggregate_units(self, unitValues, axis=1):
         # assumes positions are stacked in rows
