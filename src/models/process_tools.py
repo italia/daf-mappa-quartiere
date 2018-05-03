@@ -8,7 +8,8 @@ from sklearn import gaussian_process
 
 from matplotlib import pyplot as plt 
 import seaborn as sns
-plt.rcParams['figure.figsize']= (20,14)
+from scipy.interpolate import griddata
+import json
 
 ## TODO: find way to put this into some global settings
 import os
@@ -17,9 +18,11 @@ rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
     sys.path.append(rootDir)
 
+plt.rcParams['figure.figsize']= (20,14)
+
 from references import common_cfg
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
-from src.models.core import ServiceValues, MappedPositionsFrame
+from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
         
         
 ## Grid maker
@@ -91,11 +94,6 @@ class GridMaker():
 
     
 ## Plot tools
-from scipy.interpolate import griddata
-
-from scipy.interpolate import griddata
-
-
 class ValuesPlotter:
     '''
     A class that plots various types of output from ServiceValues
@@ -154,3 +152,62 @@ class ValuesPlotter:
                 plt.show()
 
         return None
+
+class JSONWriter:
+    def __init__(self, kpiCalc):
+        assert isinstance(kpiCalc, KPICalculator), 'KPI calculator is needed'
+        self.layersData = kpiCalc.quartiereKPI
+        self.istatData = kpiCalc.istatKPI
+        self.city = kpiCalc.city
+        self.areasTree = {}
+        for s in self.layersData:
+            area = s.serviceArea
+            self.areasTree[area] = [s] + self.areasTree.get(area, [])
+
+    def make_menu(self):
+        jsonList = common_cfg.make_output_menu(self.city,
+                                               services=list(self.layersData.keys()))
+        return jsonList
+
+    def make_serviceareas_output(self, precision=4):
+        out = dict()
+
+        # make istat layer
+        istatFrame = self.istatData.round(precision)
+        origType = istatFrame.index.dtype.type
+        dataIstat = istatFrame.reset_index().to_dict(orient='records')
+        # restore type as pandas has a bug and casts to float if int
+        for quartiereData in dataIstat:
+            oldValue = quartiereData[common_cfg.IdQuartiereColName]
+            if origType in (np.int32, np.int64, int):
+                quartiereData[common_cfg.IdQuartiereColName] = int(oldValue)
+        out[common_cfg.istatLayerName] = dataIstat
+
+        # make layers
+        for area, layers in self.areasTree.items():
+            layerList = []
+            for service in layers:
+                data = self.layersData[service].round(precision)
+                layerList.append(pd.Series(
+                    data[AgeGroup.all()].as_matrix().tolist(),
+                    index=data.index, name=service.name))
+            areaData = pd.concat(layerList, axis=1).reset_index()
+            print(areaData)
+            out[area.value] = areaData.to_dict(orient='records')
+        return out
+
+    def write_all_files_to_default_path(self):
+        # build and write menu
+        with open(os.path.join(
+                '../', common_cfg.vizOutputPath, 'menu.js'), 'w') as menuFile:
+            json.dump(self.make_menu(), menuFile, sort_keys=True,
+                      indent=4, separators=(',', ' : '))
+
+        # build and write all areas
+        areasOutput = self.make_serviceareas_output()
+        for name, data in areasOutput.items():
+            filename = '%s_%s.js' % (self.city, name)
+            with open(os.path.join('../', common_cfg.outputPath,
+                                   filename), 'w') as areaFile:
+                json.dump(data, areaFile, sort_keys=True,
+                          indent=4, separators=(',', ' : '))

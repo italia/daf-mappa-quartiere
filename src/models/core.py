@@ -13,7 +13,7 @@ rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
     sys.path.append(rootDir)
 
-from references import common_cfg
+from references import common_cfg, istat_kpi
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
 
 gaussKern = gaussian_process.kernels.RBF
@@ -309,5 +309,5 @@ class KPICalculator:
         kpiFrame = istat_kpi.wrangle_istat_cpa2011(
             self.demand.groupby(common_cfg.IdQuartiereColName).sum(),
             self.city)
-        self.istatKPI = kpiFrame.to_dict()
+        self.istatKPI = kpiFrame
         return self.istatKPI
