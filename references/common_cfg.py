@@ -23,7 +23,7 @@ quartiereDescColName = 'quartiere'
 # Json/GeoJson path parameters
 outputPath = 'data/output'
 vizOutputPath = 'data/output'
-
+istatLayerName = 'Istat'
 menuGroupTemplate = { 
                 'id' : '',
                 'city' : '', # es: 'Torino'

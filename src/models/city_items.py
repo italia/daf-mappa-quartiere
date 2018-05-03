@@ -1,9 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn import gaussian_process
-from matplotlib import pyplot as plt 
 from enum import Enum
-import os.path
 import geopy
 
 ## Enum classes

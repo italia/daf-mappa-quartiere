@@ -1,5 +1,3 @@
-from enum import Enum
-import os.path
 
 import numpy as np
 import pandas as pd
@@ -157,8 +155,7 @@ class ServiceEvaluator:
         self.units = unitList
         self.outputServices = outputServicesIn
         self.servicePositions = MappedPositionsFrame(positions=[u.site for u in unitList])
-        
-    
+
     def evaluate_services_at(self, mappedPositions):
         assert isinstance(mappedPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
         # set all age groups as output default
