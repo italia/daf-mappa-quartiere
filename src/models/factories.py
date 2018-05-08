@@ -23,10 +23,12 @@ from src.models.core import ServiceUnit, ServiceEvaluator, ServiceValues, Mapped
     
 ## UnitFactory father class
 class UnitFactory:
-    def __init__(self, path):
+    def __init__(self, path, sepInput=';', decimalInput=','):
         assert os.path.isfile(path), 'File "%s" not found' % path
         self.filepath = path
-        self.rawData = pd.DataFrame()
+
+        self.rawData = pd.read_csv(self.filepath, sep=sepInput, decimal=decimalInput)
+        self.nUnits = self.rawData.shape[0]
         
     def load_from_path(self):
            
@@ -34,7 +36,8 @@ class UnitFactory:
         if set(defaultLocationColumns).issubset(set(self.rawData.columns)):
             print('Location data found')
             # store geolocations as geopy Point
-            locations = [geopy.Point(self.rawData.loc[i, defaultLocationColumns]) for i in range(self.nUnits)]
+            locations = [geopy.Point(
+                self.rawData.loc[i, defaultLocationColumns]) for i in range(self.nUnits)]
             propertData = self.rawData.drop(defaultLocationColumns, axis=1)
         else:
             propertData = self.rawData
@@ -60,10 +63,6 @@ class SchoolFactory(UnitFactory):
         self.servicetype = ServiceType.School
         
     def load(self, meanRadius):
-        
-        self.rawData = pd.read_csv(self.filepath, sep=';', decimal=',')
-        self.nUnits = self.rawData.shape[0]
-        
         
         assert meanRadius, 'Please provide a reference radius for the mean school size'
         (propertData, locations) = super().load_from_path()
@@ -107,13 +106,10 @@ class SchoolFactory(UnitFactory):
 class LibraryFactory(UnitFactory):
     
     def __init__(self, path):
-        super().__init__(path)
+        super().__init__(path, decimalInput='.')
         self.servicetype = ServiceType.Library
         
     def load(self, meanRadius):
-        
-        self.rawData = pd.read_csv(self.filepath, sep=';', decimal='.')
-        self.nUnits = self.rawData.shape[0]
         
         assert meanRadius, 'Please provide a reference radius for the mean library size'
         (propertData, locations) = super().load_from_path()
