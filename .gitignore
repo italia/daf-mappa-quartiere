@@ -27,3 +27,4 @@ src/visualization/README.txt
 *.shp
 *.dbf
 *.xml
+\.idea/

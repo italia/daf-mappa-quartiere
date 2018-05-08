@@ -49,6 +49,7 @@ class AgeGroup(Enum):
     
 class ServiceArea(Enum):
     EducationCulture = 'EducazioneCultura'
+    Transport = 'Trasporti'
     PublicSafety = 'Sicurezza'
     Health = 'Salute'
     
@@ -73,7 +74,13 @@ class ServiceType(Enum):
                AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
                'Biblioteche', 
                'MIBACT')
-    #etc
+    #
+    TransportStop = (2, #enum id
+               ServiceArea.Transport,
+               SummaryNorm.l2,
+               AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
+               'Fermate TPL',
+               'GTFS Comuni')
     
     
     def __init__(self, _, areaOfService,
