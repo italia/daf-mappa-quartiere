@@ -51,8 +51,10 @@ class UnitFactory:
             return SchoolFactory(path)
         elif serviceType == ServiceType.Library:
             return LibraryFactory(path)
+        elif serviceType == ServiceType.TransportStop:
+            return TransportStopFactory(path)
         else:
-            print ("We're sorry, this service han not been implemented yet!")
+            print ("We're sorry, this service has not been implemented yet!")
 
             
 ## UnitFactory children classes
@@ -142,8 +144,47 @@ class LibraryFactory(UnitFactory):
                 thisUnit = ServiceUnit(self.servicetype, 
                         name=rowData[nameCol], 
                         position=typeLocations[iUnit], 
-                        ageDiffusionIn=typeAgeDict[libType], 
+                        ageDiffusionIn=typeAgeDict[libType],
                         attributesIn=attrDict)
                 unitList.append(thisUnit)
         
+        return unitList
+
+
+class TransportStopFactory(UnitFactory):
+
+    def __init__(self, path):
+        super().__init__(path, decimalInput='.')
+        self.servicetype = ServiceType.TransportStop
+
+    def load(self, meanRadius):
+
+        assert meanRadius, 'Please provide a reference radius for stops'
+        (propertData, locations) = super().load_from_path()
+        # make unique stop code
+        propertData['stopCode'] = propertData['stop_id'] + '_' + propertData['route_id']
+        # append route types
+        routeTypeCol = 'route_type'
+        gtfsTypesDict = {0: 'Tram', 1: 'Metro', 3: 'Bus'}
+        assert all(propertData[routeTypeCol].isin(gtfsTypesDict.keys())), 'Unexpected route type'
+        propertData['routeDesc'] = propertData[routeTypeCol].replace(gtfsTypesDict)
+
+        nameCol = 'stopCode'
+        typeCol = 'routeDesc'
+
+        scaleDict = {0:meanRadius, 1: 2*meanRadius, 3: meanRadius}
+
+        unitList = []
+        for iUnit in range(propertData.shape[0]):
+            rowData = propertData.iloc[iUnit, :]
+            attrDict = {'routeType': rowData[typeCol]}
+            thisUnit = ServiceUnit(self.servicetype,
+                                   name=rowData[nameCol],
+                                   position=locations[iUnit],
+                                   ageDiffusionIn={g:1 for g in AgeGroup.all_but(
+                                       [AgeGroup.Newborn, AgeGroup.Kinder])},
+                                   scaleIn=scaleDict[rowData[routeTypeCol]],
+                                   attributesIn=attrDict)
+            unitList.append(thisUnit)
+
         return unitList

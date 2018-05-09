@@ -1,4 +1,4 @@
-route_id;route_type;stop_id;IDquartiere;SEZ2011;stop_name;stop_desc;latitude;longitude;zone_id;stop_url;location_type;parent_station;wheelchair_boarding
+route_id;route_type;stop_id;IDquartiere;SEZ2011;stop_name;stop_desc;Lat;Long;zone_id;stop_url;location_type;parent_station;wheelchair_boarding
 T1;0;11283;68;151460004537;c.so sempione via villasanta;;45.479349866530505;9.166951206733;;;;;2.0
 T10;0;11283;68;151460004537;c.so sempione via villasanta;;45.479349866530505;9.166951206733;;;;;2.0
 T1;0;11287;68;151460000654;c.so sempione via canova;;45.4778718866219;9.168974201619289;;;;;2.0

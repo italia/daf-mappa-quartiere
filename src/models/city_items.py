@@ -75,7 +75,7 @@ class ServiceType(Enum):
                'Biblioteche', 
                'MIBACT')
     #
-    TransportStop = (2, #enum id
+    TransportStop = (3, #enum id
                ServiceArea.Transport,
                SummaryNorm.l2,
                AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
