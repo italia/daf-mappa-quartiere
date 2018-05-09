@@ -26,15 +26,35 @@
             [
                 {
                     "category" : "EducazioneCultura",
-                    "dataSource" : "MIBACT",
-                    "id" : "Library",
-                    "label" : "Biblioteche"
-                },
-                {
-                    "category" : "EducazioneCultura",
                     "dataSource" : "MIUR",
                     "id" : "School",
                     "label" : "Scuole"
+                },
+                {
+                    "category" : "EducazioneCultura",
+                    "dataSource" : "MIBACT",
+                    "id" : "Library",
+                    "label" : "Biblioteche"
+                }
+            ]
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : "",
+        "zoom" : []
+    },
+    {
+        "center" : [],
+        "city" : "Milano",
+        "id" : "Milano_Trasporti",
+        "indicators" : [
+            [
+                {
+                    "category" : "Trasporti",
+                    "dataSource" : "GTFS Comuni",
+                    "id" : "TransportStop",
+                    "label" : "Fermate TPL"
                 }
             ]
         ],
