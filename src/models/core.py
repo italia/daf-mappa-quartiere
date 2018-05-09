@@ -316,4 +316,7 @@ class KPICalculator:
             self.demand.groupby(common_cfg.IdQuartiereColName).sum(),
             self.city)
         self.istatKPI = kpiFrame
-        return self.istatKPI
+        self.istatVitality = istat_kpi.compute_vitality_cpa2011(
+            self.demand.groupby(common_cfg.IdQuartiereColName).sum())
+
+        return self.istatKPI, self.istatVitality

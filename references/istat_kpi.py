@@ -18,6 +18,34 @@ def new_index(old_df, lista_col_num, lista_col_den, nome_indice):
     return old_df
 
 
+def compute_vitality_cpa2011(quartiereData):
+    """Given the dataframe of Ista cpa 2011 (data level: neighborhood)
+    for a city, the function returns a new dataframe whose columns are
+    KPI computed from CPA 2011 and the rows are the neighborhoods.
+
+    The list of vitality KPI is the following (lang:it):
+
+        1. Building types (tipo di alloggi)
+
+        2. Employement density (densita' di occupati)
+
+    """
+
+    newColumnsNames = [
+        'tipo_di_alloggi',
+        'densita_occupati',
+        ]
+
+    out=pd.DataFrame()
+    # 1. Building types (average number of floors)
+    buildingColumns = ['E17', 'E18', 'E19', 'E20']
+    out[newColumnsNames[0]] = ([1,2,3,4]*quartiereData[buildingColumns]).sum(axis=1) \
+                                /quartiereData[buildingColumns].sum(axis=1)
+    # 2. Employement density
+    out[newColumnsNames[1]] = quartiereData['P60']/quartiereData['SHAPE_AREA']
+    out[newColumnsNames[1]] = out[newColumnsNames[1]]/out[newColumnsNames[1]].mean() #normalize
+
+    return out
 
 def wrangle_istat_cpa2011(quartiereData, selectedCity):
     """Given the dataframe of Ista cpa 2011 (data level: neighborhood) 
@@ -101,19 +129,5 @@ def wrangle_istat_cpa2011(quartiereData, selectedCity):
     # 7. Creo nuova colonna
     giornata_dentro_quartiere = quartiereData['P1']-(quartiereData[['P137','P138']].sum(axis=1))
     quartiereData['indice_pop_non_pend_interna_quartiere'] = giornata_dentro_quartiere/quartiereData['P1']
-    
-    quartiereData[list(quartiereData.columns)[-15:]].head()
-
-    
-    
-    # Salva df in csv
-    quartiereData[list(quartiereData.columns)[-15:]].to_csv(
-        '../data/output/'+selectedCity+ '_kpi_istat_cpa2011.csv', sep = ';')
-
-    # Salva in json
-    quartiereData[list(quartiereData.columns)[-15:]].reset_index().to_json(
-        '../data/output/'+selectedCity+ '_kpi_istat_cpa2011.json', orient='records')
-
-    
     
     return quartiereData[list(quartiereData.columns)[-15:]]

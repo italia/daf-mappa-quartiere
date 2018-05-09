@@ -158,6 +158,7 @@ class JSONWriter:
         assert isinstance(kpiCalc, KPICalculator), 'KPI calculator is needed'
         self.layersData = kpiCalc.quartiereKPI
         self.istatData = kpiCalc.istatKPI
+        self.vitalityData = kpiCalc.istatVitality
         self.city = kpiCalc.city
         self.areasTree = {}
         for s in self.layersData:
@@ -172,16 +173,23 @@ class JSONWriter:
     def make_serviceareas_output(self, precision=4):
         out = dict()
 
+        def prepare_frame_data(frameIn): # tool to format frame data that does not depend on age
+            frameIn = frameIn.round(precision)
+            origType = frameIn.index.dtype.type
+            dataDict = frameIn.reset_index().to_dict(orient='records')
+            # restore type as pandas has a bug and casts to float if int
+            for quartiereData in dataDict:
+                oldValue = quartiereData[common_cfg.IdQuartiereColName]
+                if origType in (np.int32, np.int64, int):
+                    quartiereData[common_cfg.IdQuartiereColName] = int(oldValue)
+
+            return dataDict
+
         # make istat layer
-        istatFrame = self.istatData.round(precision)
-        origType = istatFrame.index.dtype.type
-        dataIstat = istatFrame.reset_index().to_dict(orient='records')
-        # restore type as pandas has a bug and casts to float if int
-        for quartiereData in dataIstat:
-            oldValue = quartiereData[common_cfg.IdQuartiereColName]
-            if origType in (np.int32, np.int64, int):
-                quartiereData[common_cfg.IdQuartiereColName] = int(oldValue)
-        out[common_cfg.istatLayerName] = dataIstat
+        out[common_cfg.istatLayerName] = prepare_frame_data(self.istatData)
+
+        # make vitality layer
+        out[common_cfg.vitalityLayerName] = prepare_frame_data(self.vitalityData)
 
         # make layers
         for area, layers in self.areasTree.items():
@@ -194,6 +202,7 @@ class JSONWriter:
             areaData = pd.concat(layerList, axis=1).reset_index()
             print(areaData)
             out[area.value] = areaData.to_dict(orient='records')
+
         return out
 
     def write_all_files_to_default_path(self):

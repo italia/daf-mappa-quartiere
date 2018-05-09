@@ -24,6 +24,7 @@ quartiereDescColName = 'quartiere'
 outputPath = 'data/output'
 vizOutputPath = 'data/output'
 istatLayerName = 'Istat'
+vitalityLayerName = 'Vitality'
 menuGroupTemplate = { 
                 'id' : '',
                 'city' : '', # es: 'Torino'
