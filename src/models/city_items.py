@@ -81,7 +81,13 @@ class ServiceType(Enum):
                AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
                'Fermate TPL',
                'GTFS Comuni')
-    
+    #
+    Pharmacy = (4, #enum id
+               ServiceArea.Health,
+               SummaryNorm.lInf, # assume pharmacies are equivalent
+               AgeGroup.all(),
+               'Farmacie',
+               'Min. Salute')
     
     def __init__(self, _, areaOfService,
                  aggrNormInput=SummaryNorm.l2, demandAgesInput=AgeGroup.all(),

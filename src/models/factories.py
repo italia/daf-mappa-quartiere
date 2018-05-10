@@ -53,6 +53,8 @@ class UnitFactory:
             return LibraryFactory(path)
         elif serviceType == ServiceType.TransportStop:
             return TransportStopFactory(path)
+        elif serviceType == ServiceType.Pharmacy:
+            return PharmacyFactory(path)
         else:
             print ("We're sorry, this service has not been implemented yet!")
 
@@ -184,6 +186,34 @@ class TransportStopFactory(UnitFactory):
                                    ageDiffusionIn={g:1 for g in AgeGroup.all_but(
                                        [AgeGroup.Newborn, AgeGroup.Kinder])},
                                    scaleIn=scaleDict[rowData[routeTypeCol]],
+                                   attributesIn=attrDict)
+            unitList.append(thisUnit)
+
+        return unitList
+
+
+class PharmacyFactory(UnitFactory):
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.servicetype = ServiceType.Pharmacy
+
+    def load(self, meanRadius):
+        assert meanRadius, 'Please provide a reference radius for stops'
+        (propertData, locations) = super().load_from_path()
+
+        nameCol = 'CODICEIDENTIFICATIVOFARMACIA'
+        colAttributes = {'Descrizione': 'DESCRIZIONEFARMACIA', 'PartitaIva': 'PARTITAIVA'}
+
+        unitList = []
+        for iUnit in range(propertData.shape[0]):
+            rowData = propertData.iloc[iUnit, :]
+            attrDict = {name:rowData[col] for name, col in colAttributes.items()}
+            thisUnit = ServiceUnit(self.servicetype,
+                                   name=rowData[nameCol].astype(str),
+                                   position=locations[iUnit],
+                                   ageDiffusionIn={g: 1 for g in AgeGroup.all()},
+                                   scaleIn=meanRadius,
                                    attributesIn=attrDict)
             unitList.append(thisUnit)
 
