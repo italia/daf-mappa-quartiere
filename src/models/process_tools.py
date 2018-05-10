@@ -166,8 +166,11 @@ class JSONWriter:
             self.areasTree[area] = [s] + self.areasTree.get(area, [])
 
     def make_menu(self):
-        jsonList = common_cfg.make_output_menu(self.city,
-                                               services=list(self.layersData.keys()))
+        jsonList = common_cfg.make_output_menu(
+            cityName=self.city,
+            services=list(self.layersData.keys()),
+            istatLayers={'Vitalita': list(self.vitalityData.columns)}
+            )
         return jsonList
 
     def make_serviceareas_output(self, precision=4):

@@ -43,7 +43,8 @@ menuGroupTemplate = {
                      }]
                  }
 
-def make_output_menu(cityName, services, sourceUrl=''):
+
+def make_output_menu(cityName, services, istatLayers=None, sourceUrl=''):
     '''Creates a list of dictionaries that is ready to be saved as a json'''
     outList = []
     
@@ -55,7 +56,7 @@ def make_output_menu(cityName, services, sourceUrl=''):
     sourceItem['id'] = sourceId
     outList.append(sourceItem)
     
-    # layer items   
+    # service layer items
     areas = set(s.serviceArea for s in services)
     for area in areas:
         thisServices = [s for s in services if s.serviceArea == area] 
@@ -74,7 +75,24 @@ def make_output_menu(cityName, services, sourceUrl=''):
             } for service in thisServices]),
         outList.append(layerItem)
         
-    # TODO append istat layer
+    # istat layers items
+    if istatLayers:
+        for istatArea, indicators in istatLayers.items():
+            istatItem = menuGroupTemplate.copy()
+            istatItem['type'] = 'layer'
+            istatItem['city'] = cityName
+            istatItem['id'] = cityName + '_' + istatArea
+            istatItem['url'] = ''  # default empty url
+            istatItem['sourceId'] = sourceId  # link to defined source
+            #
+            istatItem['indicators'] = (
+                                          [{'category': istatArea,
+                                            'label': indicator,
+                                            'id': indicator,
+                                            'dataSource': 'ISTAT',
+                                            } for indicator in indicators]),
+            outList.append(istatItem)
+
     return outList
 
 

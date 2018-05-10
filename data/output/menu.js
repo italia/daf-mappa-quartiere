@@ -47,6 +47,32 @@
     {
         "center" : [],
         "city" : "Milano",
+        "id" : "Milano_Vitalita",
+        "indicators" : [
+            [
+                {
+                    "category" : "Vitalita",
+                    "dataSource" : "ISTAT",
+                    "id" : "tipo_di_alloggi",
+                    "label" : "tipo_di_alloggi"
+                },
+                {
+                    "category" : "Vitalita",
+                    "dataSource" : "ISTAT",
+                    "id" : "densita_occupati",
+                    "label" : "densita_occupati"
+                }
+            ]
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : "",
+        "zoom" : []
+    },
+    {
+        "center" : [],
+        "city" : "Milano",
         "id" : "Milano_Trasporti",
         "indicators" : [
             [
