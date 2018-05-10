@@ -1,20 +1,27 @@
 import React, { Component } from 'react'
 import mapboxgl from 'mapbox-gl'
 import './App.css'
+import BarChart from './BarChart';
+import Legend from './Legend';
+import Dashboard from './Dashboard';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZW5qYWxvdCIsImEiOiJjaWhtdmxhNTIwb25zdHBsejk0NGdhODJhIn0.2-F2hS_oTZenAWc0BMf_uw';
 
 class Map extends Component {
     map;
-
+    
     constructor(props: Props) {
-	super(props);
+	super(props);	
 	this.state = {
-	    hoverElement: props.hoverElement,
+	    hoverElement: "none",
 	    city: props.options.city,
 	    property: props.layer.id,
-	    clicked: "none"
+	    clicked: 1
 	};
+	this.onHoverBarChart = this.onHoverBarChart.bind(this);
+	this.onMouseOutBarChart = this.onMouseOutBarChart.bind(this);
+	this.onClickBarChart = this.onClickBarChart.bind(this);
+	this.setNeighborhood();
     }
 
     createMap() {
@@ -30,7 +37,7 @@ class Map extends Component {
 	    var props = this.props;
 	    var self = this;
 	    
-	    map.addSource('Quartieri', {type: 'geojson', data: props.data});
+	    map.addSource('Quartieri', {type: 'geojson', data: props.source});
 	    var layers = map.getStyle().layers;
 	    // Find the index of the first symbol layer in the map style
 	    this.firstSymbolId;
@@ -58,7 +65,7 @@ class Map extends Component {
 		source: 'Quartieri',
 		layout: {},
 		paint: {"fill-color": props.layer.colors.highlight, "fill-opacity": 1},
-		filter: ["==", props.joinField, props.hoverElement]
+		filter: ["==", props.joinField, this.state.hoverElement]
 	    }, this.firstSymbolId);
 	    map.addLayer({
 		id: 'Quartieri-line',
@@ -75,64 +82,174 @@ class Map extends Component {
                 filter: ["==", props.joinField, ""]
             }, this.firstSymbolId);
 	    map.on('mousemove', 'Quartieri', function(e) {
-		map.setFilter('Quartieri-hover', ['==', props.joinField, e.features[0].properties[props.joinField]]);
 		var features = map.queryRenderedFeatures(e.point);
-		props.onHover(e.features[0]);
+		var hoverElement = e.features[0].properties[props.joinField];
+		map.setFilter('Quartieri-hover', ['==', props.joinField, hoverElement]);
+		self.setState({hoverElement: hoverElement});
             });
 	    map.on('mouseout', 'Quartieri', function() {
-		map.setFilter('Quartieri-hover', ['==', props.joinField, props.hoverElement]);
+		self.setState({ hoverElement: "none" });
+		map.setFilter('Quartieri-hover', ['==', props.joinField, ""]);
 	    });
 	    map.on('click', 'Quartieri', function(e) {
 		var clicked = e.features[0].properties[props.joinField];
 		self.setState({ clicked: clicked });
+		self.setNeighborhood();
+		console.log(self.neighborhood)
                 map.setFilter('Quartieri-click', ['==', props.joinField, clicked]);
-		props.onClick(e.features[0]);
             });
 
 	});
     }
 
+    setNeighborhood() {
+	var self = this;
+	if (this.state.clicked === "none") {
+            this.neighborhood = "none";
+        } else {
+            this.neighborhood = this.props.source
+                .features
+                .filter(d => {
+                    return d.properties[self.props.joinField] === self.state.clicked;
+                })[0]
+		.properties;
+        }
+    };
+	
     componentDidMount() {
 	this.createMap();
     };
     
     componentDidUpdate() {
 	const props = this.props;
-	if (props.hoverElement !== 'none') {
-	    this.map.setFilter('Quartieri-hover', ['==', props.joinField, props.hoverElement]);
+	if (this.state.hoverElement !== 'none') {
+	    this.map.setFilter('Quartieri-hover', ['==', props.joinField, this.state.hoverElement]);
 	}
 	if (props.options.city !== this.state.city || props.layer.id !== this.state.property) {
             this.map.remove();
             this.createMap();
-	    this.setState({city: props.options.city, property: props.layer.id});
+	    this.setState({ city: props.options.city, property: props.layer.id });
 	    this.setState({ clicked: "none" });
 	}
     };
 
+    onHoverBarChart(d) {
+	this.setState({ hoverElement: d[0] });
+    };
+
+    onMouseOutBarChart(d) {
+	this.setState({ hoverElement: "none" });
+	this.map.setFilter('Quartieri-hover', ['==', this.props.joinField, ""]);
+    };
+
+    onClickBarChart(d) {
+	this.setState({ clicked: d[0] });
+	this.setNeighborhood();
+	this.map.setFilter('Quartieri-click', ['==', this.props.joinField, d[0]]);
+    };
     
     render() {
-	var color = "white";
-	var title = "Clicca su un poligono";
-	if (this.state.clicked !== "none") {
-	    console.log(this.props)
-	    if (this.state.city === "Torino") {
-		var NCIRCO = this.state.clicked;
-		var joinfield = this.props.joinField;
-		title = this.props.data.features.filter(d => d.properties[joinfield] === NCIRCO)[0].properties.DENOM;
-	    } else {
-		title = this.state.clicked;
-	    }
-	    color = "red";
-	}
-	 	
-	return (
-           <div style={{ display: "flex", flexDirection: "column" }}>
-	        <div id="popUp" style={{ backgroundColor: color }}><p >{title}</p></div>	
-                <div id="mapContainer"
+	var self = this;
+	return (   
+	    <div>
+                <div id='mapContainer'
 	            ref={el => this.mapContainer = el}
-	            style={{ height: "80vh", width: "70vw" }}>
-		</div>
-	     </div>
+	            style={{
+		        height: '90vh',
+			width: '100vw'
+		    }}/>
+		<div className='map-overlay'
+	            id='chart'
+	            style={{
+		        height: '85vh',
+			width: '25vw',
+			top: '80px',
+			right: '10px'
+		    }}>
+                    <BarChart
+	                style={{
+		            width: 700,
+			    height: 950
+			}}
+                        hoverElement={this.state.hoverElement}        
+                        onHover={this.onHoverBarChart}
+                        onMouseOut={this.onMouseOutBarChart}
+                        onClick={this.onClickBarChart}         
+                        clicked={this.state.clicked}
+                        data={{
+                            city: this.props.options.city, 
+                            label: this.props.layer.label,
+                            dataSource: this.props.layer.dataSource,
+                            headers: [this.props.joinField, this.props.layer.id],
+                            values: this.props.source.features.map(d => [d.properties[self.props.joinField], d.properties[self.props.layer.id]]), 
+                            colors: this.props.layer.colors 
+                        }}             
+                   />           
+                </div>
+		<div className='legend-overlay'
+	            id='legend'
+	            style={{
+		        height: '8vh',
+			width: '28vw',
+			right: '500px',
+			bottom: '0px'
+		    }}>
+                    <Legend
+                        stops={this.props.layer.colors.stops}
+                        style={{
+		            height: '30',
+			    width: '300'
+			}}
+                    />                                  
+                </div>  
+                <Dashboard
+	            neighborhood={this.neighborhood}
+	            nameField={"NIL"}
+
+	            list={[{
+		        label: "Numero di abitanti",
+			value: Math.floor(15000 * Math.random()),
+			dataSource: "dati simulati",
+			unit: ""
+		    },{
+			label: "Area",
+			field: "AreaHA",
+		        dataSource: "Comune di Milano",
+			unit: "ettari"
+		    }]}
+
+	            piechart={{
+			title: "Situazione occupazionale",
+			labels: ["occupati", "disoccupati", "in cerca di lavoro"],
+			values: [Math.random() * 903, Math.random() * 100, Math.random() * 200],
+			colors: [ "#9e0142", "#fdae61", "#abdda4"],
+			dataSource: "dati simulati"
+		    }}
+
+	            barchart2withlegend={{
+			title: "Popolazione per fasce d'età",
+			data1: {
+			    values: [10, 14, 15, 18, 21, 19, 15, 8, 4, 2, 1],
+			    label: "donne",
+			    color: "pink"
+			},
+			data2: {
+			    values: [12, 15, 18, 18, 22, 24, 14, 10, 5, 3, 1],
+			    label: "uomini",
+			    color: "blue"
+			},
+			labels: ['0-9', '10-19', '30-39', '40-49', '50-59', '60-69', '70-79', '80-89', '90-99', '100-109'],
+			dataSource: "dati simulati"
+		    }}
+	    
+	            style={{
+		        height: '55vh',
+			width: '30vw',
+			top: '90px',
+			left: '30px'
+		    }}
+		/>
+	    </div>	   
 	);
     };
 }

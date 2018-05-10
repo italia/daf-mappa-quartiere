@@ -15,13 +15,25 @@ class MenuItem extends Component {
 	
     render() {
 	var self = this; 
-	return <div>
-	    <li style={{color:"black", fontWeight: "bold"}}> {self.props.item.category}</li>
-	    <ul id="itemMenu"> {self.props.item.subcategories.map(s =>				  
-			<a onClick={() => self.handleClick(s)}><li>{s.label}</li></a>
-	    )}
-                   </ul>
-	        </div>
+	return (
+	    <div>
+	        <li style={{color:"black", fontWeight: "bold"}}>
+		    {self.props.item.category}
+	        </li>
+	        <ul id="itemMenu"> {
+		    self.props.item
+			.subcategories
+			.map(s => {
+		            <a onClick={() => self.handleClick(s)}>
+		                <li>
+				    {s.label}
+				</li>
+		            </a>
+	                })
+		    }
+                </ul>
+	    </div>
+        )	
     };
 }
 

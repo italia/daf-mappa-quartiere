@@ -1,22 +1,20 @@
 import React, { Component } from 'react';
-import './App.css';
+import * as path from 'path';
+import { range } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
 
+import './App.css';
 import Map from './Map';
-import BarChart from './BarChart';
 import Button from './Button';
 import Menu from './Menu';
 import results from './data/Milano/results.js';
 import resultsTorino from './data/Torino/results.js';
 import istruzioneTorino from './data/Torino/istruzione.js';
-import geojsonMilano from './data/Milano/NILZone.EPSG4326.js';
-import geojsonTorino from './data/Torino/0_geo_zone_circoscrizioni_wgs84.js';
-import menu from './data/menu.js';
-import { range } from 'd3-array';
-import { scaleLinear } from 'd3-scale';
+import educazioneCulturaMilano from './data/Milano/Milano_EducazioneCultura.js';
 
-//set default city
+
+var menuUrl = "http://localhost:4000/menu.json";
 var city = "Milano";
-
 var colors = ['#FFFFDD',
               '#AAF191',
               '#80D385',
@@ -26,150 +24,249 @@ var colors = ['#FFFFDD',
 	      '#285285',
               '#1F2D86',
               '#000086'];
-var geojson = getGeojson(city);
+
+class JsonMenu extends Component {
+    
+    constructor(props) {
+	super(props);
+	this.url = props;
+    };
+    
+    getLayers(city) {
+	if (city !== undefined) {
+	    return this.layers.filter(i => i.city === city);
+	}
+	
+	var self = this;
+
+	var layers = [];
+        self.data.forEach(m => {
+            if (m.indicators === undefined)
+                return {};
+            layers = layers.concat(m.indicators.map(c => {
+                if (m.type === "source") {
+                    return {
+                        id: c.id,
+                        label: c.label,
+                        category: c.category,
+                        sourceId: m.id,
+                        sourceUrl: m.url,
+                        city: m.city,
+                        dataSource : m.dataSource,
+                        default: c.default
+                    };
+                }
+                if (m.type === "layer") {
+                    var sourceUrl = self.data.filter(d => d.id === m.sourceId)[0].url;
+                    return {
+                        id: c.id,
+                        label: c.label,
+                        category: c.category,
+                        layerId: m.id,
+                        layerUrl: m.url,
+                        sourceId : m.sourceId,
+                        dataSource : m.dataSource,
+                        sourceUrl: sourceUrl,
+                        city: m.city,
+                        default: c.default
+                    };
+                }
+            }))
+        });
+
+	return layers;
+
+    };
+
+    getSources() {
+	return this.data
+	    .filter(m => m.type === "source");
+    };
+
+    getCities(){
+        return this.layers
+            .map(i => i.city)
+            .filter(onlyUnique);
+    };
+
+    getCategories(city) {
+	var cityLayers = this.layers.filter(i => i.city === city);
+        var categories = cityLayers.map(i => i.category)
+            .filter(onlyUnique)
+            .map(c => {
+                var subcategories = cityLayers.filter(i => i.category === c);
+                return { category: c, subcategories: subcategories };
+            });
+        return categories;
+    };
+
+    getDefaultLayer(city) {
+        return this.getLayers(city)
+            .filter(l => (l.default !== undefined && l.default))[0];
+    };
+
+    getDefaultSource(city, sourceId) {
+        return this.sources
+            .filter(i => i.city === city)
+            .filter(s => s.id === sourceId)[0];
+    }
+
+    setLayersSourcesCities() {
+	this.layers = this.getLayers();
+        this.sources = this.getSources();
+        this.cities = this.getCities();
+
+        this.sanityCheck();
+    };
+    
+    sanityCheck() {
+        if (this.cities.length === 0) {
+            console.log("no cities in the menu");
+        }
+
+        var eachCityHasOneDefaultLayer = this.cities
+            .map(city => this.layers
+                 .filter(i => i.city === city)
+                 .filter(l => (l.default !== undefined && l.default))
+                 .length === 1)
+        eachCityHasOneDefaultLayer
+            .forEach((l, i) => {
+                if (l === 0)
+                    console.log("city " + this.cities(i) + " doesn't have one default layer");
+            });
+
+        var eachCityHasOneDefaultSource = this.cities
+            .map(city => this.sources
+                 .filter(i => i.city === city)
+                 .filter(l => (l.default !== undefined && l.default))
+                 .length === 1)
+        eachCityHasOneDefaultSource
+            .forEach((s, i) =>{
+                if (s === 0)
+                    console.log("city " + this.cities(i) + " doesn't have one default source");
+            });
+    };
+    
+    render() {
+	return null;
+    };
+};
 
 class App extends Component {
     colors = {};
-
+    
     constructor(props) {
 	super(props);
 
-	this.layers = this.getAllLayers(menu);
-	this.cities = this.layers
-	    .map(i => i.city)
-	    .filter(onlyUnique);
-	this.cityLayers = this.layers
-            .filter(i => i.city === city);
-	this.setDefaultSource(city);
-	this.setDefaultLayer(city);
-	
 	this.state = {
-	    city: city,
-	    layer: this.defaultLayer,
-	    hover: "none",
-	    clicked: "none"
-	};
-	
-        this.center = this.defaultSource.center;
-        this.zoom = this.defaultSource.zoom;
-        this.joinField = this.defaultSource.joinField;
-	
-	this.setFeatures(this.state.layer);
-	this.setColors(this.state.layer);
+            city: city,
+	    source: "none",
+            layer: "none",
+	    menu: null,
+	    features: null
+        };
 	
 	this.changeCity = this.changeCity.bind(this);
-	this.changeLayer = this.changeLayer.bind(this);
-	this.onClickMap = this.onClickMap.bind(this);
-	this.onHoverBarChart = this.onHoverBarChart.bind(this);
-	this.onHoverMap = this.onHoverMap.bind(this);
-    };
+        this.changeLayer = this.changeLayer.bind(this);
 
-    getAllLayers(menu) {
-	var layers = [];
-	menu.forEach(m => {
-            if (m.indicators !== undefined) {
-                layers = layers.concat(m.indicators.map(c => {
-                    if (m.type === "source") {
-                        return {
-                            id: c.id,
-                            label: c.label,
-                            category: c.category,
-                            sourceId: m.id,
-                            sourceUrl: m.url,
-                            city: m.city,
-			    dataSource : m.dataSource,
-                            default: c.default
-                        };
-                    } else if (m.type === "layer") {
-                        var sourceUrl = menu.filter(d => d.id === m.sourceId)[0].url;
-                        return {
-                            id: c.id,
-                            label: c.label,
-                            category: c.category,
-                            layerId: m.id,
-                            layerUrl: m.url,
-                            sourceId : m.sourceId,
-			    dataSource : m.dataSource,
-                            sourceUrl: sourceUrl,
-                            city: m.city,
-                            default: c.default
-                        };
-                    }
-                }))
-            }
-        });
-	return layers;
+	var menu = new JsonMenu(menuUrl);
+	fetch(menu.url)
+	    .then(response => response.json())
+            .then(json => menu.data = json)
+            .then(() => {
+                menu.setLayersSourcesCities();
+		return menu;
+            })
+	    .then((jsonMenu) => {
+		this.layers = jsonMenu.getLayers();
+		
+		var defaultLayer = jsonMenu.getDefaultLayer(this.state.city);
+		var defaultSource = jsonMenu.getDefaultSource(this.state.city, defaultLayer.sourceId);
+				
+		fetch(defaultSource.url)
+		    .then(response => response.json())
+                    .then(jsonSource => {
+			fetch(defaultLayer.layerUrl)
+			    .then(response => response.json())
+			    .then(jsonLayer => {
+				var features = this.mergeFeatures(jsonSource.features, jsonLayer, defaultSource.joinField, defaultLayer.id);
+			    	
+				var values = features.map((d) => d.properties[defaultLayer.id]);
+				this.setColors(values);
+				
+				this.setState({ menu: jsonMenu, layer: defaultLayer, source: defaultSource, features: features });
+			    });
+		    });	    
+	    });
     };
     
-    setDefaultLayer(city) {
-        this.defaultLayer = this.cityLayers
-            .filter(l => (l.default !== undefined && l.default))[0];
-        if (this.defaultLayer === undefined) {
-            console.log("Error: city " + city + " doesn't have a default layer, check the menu file and add property default to one of the indicators");
-        }
+    fetchSource(source) {
+	return fetch(source.url)
+	    .then(response => response.json())
+	    .then(jsonSource => {
+		this.setState({ features: jsonSource.features })
+	    });
     };
 
-    setDefaultSource(city) {
-	this.defaultSource = menu
-            .filter(m => m.city === city)
-            .filter(m => m.default !== undefined && m.default)[0];
-        if (this.defaultSource === undefined) {
-            console.log("Error: city " + city + " doesn't have a default source, check the menu file and add property default to one of the sources for " + city);
-        }
+    fetchLayer(layer, features) {
+	return fetch(layer.layerUrl)
+	    .then(response => response.json())
+	    .then(jsonLayer => {
+		var features = this.mergeFeatures(this.state.features, jsonLayer, this.state.source.joinField, layer.id);
+
+		var values = features.map((d) => d.properties[layer.id]);
+                this.setColors(values);
+
+		this.setState({ layer: layer, features: features });
+	    });
     };
-    
-    getMenu() {
-	var layers = this.cityLayers;
-	var categories = layers.map(i => i.category)
-            .filter(onlyUnique)
-            .map(c => {
-		var subcategories = layers.filter(i => i.category === c);
-		return { category: c, subcategories: subcategories };
+
+    fetchSourceAndLayer(source, layer) {
+	fetch(source.url)
+            .then(response => response.json())
+            .then(jsonSource => {
+                fetch(layer.layerUrl)
+                    .then(response => response.json())
+                    .then(jsonLayer => {
+                        var features = this.mergeFeatures(jsonSource.features, jsonLayer, source.joinField, layer.id);
+
+                        var values = features.map((d) => d.properties[layer.id]);
+                        this.setColors(values);
+			
+                        this.setState({ layer: layer, source: source, features: features });
+                    });
             });
-	return categories;
-    };
-
-    onClickMap(d) {
-	this.setState({ clicked: d.properties[this.joinField] });
     };
     
-    onHoverBarChart(d) {
-	this.setState({ hover: d[0] });
-    };
-
-    onHoverMap(d) {
-	this.setState({ hover: d.properties[this.joinField] });
-    };
-
-    setColors(l) {
-	var values = this.features.map((d) => d.properties[l.id]);
+    setColors(values) {
 	values = sample(values, colors.length);
+	
         this.colors.stops = values.map((d, i) => [values[i], colors[i]]);
         this.colors.scale = scaleLinear().domain(values).range(colors);
         this.colors.highlight = "black";
     };
     
-    setFeatures(l) {
-	this.features = geojson.features;
-	var myLayer = this.cityLayers.filter(i => i.id === l.id)[0];
-	if (myLayer.layerUrl !== undefined) {
-	    //download data from layerUrl
-	    var data = resultsJson(this.state.city, myLayer.layerId);
-	    
-	    var quartieri = data.map(d => d[this.joinField]);
-	    //console.log(quartieri)
-	    //console.log(this.features.map(d => d.properties[this.joinField]))
-	    this.features.forEach(d => {
-		
-		var index = quartieri.indexOf(d.properties[this.joinField]);
-		d.properties[l.id] = data[index][l.id];
-	    });
-	}
-	
-	this.features = this.features
-	    .sort((a, b) => b.properties[l.id] - a.properties[l.id]);
-   };
-
+    mergeFeatures(features, jsonLayer, joinField, layerField) {
+	var quartieri = jsonLayer.map(d => d[joinField]);
+	features.forEach(d => {
+            var index = quartieri.indexOf(d.properties[joinField]);
+            d.properties[layerField] = jsonLayer[index][layerField];
+        });
+        features = features
+            .sort((a, b) => b.properties[layerField] - a.properties[layerField]);
+	return features;
+    };
+    	
+    fetchMenu(menu) {
+        return fetch(menu.url)
+	    .then(response => response.json())
+            .then(json => menu.data = json)
+            .then(() => {
+		menu.setLayersSourcesCities()
+		return menu;
+            });
+    };
+    
     changeCity(d, label) {
         if (this.state.city !== label) {
             this.setState({ city: label });
@@ -183,108 +280,85 @@ class App extends Component {
     };
     
     componentWillUpdate(nextProps, nextState) {
-	if (nextState.city !== this.state.city) {
-	    geojson = getGeojson(nextState.city);
 
-	    this.cityLayers = this.layers
-		.filter(i => i.city === nextState.city);
+	if (nextState.city !== this.state.city) {
+
+	    console.log("nextState.city !== this.state.city");
+	    var defaultLayer = this.state.menu.getDefaultLayer(nextState.city);
+	    var defaultSource = this.state.menu.getDefaultSource(nextState.city, defaultLayer.sourceId);
+	    this.fetchSourceAndLayer(defaultSource, defaultLayer);
+
+	} else if (nextState.layer !== this.state.layer) {
 	    
-	    this.setDefaultSource(nextState.city);
-            this.center = this.defaultSource.center;
-            this.zoom = this.defaultSource.zoom;
-	    this.joinField = this.defaultSource.joinField;
+	    console.log("nextState.layer !== this.state.layer")
+	    this.fetchLayer(nextState.layer, this.state.features);
 	    
-	    this.setDefaultLayer(nextState.city);
-	    this.setState({ layer: this.defaultLayer });
-	} else if (nextState.layer.id !== this.state.layer.id) {
-	    this.setFeatures(nextState.layer);
-	    this.setColors(nextState.layer);
-	    this.setState({ clicked: "none" });
-	}
+	} 	
     };
         
     render() {
+	if (this.state.layer === "none") {
+	    console.log("this.state.layer === none");
+	    return null;
+	}
+	
 	var self = this;
+	
 	return (
-	   
            <div className="App">
 		<div className="App-header">
 		    <div style={{ display: "flex", justifyContent: "space-between" }}>
 		        <Menu
-	                    menu={this.getMenu()}
+	                    menu={this.state.menu.getCategories(this.state.city)}
 	                    handleClick={this.changeLayer}/> 
 		        <h2>Mappa dei quartieri di {this.state.city}</h2>
                 
 		        <div>
-		            {this.cities.map(city =>
+		            {this.state.menu.cities.map(city =>
 				      <Button
 				       handleClick={this.changeCity}
 				       label={city}/>)}
 		        </div>
 		    </div>
 		</div>
-		<div style={{ display: "flex" }}>
-		            
-		            <Map
-	                        clicked={this.state.clicked}
-	                        hoverElement={this.state.hover}
-	                        onHover={this.onHoverMap}
-	                        onClick={this.onClickMap}
-	                        options={{
-		                    city: this.state.city,
-				    center: this.center,
-				    zoom: this.zoom
-				}} 
-	                        data={{
-		                    type: "FeatureCollection",
-				    features: this.features
-				}}
-	                        layer={{
-		                    id: this.state.layer.id,
-				    colors: this.colors
-				}}
-	                        joinField={this.joinField}
-		            />
-		        
-	                <div style={{ width: "30vw" }}>
-	                     <BarChart
-	                        clicked={this.state.clicked}    
-	                        hoverElement={this.state.hover}
-	                        onHover={this.onHoverBarChart}
-	                        data={{
-		                    city: this.state.city,
-		                    label: this.state.layer.label,
-				    dataSource: this.state.layer.dataSource,
-				    headers: [this.joinField, this.state.layer.id],
-		                    values: this.features.map(d => [d.properties[self.joinField], d.properties[self.state.layer.id]]),
-				    colors: this.colors
-				}}
-		            />   
-	                </div>
+		<div>	            
+		    <Map	                        
+	                options={{
+		            city: this.state.city,
+		            center: this.state.source.center,
+		            zoom: this.state.source.zoom
+			}} 
+	                source={{
+		            type: "FeatureCollection",
+		            features: this.state.features
+			}}
+	                layer={{
+		            id: this.state.layer.id,
+	                    label: this.state.layer.label,
+		            dataSource: this.state.layer.dataSource,
+		            headers: [this.state.source.joinField, this.state.layer.id],
+			    values: this.state.features.map(d => [d.properties[self.state.source.joinField], d.properties[self.state.layer.id]]),
+			    colors: this.colors
+		        }}
+	                joinField={this.state.source.joinField}
+		    />
 		</div>	
-            </div>
+	     </div>
+		
 	)
     };
 }
 
-function getGeojson(city) {
-    var toreturn;
-    if (city === "Milano") {
-        toreturn = geojsonMilano;
-    } else if (city === "Torino") {
-	toreturn = geojsonTorino;
-    }
-    return toreturn;
-};
-
 function resultsJson(city, id) {
     var toreturn;
-    if (city === "Milano") 
+    if (city === "Milano" && id === "Milano_istat") 
 	toreturn = results;
+    if (city === "Milano" && id === "Milano_EducazioneCultura")
+	toreturn = educazioneCulturaMilano;
     
-    if (city === "Torino" && id === "istatTorino")
+    if (city === "Torino" && id === "Torino_istat")
 	toreturn = resultsTorino;
-    if (city === "Torino" && id === "istruzioneTorino")
+    if (city === "Torino" && id === "Torino_istruzione")
 	toreturn = istruzioneTorino;
     
     return toreturn;
