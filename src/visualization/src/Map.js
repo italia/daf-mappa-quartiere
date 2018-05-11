@@ -149,6 +149,7 @@ class Map extends Component {
     };
     
     render() {
+	console.log(this.neighborhood);
 	var self = this;
 	return (   
 	    <div>
