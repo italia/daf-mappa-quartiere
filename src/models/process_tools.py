@@ -1,5 +1,3 @@
-from enum import Enum
-import os.path
 
 import numpy as np
 import pandas as pd
@@ -10,7 +8,8 @@ from sklearn import gaussian_process
 
 from matplotlib import pyplot as plt 
 import seaborn as sns
-plt.rcParams['figure.figsize']= (20,14)
+from scipy.interpolate import griddata
+import json
 
 ## TODO: find way to put this into some global settings
 import os
@@ -19,74 +18,11 @@ rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
     sys.path.append(rootDir)
 
+plt.rcParams['figure.figsize']= (20,14)
+
 from references import common_cfg
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
-
-gaussKern = gaussian_process.kernels.RBF
-# useful conversion function 
-make_shapely_point = lambda geoPoint: shapely.geometry.Point((geoPoint.longitude, geoPoint.latitude))
-# test utility
-get_random_pos = lambda n: list(map(geopy.Point, list(zip(np.round(np.random.uniform(45.40, 45.50, n), 5), 
-                                np.round(np.random.uniform(9.1, 9.3, n), 5)))))
-
-## Mapped positions frame class
-class MappedPositionsFrame(pd.DataFrame):
-    '''A class to collect an array of positions alongside areas labels'''
-
-    def __init__(self, positions=None, long=None, lat=None, idQuartiere=None):
-        
-        # build positions data
-        if not positions:
-            if idQuartiere is None:
-                idQuartiere = np.full(long.shape, np.nan)
-            # create mapping dict from coordinates
-            mappingDict = {
-                common_cfg.coordColNames[0]:long, #long
-                common_cfg.coordColNames[1]:lat, #lat
-                common_cfg.IdQuartiereColName: idQuartiere,    #quartiere aggregation
-                            }
-            # istantiate geopy positions
-            geopyPoints = list(map(lambda y,x: geopy.Point(y,x), lat, long))
-            mappingDict['Positions'] = geopyPoints
-            mappingDict['PositionTuples'] = [tuple(p) for p in geopyPoints] 
-            
-        else:
-            assert all([isinstance(t, geopy.Point) for t in positions]),'Geopy Points expected'
-            assert not long, 'Long input not expected if positions provided'
-            assert not lat, 'Lat input not expected if positions provided'
-            if idQuartiere is None:
-                idQuartiere = np.full(len(positions), np.nan)
-            # create mapping dict from positions    
-            mappingDict = {
-                common_cfg.coordColNames[0]: [x.longitude for x in positions], #long
-                common_cfg.coordColNames[1]: [x.latitude for x in positions], #lat
-                common_cfg.IdQuartiereColName: idQuartiere,    #quartiere aggregation
-                'Positions': positions, common_cfg.tupleIndexName: [tuple(p) for p in positions]}
-        
-        # finally call DataFrame constructor
-        super().__init__(mappingDict)
-        self.set_index([common_cfg.IdQuartiereColName, common_cfg.tupleIndexName], inplace=True)
-
-class ServiceValues(dict):
-    '''A class to store, make available for aggregation and easily export estimated service values'''
-    
-    def __init__(self, mappedPositions):
-        assert isinstance(mappedPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
-        self.mappedPositions = mappedPositions
-        
-        # initialise for all service types
-        super().__init__(
-            {service: pd.DataFrame(np.zeros([mappedPositions.shape[0], len(AgeGroup.all())]),  
-                                 index=mappedPositions.index, columns=AgeGroup.all()) 
-                 for service in ServiceType})
-    
-    @property    
-    def positions(self):
-        return list(self.mappedPositions.Positions.values)
-        
-## Main KPI calculator, for both istat and position based services
-
-        
+from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
         
         
 ## Grid maker
@@ -134,11 +70,18 @@ class GridMaker():
                         bFound = True
                         break # skip remanining zones
                 assert bFound, 'Point within city boundary was not assigned to any zone'
-        
+            
+            else: # assign default value for points outside city perimeter
+                self._IDquartiere[i,j] = np.nan
+                
         # call common format constructor
         self.grid = MappedPositionsFrame(long=self._xPlot[self._bInPerimeter].flatten(),
                                                    lat=self._yPlot[self._bInPerimeter].flatten(),
-                                                   idQuartiere=self._IDquartiere[self._bInPerimeter])
+                                                   idQuartiere=self._IDquartiere[self._bInPerimeter].flatten())
+        
+        self.fullGrid = MappedPositionsFrame(long=self._xPlot.flatten(), lat=self._yPlot.flatten(),
+                                                   idQuartiere=self._IDquartiere.flatten())
+      
       
     @property
     def longitudeRangeKm(self):
@@ -151,56 +94,132 @@ class GridMaker():
 
     
 ## Plot tools
-from descartes import PolygonPatch
-
-from scipy.interpolate import griddata
-                
 class ValuesPlotter:
     '''
-    A class that plots various types of output from a UnitAggregator
+    A class that plots various types of output from ServiceValues
     '''
-    def __init__(self, serviceValues):
+
+    def __init__(self, serviceValues, bOnGrid=False):
         assert isinstance(serviceValues, ServiceValues), 'ServiceValues class expected'
         self.values = serviceValues
-        #self.ua = unitAggregatorIn
-        
-        
+        self.bOnGrid = bOnGrid
+
     def plot_locations(self):
         '''
-        Plots the locations of the initialized ServiceValues'
+        Plots the locations of the provided ServiceValues'
         '''
-        plotScales = self.ua.scale/np.mean(self.ua.scale)
+        coordNames = common_cfg.coordColNames
         plt.figure()
-        plt.scatter(self.ua.longitude, self.ua.latitude, s=plotScales)
+        plt.scatter(self.values.mappedPositions[coordNames[0]],
+                    self.values.mappedPositions[coordNames[1]])
+        plt.xlabel(coordNames[0])
+        plt.ylabel(coordNames[1])
         plt.axis('equal')
         plt.show()
         return None
-    
-        
-    def plot_service_levels(self, servType, gridDensity=40):
+
+    def plot_service_levels(self, servType, gridDensity=40, nLevels=50):
         '''
         Plots a contour graph of the results for each ageGroup.
         '''
         assert isinstance(servType, ServiceType), 'ServiceType expected in input'
-        
-        for ageGroup, valuesSeries in self.values[servType].items():
-            valuesArray = valuesSeries.values
-            coordsList = list(zip(*valuesSeries.index.levels[1]))
-            xPlot = coordsList[1]
-            yPlot = coordsList[0]
-            if np.count_nonzero(valuesArray) > 0:
-                # grid the data using natural neighbour interpolation
-                xi = np.linspace(min(xPlot), max(xPlot), gridDensity)
-                yi = np.linspace(min(yPlot), max(yPlot), gridDensity)
-                zi = griddata((xPlot, yPlot), valuesArray, (xi[None,:], yi[:,None]), 'linear')
-                # clip to zero
-                bNeg = ~np.isnan(zi) & (zi<0)
-                #zi[bNeg] = 0
+
+        for ageGroup in self.values[servType].keys():
+
+            xPlot, yPlot, z = self.values.plot_output(servType, ageGroup)
+
+            if (~all(np.isnan(z))) & (np.count_nonzero(z)>0):
+                if self.bOnGrid:
+                    gridShape = (len(set(xPlot)), len(set(yPlot.flatten())))
+                    assert len(xPlot) == gridShape[0] * gridShape[
+                        1], 'X values do not seem on a grid'
+                    assert len(yPlot) == gridShape[0] * gridShape[
+                        1], 'Y values do not seem on a grid'
+                    xi = np.array(xPlot).reshape(gridShape)
+                    yi = np.array(yPlot).reshape(gridShape)
+                    zi = z.reshape(gridShape)
+                else:
+                    # grid the data using natural neighbour interpolation
+                    xi = np.linspace(min(xPlot), max(xPlot), gridDensity)
+                    yi = np.linspace(min(yPlot), max(yPlot), gridDensity)
+                    zi = griddata((xPlot, yPlot), z, (xi[None, :], yi[:, None]), 'nearest')
+
                 plt.figure()
                 plt.title(ageGroup)
-                CS = plt.contourf(xi, yi, zi, 20)
+                CS = plt.contourf(xi, yi, zi, nLevels)
                 cbar = plt.colorbar(CS)
                 cbar.ax.set_ylabel('Service level')
                 plt.show()
-            
+
         return None
+
+class JSONWriter:
+    def __init__(self, kpiCalc):
+        assert isinstance(kpiCalc, KPICalculator), 'KPI calculator is needed'
+        self.layersData = kpiCalc.quartiereKPI
+        self.istatData = kpiCalc.istatKPI
+        self.vitalityData = kpiCalc.istatVitality
+        self.city = kpiCalc.city
+        self.areasTree = {}
+        for s in self.layersData:
+            area = s.serviceArea
+            self.areasTree[area] = [s] + self.areasTree.get(area, [])
+
+    def make_menu(self):
+        jsonList = common_cfg.make_output_menu(
+            cityName=self.city,
+            services=list(self.layersData.keys()),
+            istatLayers={'Vitalita': list(self.vitalityData.columns)}
+            )
+        return jsonList
+
+    def make_serviceareas_output(self, precision=4):
+        out = dict()
+
+        def prepare_frame_data(frameIn): # tool to format frame data that does not depend on age
+            frameIn = frameIn.round(precision)
+            origType = frameIn.index.dtype.type
+            dataDict = frameIn.reset_index().to_dict(orient='records')
+            # restore type as pandas has a bug and casts to float if int
+            for quartiereData in dataDict:
+                oldValue = quartiereData[common_cfg.IdQuartiereColName]
+                if origType in (np.int32, np.int64, int):
+                    quartiereData[common_cfg.IdQuartiereColName] = int(oldValue)
+
+            return dataDict
+
+        # make istat layer
+        out[common_cfg.istatLayerName] = prepare_frame_data(self.istatData)
+
+        # make vitality layer
+        out[common_cfg.vitalityLayerName] = prepare_frame_data(self.vitalityData)
+
+        # make layers
+        for area, layers in self.areasTree.items():
+            layerList = []
+            for service in layers:
+                data = self.layersData[service].round(precision)
+                layerList.append(pd.Series(
+                    data[AgeGroup.all()].as_matrix().tolist(),
+                    index=data.index, name=service.name))
+            areaData = pd.concat(layerList, axis=1).reset_index()
+            print(areaData)
+            out[area.value] = areaData.to_dict(orient='records')
+
+        return out
+
+    def write_all_files_to_default_path(self):
+        # build and write menu
+        with open(os.path.join(
+                '../', common_cfg.vizOutputPath, 'menu.js'), 'w') as menuFile:
+            json.dump(self.make_menu(), menuFile, sort_keys=True,
+                      indent=4, separators=(',', ' : '))
+
+        # build and write all areas
+        areasOutput = self.make_serviceareas_output()
+        for name, data in areasOutput.items():
+            filename = '%s_%s.js' % (self.city, name)
+            with open(os.path.join('../', common_cfg.outputPath,
+                                   filename), 'w') as areaFile:
+                json.dump(data, areaFile, sort_keys=True,
+                          indent=4, separators=(',', ' : '))

@@ -12,6 +12,7 @@ cityList = ['Milano', 'Torino', 'Roma']
 # Location conventions
 coordColNames = ['Long', 'Lat']
 tupleIndexName = 'PositionTuples'
+positionsCol = 'Positions'
 
 # Istat parameters
 cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
@@ -21,7 +22,9 @@ quartiereDescColName = 'quartiere'
 
 # Json/GeoJson path parameters
 outputPath = 'data/output'
-
+vizOutputPath = 'data/output'
+istatLayerName = 'Istat'
+vitalityLayerName = 'Vitality'
 menuGroupTemplate = { 
                 'id' : '',
                 'city' : '', # es: 'Torino'
@@ -35,12 +38,13 @@ menuGroupTemplate = {
                     {'category' : '',
                     'label' : '',
                     'id' : '',
-                    'default' : False
+                    'default' : False,
+                    'dataSource': '',
                      }]
                  }
 
 
-def make_output_menu(cityName, services, sourceUrl=''):
+def make_output_menu(cityName, services, istatLayers=None, sourceUrl=''):
     '''Creates a list of dictionaries that is ready to be saved as a json'''
     outList = []
     
@@ -52,7 +56,7 @@ def make_output_menu(cityName, services, sourceUrl=''):
     sourceItem['id'] = sourceId
     outList.append(sourceItem)
     
-    # layer items   
+    # service layer items
     areas = set(s.serviceArea for s in services)
     for area in areas:
         thisServices = [s for s in services if s.serviceArea == area] 
@@ -67,10 +71,28 @@ def make_output_menu(cityName, services, sourceUrl=''):
             [{'category': service.serviceArea.value,
              'label': service.label,
              'id': service.name,
+             'dataSource': service.dataSource,
             } for service in thisServices]),
         outList.append(layerItem)
         
-    # TODO append istat layer
+    # istat layers items
+    if istatLayers:
+        for istatArea, indicators in istatLayers.items():
+            istatItem = menuGroupTemplate.copy()
+            istatItem['type'] = 'layer'
+            istatItem['city'] = cityName
+            istatItem['id'] = cityName + '_' + istatArea
+            istatItem['url'] = ''  # default empty url
+            istatItem['sourceId'] = sourceId  # link to defined source
+            #
+            istatItem['indicators'] = (
+                                          [{'category': istatArea,
+                                            'label': indicator,
+                                            'id': indicator,
+                                            'dataSource': 'ISTAT',
+                                            } for indicator in indicators]),
+            outList.append(istatItem)
+
     return outList
 
 

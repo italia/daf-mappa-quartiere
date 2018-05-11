@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
-from sklearn import gaussian_process
-from matplotlib import pyplot as plt 
 from enum import Enum
-import os.path
+import geopy
 
 ## Enum classes
 class AgeGroup(Enum):
@@ -31,6 +29,10 @@ class AgeGroup(Enum):
         return([g for g in AgeGroup])
 
     @staticmethod
+    def all_but(excluded):
+        return([g for g in AgeGroup if g not in excluded])
+
+    @staticmethod
     def classify_array(arrayIn):
         return [AgeGroup.find_AgeGroup(y) for y in arrayIn]
     
@@ -47,6 +49,7 @@ class AgeGroup(Enum):
     
 class ServiceArea(Enum):
     EducationCulture = 'EducazioneCultura'
+    Transport = 'Trasporti'
     PublicSafety = 'Sicurezza'
     Health = 'Salute'
     
@@ -58,19 +61,45 @@ class SummaryNorm(Enum):
     
 
 class ServiceType(Enum):
-    School = (1, ServiceArea.EducationCulture, SummaryNorm.l2, 'Scuole')
+    School = (1, #enum id 
+              ServiceArea.EducationCulture, 
+              SummaryNorm.l2,
+              [AgeGroup.ChildPrimary, AgeGroup.ChildMid, AgeGroup.ChildHigh],
+              'Scuole', 
+              'MIUR')
     #
-    Library = (2, ServiceArea.EducationCulture, SummaryNorm.l2, 'Biblioteche')
+    Library = (2, #enum id
+               ServiceArea.EducationCulture, 
+               SummaryNorm.l2,
+               AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
+               'Biblioteche', 
+               'MIBACT')
+    #
+    TransportStop = (3, #enum id
+               ServiceArea.Transport,
+               SummaryNorm.l2,
+               AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
+               'Fermate TPL',
+               'GTFS Comuni')
+    #
+    Pharmacy = (4, #enum id
+               ServiceArea.Health,
+               SummaryNorm.lInf, # assume pharmacies are equivalent
+               AgeGroup.all(),
+               'Farmacie',
+               'Min. Salute')
     
-    #etc
     def __init__(self, _, areaOfService,
-                 aggrNormInput=SummaryNorm.l2, label=''):
+                 aggrNormInput=SummaryNorm.l2, demandAgesInput=AgeGroup.all(),
+                 label='', dataSource=''):
         self.aggrNorm = aggrNormInput
         self.serviceArea = areaOfService
         self.label = label
-        # initialise demand factors for each age group
-        print('WARNING: mock demand factors initalised for ServiceTypes')
-        self.demandFactors = pd.Series({a: np.random.uniform() for a in AgeGroup.all()}) #TODO: import this from input
+        self.dataSource = dataSource
+        # declare the AgeGroups that make use of this service
+        assert isinstance(demandAgesInput, list), 'list expected for demand ages'
+        assert all([isinstance(g, AgeGroup) for g in demandAgesInput]), 'AgeGroups expected'
+        self.demandAges = demandAgesInput
     
     def aggregate_units(self, unitValues, axis=1):
         # assumes positions are stacked in rows
@@ -82,3 +111,10 @@ class ServiceType(Enum):
     
 #demandFactors = pd.DataFrame(np.ones([len(AgeGroup.all()), len(ServiceType.all())]), 
 #                             index=AgeGroup.all(), columns=ServiceType.all())
+# test utility 
+def get_random_pos(n):
+    out = list(map(geopy.Point, list(zip(np.round(
+                                np.random.uniform(45.40, 45.50, n), 5),  
+                                np.round(np.random.uniform(9.1, 9.3, n), 5)
+                                )))) 
+    return out

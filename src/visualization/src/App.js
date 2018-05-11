@@ -9,6 +9,7 @@ import Button from './Button';
 import Menu from './Menu';
 import results from './data/Milano/results.js';
 import resultsTorino from './data/Torino/results.js';
+import educazioneCulturaMilano from './data/Milano/Milano_EducazioneCultura.js';
 import istruzioneTorino from './data/Torino/istruzione.js';
 import educazioneCulturaMilano from './data/Milano/Milano_EducazioneCultura.js';
 
@@ -267,6 +268,27 @@ class App extends Component {
             });
     };
     
+    setFeatures(l) {
+	this.features = geojson.features;
+	var myLayer = this.cityLayers.filter(i => i.id === l.id)[0];
+	if (myLayer.layerUrl !== undefined) {
+	    //download data from layerUrl
+	    var data = resultsJson(this.state.city, myLayer.layerId);
+	    
+	    var quartieri = data.map(d => d[this.joinField]);
+	    //console.log(quartieri)
+	    //console.log(this.features.map(d => d.properties[this.joinField]))
+	    this.features.forEach(d => {
+		var index = quartieri.indexOf(d.properties[this.joinField]);
+		d.properties[l.id] = data[index][l.id];
+	    });
+	}
+	
+	this.features = this.features
+	    .sort((a, b) => b.properties[l.id] - a.properties[l.id]);
+   };
+
+>>>>>>> a55fff9272767603c557d6787e84138699af1122
     changeCity(d, label) {
         if (this.state.city !== label) {
             this.setState({ city: label });
