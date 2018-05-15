@@ -13,7 +13,7 @@ rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
     sys.path.append(rootDir)
 
-from references import common_cfg, istat_kpi, citySettings
+from references import common_cfg, istat_kpi, city_settings
 from src.models.city_items import AgeGroup, ServiceType # enum classes for the model
 
 gaussKern = gaussian_process.kernels.RBF
@@ -237,7 +237,7 @@ class DemandFrame(pd.DataFrame):
     @staticmethod
     def create_from_istat_cpa(cityName):
         '''Constructor caller for DemandFrame'''
-        cityConfig = citySettings.get_city_config(cityName)
+        cityConfig = city_settings.get_city_config(cityName)
         frame = DemandFrame(cityConfig.get_istat_cpa_data(), bDuplicatesCheck=False)
         return frame
 
@@ -247,7 +247,7 @@ class KPICalculator:
     '''Class to aggregate demand and evaluate section based and position based KPIs'''
     
     def __init__(self, demandFrame, serviceUnits, cityName):
-        assert cityName in citySettings.cityNamesList, 'Unrecognized city name %s' % cityName
+        assert cityName in city_settings.cityNamesList, 'Unrecognized city name %s' % cityName
         assert isinstance(demandFrame, DemandFrame),'Demand frame expected'
         assert all([isinstance(su, ServiceUnit) for su in serviceUnits]),'Service units list expected'
         
