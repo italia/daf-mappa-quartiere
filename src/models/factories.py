@@ -58,6 +58,11 @@ class UnitFactory:
         else:
             print ("We're sorry, this service has not been implemented yet!")
 
+    @staticmethod
+    def make_loaders_for_city(modelCity):
+        paths = modelCity.servicePaths
+        return {s.label: UnitFactory.createLoader(s, paths[s]) for s in modelCity.keys()}
+
             
 ## UnitFactory children classes
 class SchoolFactory(UnitFactory):
@@ -199,7 +204,7 @@ class PharmacyFactory(UnitFactory):
         self.servicetype = ServiceType.Pharmacy
 
     def load(self, meanRadius):
-        assert meanRadius, 'Please provide a reference radius for stops'
+        assert meanRadius, 'Please provide a reference radius for pharmacies'
         (propertData, locations) = super().load_from_path()
 
         nameCol = 'CODICEIDENTIFICATIVOFARMACIA'
@@ -209,6 +214,34 @@ class PharmacyFactory(UnitFactory):
         for iUnit in range(propertData.shape[0]):
             rowData = propertData.iloc[iUnit, :]
             attrDict = {name:rowData[col] for name, col in colAttributes.items()}
+            thisUnit = ServiceUnit(self.servicetype,
+                                   name=rowData[nameCol].astype(str),
+                                   position=locations[iUnit],
+                                   ageDiffusionIn={g: 1 for g in AgeGroup.all()},
+                                   scaleIn=meanRadius,
+                                   attributesIn=attrDict)
+            unitList.append(thisUnit)
+
+        return unitList
+
+
+class UrbanGreenFactory(UnitFactory):
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.servicetype = ServiceType.UrbanGreen
+
+    def load(self, meanRadius):
+        assert meanRadius, 'Please provide a reference radius for urban green'
+        (propertData, locations) = super().load_from_path()
+
+        nameCol = 'CODICEIDENTIFICATIVOFARMACIA'
+        colAttributes = {'Descrizione': 'DESCRIZIONEFARMACIA', 'PartitaIva': 'PARTITAIVA'}
+
+        unitList = []
+        for iUnit in range(propertData.shape[0]):
+            rowData = propertData.iloc[iUnit, :]
+            attrDict = {name: rowData[col] for name, col in colAttributes.items()}
             thisUnit = ServiceUnit(self.servicetype,
                                    name=rowData[nameCol].astype(str),
                                    position=locations[iUnit],
