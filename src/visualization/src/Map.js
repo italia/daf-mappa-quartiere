@@ -11,20 +11,57 @@ class Map extends Component {
     map;
     
     constructor(props: Props) {
-	super(props);	
+	super(props);
+	
 	this.state = {
 	    hoverElement: "none",
 	    city: props.options.city,
 	    property: props.layer.id,
-	    clicked: 1
+	    neighborhood: "none"
 	};
+	
 	this.onHoverBarChart = this.onHoverBarChart.bind(this);
 	this.onMouseOutBarChart = this.onMouseOutBarChart.bind(this);
 	this.onClickBarChart = this.onClickBarChart.bind(this);
-	this.setNeighborhood();
-    }
+    };
 
+    /*shouldComponentUpdate(nextProps, nextState) {
+	console.log("nextProps");
+	console.log(nextProps)
+	if (this.props.city != nextProps.options.city) {
+	    this.map.remove();
+	    this.setState({
+		city: nextProps.options.city,
+		property: nextProps.layer.id,
+		neighborhood: "none"
+	    });
+	    this.createMap(); 
+	}
+	return true;
+    };*/
+	
+    componentWillReceiveProps(nextProps) {
+	if (this.props.hoverElement !== nextProps.hoverElement) {
+	    this.setState({ hoverElement: nextProps.hoverElement });
+	}
+	if (this.props.neighborhood !== nextProps.neighborhood) {
+	    this.setState({ neighborhood: nextProps.neighborhood });
+	}
+	if (this.props.city != nextProps.options.city) {
+	    if (this.map !== undefined) {
+		this.map.remove();
+		this.setState({
+		    city: nextProps.options.city,
+		    property: nextProps.layer.id,
+		    neighborhood: "none"
+		});
+	    }
+	}
+	this.createMap();
+    };
+	    
     createMap() {
+	
 	this.map = new mapboxgl.Map({
             container: this.mapContainer,
             style: 'mapbox://styles/mapbox/light-v9',
@@ -46,7 +83,7 @@ class Map extends Component {
 		    this.firstSymbolId = layers[i].id;
 		    break;
 		}
-	    }
+	    };
 	    
 	    map.addLayer({
 		id: 'Quartieri',
@@ -82,76 +119,66 @@ class Map extends Component {
                 filter: ["==", props.joinField, ""]
             }, this.firstSymbolId);
 	    map.on('mousemove', 'Quartieri', function(e) {
-		var features = map.queryRenderedFeatures(e.point);
 		var hoverElement = e.features[0].properties[props.joinField];
+		self.setState({ hoverElement: hoverElement }); 
 		map.setFilter('Quartieri-hover', ['==', props.joinField, hoverElement]);
-		self.setState({hoverElement: hoverElement});
+		//self.setState({hoverElement: hoverElement});
             });
 	    map.on('mouseout', 'Quartieri', function() {
-		self.setState({ hoverElement: "none" });
+		self.setState({ hoverElement: "none" }); 
 		map.setFilter('Quartieri-hover', ['==', props.joinField, ""]);
+		//self.setState({ hoverElement: "none" });
 	    });
 	    map.on('click', 'Quartieri', function(e) {
-		var clicked = e.features[0].properties[props.joinField];
-		self.setState({ clicked: clicked });
-		self.setNeighborhood();
-		console.log(self.neighborhood)
-                map.setFilter('Quartieri-click', ['==', props.joinField, clicked]);
+		var neighborhood = e.features[0].properties;
+		var clicked = neighborhood[props.joinField];
+		self.setState({ neighborhood: neighborhood });
+		map.setFilter('Quartieri-click', ['==', props.joinField, clicked]);
+		//self.setState({ neighborhood: neighborhood });
             });
-
 	});
-    }
-
-    setNeighborhood() {
-	var self = this;
-	if (this.state.clicked === "none") {
-            this.neighborhood = "none";
-        } else {
-            this.neighborhood = this.props.source
-                .features
-                .filter(d => {
-                    return d.properties[self.props.joinField] === self.state.clicked;
-                })[0]
-		.properties;
-        }
     };
-	
+    /*
     componentDidMount() {
 	this.createMap();
-    };
+    };*/
     
-    componentDidUpdate() {
-	const props = this.props;
-	if (this.state.hoverElement !== 'none') {
-	    this.map.setFilter('Quartieri-hover', ['==', props.joinField, this.state.hoverElement]);
-	}
-	if (props.options.city !== this.state.city || props.layer.id !== this.state.property) {
-            this.map.remove();
-            this.createMap();
-	    this.setState({ city: props.options.city, property: props.layer.id });
-	    this.setState({ clicked: "none" });
-	}
-    };
-
     onHoverBarChart(d) {
+	this.map.setFilter('Quartieri-hover', ['==', this.props.joinField, d[0]]);
 	this.setState({ hoverElement: d[0] });
     };
 
     onMouseOutBarChart(d) {
-	this.setState({ hoverElement: "none" });
 	this.map.setFilter('Quartieri-hover', ['==', this.props.joinField, ""]);
+	this.setState({ hoverElement: "none" });
     };
 
     onClickBarChart(d) {
-	this.setState({ clicked: d[0] });
-	this.setNeighborhood();
-	this.map.setFilter('Quartieri-click', ['==', this.props.joinField, d[0]]);
+	var props = this.props;
+	
+	var clicked = d[0];
+	var neighborhood = props.source
+	    .features
+	    .filter(d => {
+		return d.properties[props.joinField] === clicked;
+	    })[0]
+	    .properties;
+	this.map.setFilter('Quartieri-click', ['==', props.joinField, clicked]);
+	this.setState({ neighborhood: neighborhood });
     };
     
     render() {
-	console.log(this.neighborhood);
+	console.log(this.state)
+	var nameField = "NIL";
+	if (this.state.city === "Torino")
+	    nameField = "DENOM";
+	
+	var clicked = (this.state.neighborhood === "none") ?
+	    "none" :
+	    this.state.neighborhood[this.props.joinField];
+	
 	var self = this;
-	return (   
+	return (  
 	    <div>
                 <div id='mapContainer'
 	            ref={el => this.mapContainer = el}
@@ -159,6 +186,7 @@ class Map extends Component {
 		        height: '90vh',
 			width: '100vw'
 		    }}/>
+		
 		<div className='map-overlay'
 	            id='chart'
 	            style={{
@@ -176,7 +204,7 @@ class Map extends Component {
                         onHover={this.onHoverBarChart}
                         onMouseOut={this.onMouseOutBarChart}
                         onClick={this.onClickBarChart}         
-                        clicked={this.state.clicked}
+                        clicked={clicked}
                         data={{
                             city: this.props.options.city, 
                             label: this.props.layer.label,
@@ -187,6 +215,7 @@ class Map extends Component {
                         }}             
                    />           
                 </div>
+	                    
 		<div className='legend-overlay'
 	            id='legend'
 	            style={{
@@ -202,10 +231,11 @@ class Map extends Component {
 			    width: '300'
 			}}
                     />                                  
-                </div>  
+                </div>
+		
                 <Dashboard
-	            neighborhood={this.neighborhood}
-	            nameField={"NIL"}
+	            neighborhood={this.state.neighborhood}
+	            nameField={nameField}
 
 	            list={[{
 		        label: "Numero di abitanti",

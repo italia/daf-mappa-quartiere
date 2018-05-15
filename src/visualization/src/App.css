@@ -27,6 +27,10 @@ rect.handle {
     opacity: 0.25;
 }
 
+div.dashboard {
+    font-size: 20px;
+}
+    
 a {
     text-decoration: none;
     color: #232323;
@@ -191,8 +195,13 @@ button {
     border-radius: 8px;
 }
 
+#dashboard-start {
+    padding-left: 20px;
+    padding-top: 40px;
+    padding-right: 20px;  
+}
 
 #dashboard {
-    padding-top: 0px;
     padding-left: 20px;
+    padding-top: 0px;
 }

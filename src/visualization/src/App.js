@@ -283,14 +283,12 @@ class App extends Component {
 
 	if (nextState.city !== this.state.city) {
 
-	    console.log("nextState.city !== this.state.city");
 	    var defaultLayer = this.state.menu.getDefaultLayer(nextState.city);
 	    var defaultSource = this.state.menu.getDefaultSource(nextState.city, defaultLayer.sourceId);
 	    this.fetchSourceAndLayer(defaultSource, defaultLayer);
 
 	} else if (nextState.layer !== this.state.layer) {
 	    
-	    console.log("nextState.layer !== this.state.layer")
 	    this.fetchLayer(nextState.layer, this.state.features);
 	    
 	} 	
@@ -298,7 +296,6 @@ class App extends Component {
         
     render() {
 	if (this.state.layer === "none") {
-	    console.log("this.state.layer === none");
 	    return null;
 	}
 	

@@ -17,48 +17,39 @@ function sigFigs(n, sig) {
 
 class BarChart extends Component {
     yScale;
-    barWidth = Math.min(18, Math.max(this.props.style.height / (this.props.data.values.length * 1.5), 7));
-    x = 250;
-    y = 50;
     
     constructor(props) {
 	super(props);
+
+	this.barWidth = Math.min(18, Math.max(this.props.style.height / (this.props.data.values.length * 1.5), 7));
+	this.x = 250;
+	this.y = 50;
+	
 	this.state = {
-	    hoverElement: props.hoverElement,
-	    city: props.data.city,
-	    layer: props.data.headers[1],
-	    clicked: props.clicked
+	    clicked: props.clicked,
+	    hoverElement: props.hoverElements
 	};
 	
 	this.createBarChart = this.createBarChart.bind(this);
 	this.visibilityClick = this.visibilityClick.bind(this);
 	this.visibilityHover = this.visibilityHover.bind(this);
 
-    };
-
-    createChart() {
-	this.setLabel();
-        this.setYScale();
-        this.createBarChart();
+	this.createBarChart();
     };
     
-    componentDidMount() {
-	this.createChart();
-    };
-
     setYScale() {
 	const dataMax = max(this.props.data.values.map(d => d[1]));
 	this.yScale = scaleLinear()
             .domain([0, dataMax])
             .range([0, 200]);
     };
-	
+
     visibilityHover(d, i) {
-	return (this.props.hoverElement === d[0]) ? "visible" : "hidden";
+	return (this.state.hoverElement === d[0]) ? "visible" : "hidden";
     };
 
     visibilityClick(d, i) {
-	return (this.props.clicked === d[0]) ? "visible" : "hidden";
+	return (this.state.clicked === d[0]) ? "visible" : "hidden";
     };
 
     colorHover() {
@@ -77,7 +68,7 @@ class BarChart extends Component {
 	return "hover";
     };
         
-    createBarTooltip(visibilityCallback, colorCallback, classCallback) {
+    createTooltip(visibilityCallback, colorCallback, classCallback) {
 	const chartContainer = this.chartContainer;
 
 	var size = 8;	
@@ -166,8 +157,11 @@ class BarChart extends Component {
 	    .attr("font-size", 8)
 	    .text("Sorgente dati: " + this.props.data.dataSource);
     };
-    
+
     createBarChart() {
+	this.setLabel();
+	this.setYScale();
+	
 	const chartContainer = this.chartContainer;
 
 	select(chartContainer)
@@ -188,8 +182,14 @@ class BarChart extends Component {
 	    .enter()
 	    .append("rect")
             .attr("class", "bar")
-            .on("mouseover", this.props.onHover)
-	    .on("mouseout", this.props.onMouseOut);
+            .on("mouseover", d => {
+		this.setState({ hoverElement: d[0] });
+		this.props.onHover(d);
+	    })
+	    .on("mouseout", d => {
+		this.setState({ hoverElement: "none" });
+		this.props.onMouseOut(d);
+	    });
 	
 	select(chartContainer)
 	    .selectAll("rect.bar")
@@ -205,31 +205,46 @@ class BarChart extends Component {
             .attr("width", d => this.yScale(d[1]))
             .attr("height", this.barWidth)
             .style("fill", d => {
-		return this.props.hoverElement === d[0] ? this.props.data.colors.highlight : this.props.data.colors.scale(d[1]);
+		return this.state.hoverElement === d[0] ? this.props.data.colors.highlight : this.props.data.colors.scale(d[1]);
 	    })
             .style("stroke", "black")
             .style("stroke-opacity", 0.25)
-	    .on("click", this.props.onClick);
+	    .on("click", d => {
+		this.setState({ clicked: d[0] });
+		this.props.onClick(d);
+	    });
  
-	this.createBarTooltip(this.visibilityHover, this.colorHover, this.classHover);
-	this.createBarTooltip(this.visibilityClick, this.colorClick, this.classClick);
+	this.createTooltip(this.visibilityHover, this.colorHover, this.classHover);
+	this.createTooltip(this.visibilityClick, this.colorClick, this.classClick);
+
     };
-    
+  
+    componentWillReceiveProps(nextProps) {
+	if (this.props.clicked !== nextProps.clicked) {
+	    this.setState({ clicked: nextProps.clicked });
+	}
+	if (this.props.hoverElement !== nextProps.hoverElement) {
+	    this.setState({ hoverElement: nextProps.hoverElement });
+	}
+    };
+ 
     render() {
-	const chartContainer = this.chartContainer;
-		
-	if (this.props.clicked === "none") {
+	this.createBarChart();
+
+	var chartContainer = this.chartContainer;
+	
+	if (this.state.clicked === "none") {
             select(chartContainer).selectAll("rect.tooltipclick").remove();
             select(chartContainer).selectAll("text.tooltipclick").remove();
             select(chartContainer).selectAll("line.tooltipclick").remove();
         }
-
-	this.createChart(); 
-	return <svg className="BarChart"
+	return (
+		<svg className="BarChart"
                    ref={el => this.chartContainer = el}
                    width={this.props.style.width}
                    height={this.props.style.height}
-	       />
+		/>
+	);
     };
 }
 

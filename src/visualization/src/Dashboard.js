@@ -22,7 +22,6 @@ class Dashboard extends Component {
 	this.state = {
 	    neighborhood: props.neighborhood
 	};
-	console.log(props.neighborhood)
     };
 
     //otherwise it's updated at each mouse move
@@ -32,10 +31,25 @@ class Dashboard extends Component {
 	return false;
     };
 	
-    render() {
-		
+    render() {	
 	if (this.props.neighborhood === "none") {
-	    return null;
+	    return (
+		    <div
+		        className='dashboard-overlay'
+		        id='dashboard-start'
+		        style={{
+			    width: '250px',
+			    height: '50px',
+			    top: '300px',
+			    left: '70px'}}>
+		        <div
+		            style={{
+		                textAlign: 'middle'
+			    }}>
+		            Clicca su un quartiere
+		        </div>
+		    </div>
+	    );
 	}
 
 	var self = this;
@@ -49,7 +63,7 @@ class Dashboard extends Component {
 		    <ul style={{textAlign: "left", padding: 0}}>
 		    {
 		        this.props.list.map(l => {
-			    var value = l.value === undefined? self.props.neighborhood[l.field] : l.value;
+			    var value = (l.value === undefined)? self.props.neighborhood[l.field] : l.value;
 			    return <li> {l.label} : {value} {l.unit}</li>
 		        })
 		    }
