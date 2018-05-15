@@ -28,3 +28,5 @@ src/visualization/README.txt
 *.dbf
 *.xml
 \.idea/
+
+*.pickle
