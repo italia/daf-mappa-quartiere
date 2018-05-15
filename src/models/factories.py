@@ -27,23 +27,25 @@ class UnitFactory:
         assert os.path.isfile(path), 'File "%s" not found' % path
         self.filepath = path
 
-        self.rawData = pd.read_csv(self.filepath, sep=sepInput, decimal=decimalInput)
-        self.nUnits = self.rawData.shape[0]
+        self._rawData = pd.read_csv(self.filepath, sep=sepInput, decimal=decimalInput)
         
-    def load_from_path(self):
+    def extract_locations(self):
            
         defaultLocationColumns = ['Lat', 'Long']
-        if set(defaultLocationColumns).issubset(set(self.rawData.columns)):
+        if set(defaultLocationColumns).issubset(set(self._rawData.columns)):
             print('Location data found')
             # store geolocations as geopy Point
             locations = [geopy.Point(
-                self.rawData.loc[i, defaultLocationColumns]) for i in range(self.nUnits)]
-            propertData = self.rawData.drop(defaultLocationColumns, axis=1)
+                self._rawData.loc[i, defaultLocationColumns]) for i in range(self.nUnits)]
+            propertData = self._rawData.drop(defaultLocationColumns, axis=1)
         else:
-            propertData = self.rawData
-            locations = []
-            
+            raise 'Locations not found - not implemented!'
+
         return propertData, locations
+
+    @property
+    def nUnits(self):
+        return self._rawData.shape[0]
 
     @staticmethod
     def createLoader(serviceType, path):
@@ -74,7 +76,7 @@ class SchoolFactory(UnitFactory):
     def load(self, meanRadius):
         
         assert meanRadius, 'Please provide a reference radius for the mean school size'
-        (propertData, locations) = super().load_from_path()
+        (propertData, locations) = super().extract_locations()
         
         nameCol = 'DENOMINAZIONESCUOLA'
         typeCol = 'ORDINESCUOLA'
@@ -121,7 +123,7 @@ class LibraryFactory(UnitFactory):
     def load(self, meanRadius):
         
         assert meanRadius, 'Please provide a reference radius for the mean library size'
-        (propertData, locations) = super().load_from_path()
+        (propertData, locations) = super().extract_locations()
         
         nameCol = 'denominazioni.ufficiale'
         typeCol = 'tipologia-funzionale'
@@ -167,7 +169,7 @@ class TransportStopFactory(UnitFactory):
     def load(self, meanRadius):
 
         assert meanRadius, 'Please provide a reference radius for stops'
-        (propertData, locations) = super().load_from_path()
+        (propertData, locations) = super().extract_locations()
         # make unique stop code
         propertData['stopCode'] = propertData['stop_id'] + '_' + propertData['route_id']
         # append route types
@@ -205,7 +207,7 @@ class PharmacyFactory(UnitFactory):
 
     def load(self, meanRadius):
         assert meanRadius, 'Please provide a reference radius for pharmacies'
-        (propertData, locations) = super().load_from_path()
+        (propertData, locations) = super().extract_locations()
 
         nameCol = 'CODICEIDENTIFICATIVOFARMACIA'
         colAttributes = {'Descrizione': 'DESCRIZIONEFARMACIA', 'PartitaIva': 'PARTITAIVA'}
@@ -233,7 +235,7 @@ class UrbanGreenFactory(UnitFactory):
 
     def load(self, meanRadius):
         assert meanRadius, 'Please provide a reference radius for urban green'
-        (propertData, locations) = super().load_from_path()
+        (propertData, locations) = super().extract_locations()
 
         nameCol = 'CODICEIDENTIFICATIVOFARMACIA'
         colAttributes = {'Descrizione': 'DESCRIZIONEFARMACIA', 'PartitaIva': 'PARTITAIVA'}

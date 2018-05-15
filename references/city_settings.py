@@ -41,7 +41,7 @@ defaultCities = [
     ModelCity(
         'Milano',
         '',
-        {ServiceType.School: 'Milano_datiScuole.csv',
+        {ServiceType.School: 'Milano_scuole.csv',
          ServiceType.Library: 'Milano_biblioteche.csv',
          ServiceType.TransportStop: 'Milano_TPL.csv',
          ServiceType.Pharmacy: 'Milano_farmacie.csv',
@@ -49,7 +49,7 @@ defaultCities = [
     ModelCity(
         'Torino',
         '',
-        {ServiceType.School: 'Torino_datiScuole.csv',
+        {ServiceType.School: 'Torino_scuole.csv',
          ServiceType.Library: 'Torino_biblioteche.csv',
          ServiceType.TransportStop: 'Torino_TPL.csv',
          ServiceType.Pharmacy: 'Torino_farmacie.csv',
