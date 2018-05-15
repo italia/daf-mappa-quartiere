@@ -1,4 +1,4 @@
-route_id;route_type;stop_id;IDquartiere;SEZ2011;stop_name;stop_desc;latitude;longitude;wheelchair_boarding
+route_id;route_type;stop_id;IDquartiere;SEZ2011;stop_name;stop_desc;Lat;Long;wheelchair_boarding
 METROU;1;8212;3;12720003824.0;METRO MARCHE;corso Francia / corso Marche;45.07432;7.614560000000001;1
 METROU;1;8213;4;12720002048.0;METRO MASSAUA;;45.07457;7.6201300000000005;1
 METROU;1;8214;4;12720002050.0;METRO POZZO STRADA;corso Francia / via Pozzo strada;45.07493;7.62893;1

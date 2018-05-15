@@ -52,6 +52,7 @@ class ServiceArea(Enum):
     Transport = 'Trasporti'
     PublicSafety = 'Sicurezza'
     Health = 'Salute'
+    Environment = 'Ambiente'
     
     
 class SummaryNorm(Enum):
@@ -88,6 +89,14 @@ class ServiceType(Enum):
                AgeGroup.all(),
                'Farmacie',
                'Min. Salute')
+
+    UrbanGreen = (5, #enum id
+               ServiceArea.Environment,
+               SummaryNorm.l2,
+               AgeGroup.all(),
+               'Aree Verdi',
+               'Open Data Comuni')
+
     
     def __init__(self, _, areaOfService,
                  aggrNormInput=SummaryNorm.l2, demandAgesInput=AgeGroup.all(),
