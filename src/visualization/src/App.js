@@ -7,11 +7,6 @@ import './App.css';
 import Map from './Map';
 import Button from './Button';
 import Menu from './Menu';
-//import results from './data/Milano/results.js';
-import resultsTorino from './data/Torino/results.js';
-import educazioneCulturaMilano from './data/Milano/Milano_EducazioneCultura.js';
-import istruzioneTorino from './data/Torino/istruzione.js';
-
 
 var menuUrl = "http://localhost:4000/menu.json";
 var city = "Milano";
@@ -57,6 +52,7 @@ class JsonMenu extends Component {
                     };
                 }
                 if (m.type === "layer") {
+		    console.log(m);
                     var sourceUrl = self.data.filter(d => d.id === m.sourceId)[0].url;
                     return {
                         id: c.id,
@@ -274,6 +270,7 @@ class App extends Component {
     };
 
     changeLayer(d) {
+	console.log(d)
         if (this.state.layer.id !== d.id) {
             this.setState({ layer: d });
         }
@@ -338,6 +335,7 @@ class App extends Component {
 			    colors: this.colors
 		        }}
 	                joinField={this.state.source.joinField}
+	                nameField={this.state.source.nameField}
 		    />
 		</div>	
 	     </div>

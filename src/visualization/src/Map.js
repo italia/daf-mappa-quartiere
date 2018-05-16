@@ -146,10 +146,11 @@ class Map extends Component {
     };
     
     render() {
+	/*
 	var nameField = "NIL";
 	if (this.state.city === "Torino")
 	    nameField = "DENOM";
-	
+	*/
 	var clicked = (this.state.neighborhood === "none") ?
 	    "none" :
 	    this.state.neighborhood[this.props.joinField];
@@ -212,7 +213,7 @@ class Map extends Component {
 		
                 <Dashboard
 	            neighborhood={this.state.neighborhood}
-	            nameField={nameField}
+	            nameField={this.props.nameField}
 
 	            list={[{
 		        label: "Numero di abitanti",

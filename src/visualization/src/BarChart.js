@@ -8,7 +8,7 @@ import { transition } from 'd3-transition';
 import { axisBottom } from 'd3-axis';
 
 function sigFigs(n, sig) {
-    if (n < 1) {
+    if (n < 10) {
 	var mult = Math.pow(10, sig - Math.floor(Math.log(n) / Math.LN10) - 1);
 	return Math.round(n * mult) / mult;
     } else 
