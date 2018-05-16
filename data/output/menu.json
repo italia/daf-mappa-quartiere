@@ -21,6 +21,26 @@
     {
         "center" : [],
         "city" : "Milano",
+        "id" : "Milano_Salute",
+        "indicators" : [
+            [
+                {
+                    "category" : "Salute",
+                    "dataSource" : "Min. Salute",
+                    "id" : "Pharmacy",
+                    "label" : "Farmacie"
+                }
+            ]
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : "",
+        "zoom" : []
+    },
+    {
+        "center" : [],
+        "city" : "Milano",
         "id" : "Milano_EducazioneCultura",
         "indicators" : [
             [
