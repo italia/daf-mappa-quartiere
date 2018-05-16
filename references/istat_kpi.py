@@ -44,7 +44,7 @@ def compute_vitality_cpa2011(quartiereData):
     # 2. Employement density
     try:
         val = quartiereData['P60']/quartiereData['SHAPE_AREA']
-        val = val/out[newColumnsNames[1]].mean() #normalize
+        val = val/val.mean() #normalize
         out[newColumnsNames[1]] = val
     except:
         print('Had to skip employment density')
@@ -134,4 +134,4 @@ def wrangle_istat_cpa2011(quartiereData, selectedCity):
     giornata_dentro_quartiere = quartiereData['P1']-(quartiereData[['P137','P138']].sum(axis=1))
     quartiereData['indice_pop_non_pend_interna_quartiere'] = giornata_dentro_quartiere/quartiereData['P1']
     
-    return quartiereData[list(quartiereData.columns)[-15:]]
+    return quartiereData

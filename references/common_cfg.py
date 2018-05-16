@@ -22,6 +22,11 @@ sezioneColName = 'SEZ2011'
 IdQuartiereColName = 'IDquartiere'
 quartiereDescColName = 'quartiere'
 
+#per quanto riguarda censimento abitazioni
+# da quello che ho visto escluderei i campi A44, da PF a PF9, E27 per ora
+excludedColumns = ['A44', 'E27']+['PF%i'%(i+1) for i in range(9)] +\
+    ['SEZ', 'SHAPE_LEN', ]
+
 # Json/GeoJson path parameters
 outputPath = 'data/output'
 vizOutputPath = 'data/output'
