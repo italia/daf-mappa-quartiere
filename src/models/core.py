@@ -311,7 +311,10 @@ class KPICalculator:
 
     def compute_kpi_for_istat_values(self):
         allQuartiere = self.demand.groupby(common_cfg.IdQuartiereColName).sum()
-        quartiereData = allQuartiere.drop(AgeGroup.all()+common_cfg.excludedColumns, axis=1)
+
+        dropColumns = [c for c in AgeGroup.all()+common_cfg.excludedColumns \
+                       if c in allQuartiere.columns]
+        quartiereData = allQuartiere.drop(dropColumns , axis=1)
 
         kpiFrame = istat_kpi.wrangle_istat_cpa2011(quartiereData, self.city)
 
