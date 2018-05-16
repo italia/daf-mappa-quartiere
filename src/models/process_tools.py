@@ -211,14 +211,14 @@ class JSONWriter:
     def write_all_files_to_default_path(self):
         # build and write menu
         with open(os.path.join(
-                '../', common_cfg.vizOutputPath, 'menu.js'), 'w') as menuFile:
+                '../', common_cfg.vizOutputPath, 'menu.json'), 'w') as menuFile:
             json.dump(self.make_menu(), menuFile, sort_keys=True,
                       indent=4, separators=(',', ' : '))
 
         # build and write all areas
         areasOutput = self.make_serviceareas_output()
         for name, data in areasOutput.items():
-            filename = '%s_%s.js' % (self.city, name)
+            filename = '%s_%s.json' % (self.city, name)
             with open(os.path.join('../', common_cfg.outputPath,
                                    filename), 'w') as areaFile:
                 json.dump(data, areaFile, sort_keys=True,

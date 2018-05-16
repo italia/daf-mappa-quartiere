@@ -42,8 +42,12 @@ def compute_vitality_cpa2011(quartiereData):
     out[newColumnsNames[0]] = ([1,2,3,4]*quartiereData[buildingColumns]).sum(axis=1) \
                                 /quartiereData[buildingColumns].sum(axis=1)
     # 2. Employement density
-    out[newColumnsNames[1]] = quartiereData['P60']/quartiereData['SHAPE_AREA']
-    out[newColumnsNames[1]] = out[newColumnsNames[1]]/out[newColumnsNames[1]].mean() #normalize
+    try:
+        val = quartiereData['P60']/quartiereData['SHAPE_AREA']
+        val = val/out[newColumnsNames[1]].mean() #normalize
+        out[newColumnsNames[1]] = val
+    except:
+        print('Had to skip employment density')
 
     return out
 
