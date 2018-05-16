@@ -310,11 +310,12 @@ class KPICalculator:
         return self.quartiereKPI
 
     def compute_kpi_for_istat_values(self):
-        kpiFrame = istat_kpi.wrangle_istat_cpa2011(
-            self.demand.groupby(common_cfg.IdQuartiereColName).sum(),
-            self.city)
+        allQuartiere = self.demand.groupby(common_cfg.IdQuartiereColName).sum()
+        quartiereData = allQuartiere.drop(AgeGroup.all()+common_cfg.excludedColumns, axis=1)
+
+        kpiFrame = istat_kpi.wrangle_istat_cpa2011(quartiereData, self.city)
+
         self.istatKPI = kpiFrame
-        self.istatVitality = istat_kpi.compute_vitality_cpa2011(
-            self.demand.groupby(common_cfg.IdQuartiereColName).sum())
+        self.istatVitality = istat_kpi.compute_vitality_cpa2011(quartiereData)
 
         return self.istatKPI, self.istatVitality

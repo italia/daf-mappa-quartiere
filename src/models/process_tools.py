@@ -203,7 +203,6 @@ class JSONWriter:
                     data[AgeGroup.all()].as_matrix().tolist(),
                     index=data.index, name=service.name))
             areaData = pd.concat(layerList, axis=1).reset_index()
-            print(areaData)
             out[area.value] = areaData.to_dict(orient='records')
 
         return out
