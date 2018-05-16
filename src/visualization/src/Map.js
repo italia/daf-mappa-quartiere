@@ -24,22 +24,7 @@ class Map extends Component {
 	this.onMouseOutBarChart = this.onMouseOutBarChart.bind(this);
 	this.onClickBarChart = this.onClickBarChart.bind(this);
     };
-
-    /*shouldComponentUpdate(nextProps, nextState) {
-	console.log("nextProps");
-	console.log(nextProps)
-	if (this.props.city != nextProps.options.city) {
-	    this.map.remove();
-	    this.setState({
-		city: nextProps.options.city,
-		property: nextProps.layer.id,
-		neighborhood: "none"
-	    });
-	    this.createMap(); 
-	}
-	return true;
-    };*/
-	
+    
     componentWillReceiveProps(nextProps) {
 	if (this.props.hoverElement !== nextProps.hoverElement) {
 	    this.setState({ hoverElement: nextProps.hoverElement });
@@ -122,26 +107,19 @@ class Map extends Component {
 		var hoverElement = e.features[0].properties[props.joinField];
 		self.setState({ hoverElement: hoverElement }); 
 		map.setFilter('Quartieri-hover', ['==', props.joinField, hoverElement]);
-		//self.setState({hoverElement: hoverElement});
             });
 	    map.on('mouseout', 'Quartieri', function() {
 		self.setState({ hoverElement: "none" }); 
 		map.setFilter('Quartieri-hover', ['==', props.joinField, ""]);
-		//self.setState({ hoverElement: "none" });
 	    });
 	    map.on('click', 'Quartieri', function(e) {
 		var neighborhood = e.features[0].properties;
 		var clicked = neighborhood[props.joinField];
 		self.setState({ neighborhood: neighborhood });
 		map.setFilter('Quartieri-click', ['==', props.joinField, clicked]);
-		//self.setState({ neighborhood: neighborhood });
             });
 	});
     };
-    /*
-    componentDidMount() {
-	this.createMap();
-    };*/
     
     onHoverBarChart(d) {
 	this.map.setFilter('Quartieri-hover', ['==', this.props.joinField, d[0]]);
@@ -168,7 +146,6 @@ class Map extends Component {
     };
     
     render() {
-	console.log(this.state)
 	var nameField = "NIL";
 	if (this.state.city === "Torino")
 	    nameField = "DENOM";
