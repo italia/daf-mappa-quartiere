@@ -20,7 +20,7 @@ if rootDir not in sys.path:
 
 plt.rcParams['figure.figsize']= (20,14)
 
-from references import common_cfg
+from references import common_cfg, city_settings
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
 from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
         
@@ -159,15 +159,75 @@ class JSONWriter:
         self.layersData = kpiCalc.quartiereKPI
         self.istatData = kpiCalc.istatKPI
         self.vitalityData = kpiCalc.istatVitality
-        self.city = kpiCalc.city
+        self.city = city_settings.get_city_config(kpiCalc.city)
         self.areasTree = {}
         for s in self.layersData:
             area = s.serviceArea
             self.areasTree[area] = [s] + self.areasTree.get(area, [])
 
     def make_menu(self):
-        jsonList = common_cfg.make_output_menu(
-            cityName=self.city,
+
+        def make_output_menu(city, services, istatLayers=None):
+            '''Creates a list of dictionaries that is ready to be saved as a json'''
+            outList = []
+            assert isinstance(city, city_settings.ModelCity), 'City template expected'
+
+            # source element
+            sourceId = city.name + '_quartieri'
+            sourceItem = common_cfg.menuGroupTemplate.copy()
+            sourceItem['city'] = city.name
+            sourceItem['url'] = city.source
+            sourceItem['id'] = sourceId
+            # add center and zoom info for the source layer only
+            sourceItem['zoom'] = city.zoomCenter[0]
+            sourceItem['center'] = city.zoomCenter[1]
+
+            # declare the joinField
+            sourceItem['joinField'] = common_cfg.IdQuartiereColName
+
+            #  Does a source have a dataSource?
+            # 'dataSource': '',
+            outList.append(sourceItem)
+
+            # service layer items
+            areas = set(s.serviceArea for s in services)
+            for area in areas:
+                thisServices = [s for s in services if s.serviceArea == area]
+                layerItem = common_cfg.menuGroupTemplate.copy()
+                layerItem['type'] = 'layer'
+                layerItem['city'] = city.name
+                layerItem['id'] = city.name + '_' + area.value
+                layerItem['url'] = ''  # default empty url
+                layerItem['sourceId'] = sourceId  # link to defined source
+                #
+                layerItem['indicators'] = (
+                                              [{'category': service.serviceArea.value,
+                                                'label': service.label,
+                                                'id': service.name,
+                                                'dataSource': service.dataSource,
+                                                } for service in thisServices]),
+                outList.append(layerItem)
+
+            # istat layers items
+            if istatLayers:
+                for istatArea, indicators in istatLayers.items():
+                    istatItem = common_cfg.menuGroupTemplate.copy()
+                    istatItem['type'] = 'layer'
+                    istatItem['city'] = city.name
+                    istatItem['id'] = city.name + '_' + istatArea
+                    istatItem['url'] = ''  # default empty url
+                    istatItem['sourceId'] = sourceId  # link to defined source
+                    #
+                    istatItem['indicators'] = ([{'category': istatArea,
+                                                    'label': indicator,
+                                                    'id': indicator,
+                                                    'dataSource': 'ISTAT',
+                                                    } for indicator in indicators]), \
+                                              outList.append(istatItem)
+
+            return outList
+
+        jsonList = make_output_menu(self.city,
             services=list(self.layersData.keys()),
             istatLayers={'Vitalita': list(self.vitalityData.columns)}
             )
@@ -217,7 +277,7 @@ class JSONWriter:
         # build and write all areas
         areasOutput = self.make_serviceareas_output()
         for name, data in areasOutput.items():
-            filename = '%s_%s.json' % (self.city, name)
+            filename = '%s_%s.json' % (self.city.name, name)
             with open(os.path.join('../', common_cfg.outputPath,
                                    filename), 'w') as areaFile:
                 json.dump(data, areaFile, sort_keys=True,
