@@ -118,5 +118,119 @@
         "sourceId" : "Milano_quartieri",
         "type" : "layer",
         "url" : ""
+    },
+    {
+        "center" : [
+            7.191383,
+            46
+        ],
+        "city" : "Torino",
+        "id" : "Torino_quartieri",
+        "indicators" : [
+            {
+                "category" : "",
+                "dataSource" : "",
+                "default" : false,
+                "id" : "",
+                "label" : ""
+            }
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "",
+        "type" : "source",
+        "url" : "",
+        "zoom" : 12
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_EducazioneCultura",
+        "indicators" : [
+            [
+                {
+                    "category" : "EducazioneCultura",
+                    "dataSource" : "MIBACT",
+                    "id" : "Library",
+                    "label" : "Biblioteche"
+                },
+                {
+                    "category" : "EducazioneCultura",
+                    "dataSource" : "MIUR",
+                    "id" : "School",
+                    "label" : "Scuole"
+                }
+            ]
+        ],
+        "sourceId" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Salute",
+        "indicators" : [
+            [
+                {
+                    "category" : "Salute",
+                    "dataSource" : "Min. Salute",
+                    "id" : "Pharmacy",
+                    "label" : "Farmacie"
+                }
+            ]
+        ],
+        "sourceId" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Trasporti",
+        "indicators" : [
+            [
+                {
+                    "category" : "Trasporti",
+                    "dataSource" : "GTFS Comuni",
+                    "id" : "TransportStop",
+                    "label" : "Fermate TPL"
+                }
+            ]
+        ],
+        "sourceId" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Ambiente",
+        "indicators" : [
+            [
+                {
+                    "category" : "Ambiente",
+                    "dataSource" : "Open Data Comuni",
+                    "id" : "UrbanGreen",
+                    "label" : "Aree Verdi"
+                }
+            ]
+        ],
+        "sourceId" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Vitalita",
+        "indicators" : [
+            [
+                {
+                    "category" : "Vitalita",
+                    "dataSource" : "ISTAT",
+                    "id" : "tipo_di_alloggi",
+                    "label" : "tipo_di_alloggi"
+                }
+            ],
+            null
+        ],
+        "sourceId" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
     }
 ]
