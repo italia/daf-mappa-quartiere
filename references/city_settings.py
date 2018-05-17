@@ -12,9 +12,10 @@ from references import common_cfg
 class ModelCity(dict):
     loadFolder = common_cfg.processedPath
 
-    def __init__(self, name, zonesPath, serviceLayersDict):
+    def __init__(self, name, zonesPath, zoomCenterTuple, serviceLayersDict):
         self.name = name
         self.source = zonesPath
+        self.zoomCenter = zoomCenterTuple
         super().__init__(serviceLayersDict)
 
     def get_istat_cpa_data(self):
@@ -41,6 +42,7 @@ defaultCities = [
     ModelCity(
         'Milano',
         '',
+        (11,[9.191383, 45.464211]), #zoom level and center for d3
         {ServiceType.School: 'Milano_scuole.csv',
          ServiceType.Library: 'Milano_biblioteche.csv',
          ServiceType.TransportStop: 'Milano_TPL.csv',
@@ -49,6 +51,7 @@ defaultCities = [
     ModelCity(
         'Torino',
         '',
+        (12,[7.191383, 46]), #zoom level and center for d3
         {ServiceType.School: 'Torino_scuole.csv',
          ServiceType.Library: 'Torino_biblioteche.csv',
          ServiceType.TransportStop: 'Torino_TPL.csv',
