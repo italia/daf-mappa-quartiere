@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component } from 'react';A
 import './App.css';
 import PieChartWithLegend from './PieChartWithLegend.js';
 import BarChart2WithLegend from './BarChart2WithLegend.js';
@@ -51,8 +51,6 @@ class Dashboard extends Component {
 		    </div>
 	    );
 	}
-
-	var self = this;
 	var properties = this.props.neighborhood;
 	return (
 	    <div className='dashboard-overlay' id='dashboard' style={this.props.style}>
@@ -61,30 +59,61 @@ class Dashboard extends Component {
 		        {properties[this.props.nameField]}
 		    </h3>
 		    <ul style={{textAlign: "left", padding: 0}}>
-		    {
-		        this.props.list.map(l => {
-			    var value = (l.value === undefined)? self.props.neighborhood[l.field] : l.value;
-			    return <li> {l.label} : {value} {l.unit}</li>
-		        })
-		    }
+	                {
+		            this.props.dashboard.list
+				.map(l => {
+				    return (
+					    <li>
+					        {l.label} : {sigFigs(this.props.dashboard.data[this.props.neighborhood.IDquartiere][l.field], 2)}
+				            </li>
+				    );
+	                        })
+			}
 		    </ul>
 		</div>
 		
-		<svg width="300" height="350" style={{display: "block"}}>
-		    <PieChartWithLegend
-                        title={this.props.piechart.title}
-                        labels={this.props.piechart.labels}
-                        values={this.props.piechart.values}
-                        colors={this.props.piechart.colors}
-	                dataSource={this.props.piechart.dataSource}
-                    />
-	    	    <BarChart2WithLegend
-	                title={this.props.barchart2withlegend.title}
-	                data1={this.props.barchart2withlegend.data1}
-	                data2={this.props.barchart2withlegend.data2}
-	                labels={this.props.barchart2withlegend.labels}
-	                dataSource={this.props.barchart2withlegend.dataSource}
-	            />
+		<svg width="350" height="350" style={{display: "block"}}>
+		    {
+		        this.props.dashboard.piechart
+			    .map((p, i) => {
+				var values = p.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere][f]);
+				return (
+					<PieChartWithLegend
+				            key={i}
+				            title={p.label}
+				            labels={p.labels}
+				            values={values}
+				            colors={p.colors}
+				            dataSource={this.props.dashboard.dataSource}
+					 />
+				)})
+		    }
+	            {
+		        this.props.dashboard.barchart2
+			    .map((d, i) => {
+				var data1 = {
+				    values: d.data1.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere][f]),
+				    color: d.data1.color,
+				    label: d.data1.label
+				};
+				var data2 = {
+				    values: d.data2.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere][f]),
+				    color: d.data2.color,
+				    label: d.data2.label
+				};
+				console.log(data1)
+				console.log(data2)
+				return (
+					<BarChart2WithLegend
+				            key={i + "bar"}
+				            title={d.label}
+				            data1={data1}
+				            data2={data2}
+				            labels={d.labels}
+					    dataSource={this.props.dashboard.dataSource}
+					/>
+				)})
+		    }
 		</svg>
 	    </div>
 	);

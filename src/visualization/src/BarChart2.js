@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import './App.css';
 import { format } from 'd3-format';
 import { max, min } from 'd3-array';
-import { select } from 'd3-selection';
+import { select, selectAll } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import { transition } from 'd3-transition';
 
@@ -17,18 +17,12 @@ function sigFigs(n, sig) {
 class BarChart2 extends Component {
     constructor(props: Props) {
 	super(props);
-
+	
 	//set histogram parameters
 	this.barLength = props.style.width / 3; //max length of histogram bars
 	this.barDistance = this.barLength / 2; //distance between left and right histogram 
 	this.fontSize = (props.barWidth - 1) + "px";
 
-	//group data of the right and data of the left histogram
-	this.left = props.data.map(d => d.left);
-	this.right = props.data.map(d => d.right);
-
-	this.setYScale();
-	this.yScale = this.yScale.bind(this);
 	this.yBar = this.yBar.bind(this);
     };
 
@@ -36,12 +30,12 @@ class BarChart2 extends Component {
 	this.createChart();
     };
 
-    setYScale() {
-	const maxValue = max([...this.left, ...this.right]);
-	
+    setYScale(maxValue) {	
 	this.yScale = scaleLinear()
             .domain([0, maxValue])
             .range([0, this.barLength]);
+	
+	this.yScale = this.yScale.bind(this);
     };
 
     yBar(d, i) {
@@ -51,13 +45,23 @@ class BarChart2 extends Component {
     createChart() {
 	const chartContainer = this.chartContainer;
 
+	//group data of the right and data of the left histogram
+	var sum = this.props.data.map(d => d.left).reduce((acc, val) => acc + val);
+	sum = sum + this.props.data.map(d => d.right).reduce((acc, val) => acc + val);
+
+	this.right = this.props.data.map(d => sigFigs(d.right * 100 / sum, 2));
+	this.left = this.props.data.map(d => sigFigs(d.left * 100 / sum, 2));
+	
+	const maxValue = max([...this.left, ...this.right]);
+	this.setYScale(maxValue);
+	
 	var self = this;
 	select(chartContainer)
 	    .selectAll("rect.bar.left")
 	    .data(self.left)
 	    .enter()
 	    .append("rect")
-            .attr("class", "bar")
+	    .attr("class", "rect2")
             .attr("x", d => self.props.x + self.barLength - self.yScale(d))
 	    .attr("y", self.yBar)
             .attr("width", self.yScale)
@@ -70,7 +74,7 @@ class BarChart2 extends Component {
 	    .data(self.right)
 	    .enter()
 	    .append("rect")
-	    .attr("class", "bar")
+	    .attr("class", "rect2")
 	    .attr("x", self.props.x + self.barLength + self.barDistance)
 	    .attr("y", self.yBar) 
 	    .attr("width", self.yScale)
@@ -83,6 +87,7 @@ class BarChart2 extends Component {
 	    .data(self.props.data.map(d => d.label))
 	    .enter()
 	    .append("text")
+	    .attr("class", "text2")    
 	    .attr("x", self.props.x + self.barLength + self.barDistance / 2)
 	    .attr("y", (d, i) => self.yBar(d, i) + 0.7 * self.props.barWidth)
 	    .style("font-size", self.fontSize)
@@ -94,7 +99,8 @@ class BarChart2 extends Component {
 	    .data(self.left)
 	    .enter()
 	    .append("text")
-	    .attr("x",  d => self.props.x + self.barLength - self.yScale(d) - 2 * (self.props.barWidth - 1))
+	    .attr("class", "text2")
+	    .attr("x",  d => self.props.x + self.barLength - self.yScale(d) - 2 * (self.props.barWidth - 2))
 	    .attr("y", (d, i) => self.yBar(d, i) + 0.7 * self.props.barWidth)
 	    .style("font-size", self.fontSize)
 	    .style("text-anchor", "middle")
@@ -105,7 +111,8 @@ class BarChart2 extends Component {
             .data(self.right)
             .enter()
             .append("text")
-            .attr("x",  d => self.props.x + self.barLength + self.barDistance + self.yScale(d) + 2 * (self.props.barWidth - 1))
+	    .attr("class", "text2")
+            .attr("x",  d => self.props.x + self.barLength + self.barDistance + self.yScale(d) + 2 * (self.props.barWidth - 2))
             .attr("y", (d, i) => self.yBar(d, i) + 0.7 * self.props.barWidth + 1)
             .style("font-size", self.fontSize)
             .style("text-anchor", "middle")
@@ -113,7 +120,12 @@ class BarChart2 extends Component {
     };
     
     render() {
-	return <svg className="BarChart"
+	selectAll(".rect2").remove();
+	selectAll(".text2").remove();
+	
+	this.createChart();
+	
+	return <svg className="BarChart2"
                    ref={el => this.chartContainer = el}
                    width={this.props.style.width}
                    height={this.props.style.height}

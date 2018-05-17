@@ -13,29 +13,21 @@ class Arc extends Component {
 	    .innerRadius(props.innerRadius)
 	    .outerRadius(props.innerRadius + this.tickness)
 	    .cornerRadius(3);
-	
-        this.state = {
-            color: props.color,
-            origCol: props.color,
-            d: props.d,
-            pathD: this.arcLine(props.d)
-        };
-    }
+    };
 
     render() {
-        const { color, pathD } = this.state;
 
         return (
             <path
-                d={pathD}
+                d={this.arcLine(this.props.d)}
                 style={{
-                    fill: color,
+                    fill: this.props.color,
 		    stroke: "black"
                 }}
                 ref="elem"
             />
         );
-    }
+    };
 }
 
 class Piechart extends Component {
@@ -49,7 +41,7 @@ class Piechart extends Component {
         const { data, color, innerRadius, x, y} = this.props;
    
         return (
-            <g transform={`translate(${x}, ${y})`}>
+            <g className="Piechart" transform={`translate(${x}, ${y})`}>
                 {this.pieChart(data).map((d, i) => ( 
 		    <Arc
 		        d={d}
@@ -60,7 +52,7 @@ class Piechart extends Component {
                 ))}
             </g>
         );
-    }
+    };
 }
 
 export default Piechart;

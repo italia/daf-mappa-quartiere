@@ -19,7 +19,9 @@ class Map extends Component {
 	    property: props.layer.id,
 	    neighborhood: "none"
 	};
-	
+
+
+	console.log(this.props.dashboard)
 	this.onHoverBarChart = this.onHoverBarChart.bind(this);
 	this.onMouseOutBarChart = this.onMouseOutBarChart.bind(this);
 	this.onClickBarChart = this.onClickBarChart.bind(this);
@@ -145,9 +147,7 @@ class Map extends Component {
 	this.setState({ neighborhood: neighborhood });
     };
     
-    render() {
-	console.log("colors");
-	console.log(this.props.layer.colors.stops);
+    render() {	
 	var clicked = (this.state.neighborhood === "none") ?
 	    "none" :
 	    this.state.neighborhood[this.props.joinField];
@@ -211,45 +211,10 @@ class Map extends Component {
                 <Dashboard
 	            neighborhood={this.state.neighborhood}
 	            nameField={this.props.nameField}
+                    dashboard={this.props.dashboard}
 
-	            list={[{
-		        label: "Numero di abitanti",
-			value: Math.floor(15000 * Math.random()),
-			dataSource: "dati simulati",
-			unit: ""
-		    },{
-			label: "Area",
-			field: "AreaHA",
-		        dataSource: "Comune di Milano",
-			unit: "ettari"
-		    }]}
-
-	            piechart={{
-			title: "Situazione occupazionale",
-			labels: ["occupati", "disoccupati", "in cerca di lavoro"],
-			values: [Math.random() * 903, Math.random() * 100, Math.random() * 200],
-			colors: [ "#9e0142", "#fdae61", "#abdda4"],
-			dataSource: "dati simulati"
-		    }}
-
-	            barchart2withlegend={{
-			title: "Popolazione per fasce d'età",
-			data1: {
-			    values: [10, 14, 15, 18, 21, 19, 15, 8, 4, 2, 1],
-			    label: "donne",
-			    color: "pink"
-			},
-			data2: {
-			    values: [12, 15, 18, 18, 22, 24, 14, 10, 5, 3, 1],
-			    label: "uomini",
-			    color: "blue"
-			},
-			labels: ['0-9', '10-19', '30-39', '40-49', '50-59', '60-69', '70-79', '80-89', '90-99', '100-109'],
-			dataSource: "dati simulati"
-		    }}
-	    
 	            style={{
-		        height: '55vh',
+		        height: '47vh',
 			width: '30vw',
 			top: '90px',
 			left: '30px'
