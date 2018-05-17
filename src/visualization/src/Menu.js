@@ -14,24 +14,22 @@ class MenuItem extends Component {
     };
 	
     render() {
-	var self = this; 
+	var self = this;
+	const list = self.props.item
+	      .subcategories
+	      .map((s,i) =>
+		   <a onClick={() => self.handleClick(s)}>
+	           <li key={i.toString()} style={{paddingLeft: "20px", paddingBottom: "4px", fontSize: "16px"}}>
+		           {s.label}
+		       </li>
+		   </a>
+		  );
 	return (
 	    <div>
-	        <li style={{color:"black", fontWeight: "bold"}}>
+	        <li style={{color: "black", fontWeight: "bold", fontSize: "18px"}}>
 		    {self.props.item.category}
 	        </li>
-	        <ul id="itemMenu"> {
-		    self.props.item
-			.subcategories
-			.map(s => {
-		            <a onClick={() => self.handleClick(s)}>
-		                <li>
-				    {s.label}
-				</li>
-		            </a>
-	                })
-		    }
-                </ul>
+	        <ul>{list}</ul>
 	    </div>
         )	
     };
@@ -49,7 +47,7 @@ class Menu extends Component {
 	this.props.handleClick(s);
     };
     
-    render() {	
+    render() {
 	return <nav role="navigation">
 	           <div id="menuToggle">
 	               <input type="checkbox" />

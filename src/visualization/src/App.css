@@ -138,12 +138,7 @@ a:hover {
 ul {
     text-align: left;
     padding: 0;
-}
-
-#menu li {
-    text-align: left;
-    padding: 10px 0;
-    font-size: 22px;
+    list-style-type: none;
 }
 
 /*
@@ -151,10 +146,6 @@ ul {
  */
 #menuToggle input:checked ~ ul {
     transform: none;
-}
-
-ul {
-    list-style-type: none;
 }
 
 .BarChart {
@@ -173,6 +164,13 @@ button {
     border-radius: 4px;
 }
 
+.menuList {
+    padding-top: 0px;
+    padding-bottom: 5px;
+    padding-left: 50px;
+    text-align: left;
+}
+    
 .map-overlay {
     position: absolute;
     right: 0;

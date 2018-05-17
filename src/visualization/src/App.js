@@ -52,7 +52,7 @@ class JsonMenu extends Component {
                     };
                 }
                 if (m.type === "layer") {
-		    console.log(m);
+		    var dataSource = (c.dataSource === undefined) ? m.dataSource : c.dataSource;
                     var sourceUrl = self.data.filter(d => d.id === m.sourceId)[0].url;
                     return {
                         id: c.id,
@@ -61,10 +61,11 @@ class JsonMenu extends Component {
                         layerId: m.id,
                         layerUrl: m.url,
                         sourceId : m.sourceId,
-                        dataSource : m.dataSource,
+                        dataSource : dataSource,
                         sourceUrl: sourceUrl,
                         city: m.city,
-                        default: c.default
+                        default: c.default,
+			labels: c.labels
                     };
                 }
             }))
@@ -204,12 +205,23 @@ class App extends Component {
 	    });
     };
 
+    //note length of a and b should be the same
+    sumArray(a) {
+	var sum = 0;
+	for (var i=0; i<a.length; i++) {
+	    if (a[i] !== "NaN")
+		sum = sum + a[i];
+	}
+	return sum;
+    };
+    
     fetchLayer(layer, features) {
 	return fetch(layer.layerUrl)
 	    .then(response => response.json())
 	    .then(jsonLayer => {
+		
+		console.log(jsonLayer)
 		var features = this.mergeFeatures(this.state.features, jsonLayer, this.state.source.joinField, layer.id);
-
 		var values = features.map((d) => d.properties[layer.id]);
                 this.setColors(values);
 
@@ -236,7 +248,6 @@ class App extends Component {
     
     setColors(values) {
 	values = sample(values, colors.length);
-	
         this.colors.stops = values.map((d, i) => [values[i], colors[i]]);
         this.colors.scale = scaleLinear().domain(values).range(colors);
         this.colors.highlight = "black";
@@ -246,7 +257,10 @@ class App extends Component {
 	var quartieri = jsonLayer.map(d => d[joinField]);
 	features.forEach(d => {
             var index = quartieri.indexOf(d.properties[joinField]);
-            d.properties[layerField] = jsonLayer[index][layerField];
+	    var value = jsonLayer[index][layerField];
+	    if (Array.isArray(value)) value = this.sumArray(value);
+   
+            d.properties[layerField] = value;
         });
         features = features
             .sort((a, b) => b.properties[layerField] - a.properties[layerField]);
@@ -270,7 +284,6 @@ class App extends Component {
     };
 
     changeLayer(d) {
-	console.log(d)
         if (this.state.layer.id !== d.id) {
             this.setState({ layer: d });
         }

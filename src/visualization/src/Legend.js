@@ -1,13 +1,17 @@
 import React, { Component } from 'react';
 import './App.css';
-import { select } from 'd3-selection';
+import { select, selectAll } from 'd3-selection';
 import { max, min } from 'd3-array';
 import { axisBottom } from 'd3-axis';
 import { scaleLinear } from 'd3-scale';
 
 class Legend extends Component {
+    
+    createLegend() {
+	//clean
+	select("#mapLegend").remove();
+	select("#mapAxis").remove();
 
-    componentDidMount() {
 	const legendContainer = this.legendContainer;
 	
 	var values = this.props.stops.map(d => d[0]),
@@ -17,7 +21,7 @@ class Legend extends Component {
 	var bar = select(legendContainer)
 	    .append("defs")
 	    .append("svg:linearGradient")
-	    .attr("id", "gradient")
+	    .attr("id", "mapGradient")
 	    .attr("x1", "0%")
 	    .attr("y1", "100%")
 	    .attr("x2", "100%")
@@ -36,11 +40,11 @@ class Legend extends Component {
 
 	select(legendContainer)
 	    .append("rect")
-	    .attr("id", "legend")
+	    .attr("id", "mapLegend")
 	    .attr("width", this.props.style.width)
 	    .attr("height", this.props.style.height)
-	    .style("fill", "url(#gradient)")
-	    .attr("transform", "translate(0,0)");
+	    .style("fill", "url(#mapGradient)")
+	    .attr("transform", "translate(20,0)");
 
 	var y = scaleLinear()
 	    .range([this.props.style.width, 0])
@@ -52,16 +56,20 @@ class Legend extends Component {
 
 	select(legendContainer)
 	    .append("g")
+	    .attr("id", "mapAxis")
 	    .attr("class", "axis")
-	    .attr("transform", "translate(0,40)")
+	    .attr("transform", "translate(20,40)")
 	    .call(yAxis);
 	
     };
     
     render() {
-      return  <svg className="Legend"
-                  ref={el => this.legendContainer = el}
-	      />
+	this.createLegend();
+        return  <svg className="Legend"
+                    ref={el => this.legendContainer = el}
+	            width={this.props.style.width * 2}
+	            height={this.props.style.height * 2}
+	        />
   };
 }
 

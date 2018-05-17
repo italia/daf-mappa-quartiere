@@ -146,11 +146,8 @@ class Map extends Component {
     };
     
     render() {
-	/*
-	var nameField = "NIL";
-	if (this.state.city === "Torino")
-	    nameField = "DENOM";
-	*/
+	console.log("colors");
+	console.log(this.props.layer.colors.stops);
 	var clicked = (this.state.neighborhood === "none") ?
 	    "none" :
 	    this.state.neighborhood[this.props.joinField];
@@ -198,15 +195,15 @@ class Map extends Component {
 	            id='legend'
 	            style={{
 		        height: '8vh',
-			width: '28vw',
+			width: '50vw',
 			right: '500px',
 			bottom: '0px'
 		    }}>
                     <Legend
                         stops={this.props.layer.colors.stops}
                         style={{
-		            height: '30',
-			    width: '300'
+		            width: 500,
+		            height: 30
 			}}
                     />                                  
                 </div>
