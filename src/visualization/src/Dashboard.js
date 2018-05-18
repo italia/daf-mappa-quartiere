@@ -1,4 +1,4 @@
-import React, { Component } from 'react';A
+import React, { Component } from 'react';
 import './App.css';
 import PieChartWithLegend from './PieChartWithLegend.js';
 import BarChart2WithLegend from './BarChart2WithLegend.js';
@@ -10,10 +10,6 @@ function sigFigs(n, sig) {
     } else
 	return Math.round(n);
 };
-
-/*
-props.list = [{label: "Numero di abitanti", propertyField: "random"}, {label: "Area", propertyField: "AreaHA"}]
-*/
 
 class Dashboard extends Component {
     constructor(props: Props) {
@@ -51,6 +47,7 @@ class Dashboard extends Component {
 		    </div>
 	    );
 	}
+	//to do add IDquartiere in Milano_dashboard.json
 	var properties = this.props.neighborhood;
 	return (
 	    <div className='dashboard-overlay' id='dashboard' style={this.props.style}>
@@ -62,9 +59,10 @@ class Dashboard extends Component {
 	                {
 		            this.props.dashboard.list
 				.map(l => {
+				    
 				    return (
 					    <li>
-					        {l.label} : {sigFigs(this.props.dashboard.data[this.props.neighborhood.IDquartiere][l.field], 2)}
+					        {l.label} : {sigFigs(this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][l.field], 2)}
 				            </li>
 				    );
 	                        })
@@ -76,7 +74,7 @@ class Dashboard extends Component {
 		    {
 		        this.props.dashboard.piechart
 			    .map((p, i) => {
-				var values = p.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere][f]);
+				var values = p.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]);
 				return (
 					<PieChartWithLegend
 				            key={i}
@@ -92,17 +90,15 @@ class Dashboard extends Component {
 		        this.props.dashboard.barchart2
 			    .map((d, i) => {
 				var data1 = {
-				    values: d.data1.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere][f]),
+				    values: d.data1.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]),
 				    color: d.data1.color,
 				    label: d.data1.label
 				};
 				var data2 = {
-				    values: d.data2.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere][f]),
+				    values: d.data2.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]),
 				    color: d.data2.color,
 				    label: d.data2.label
 				};
-				console.log(data1)
-				console.log(data2)
 				return (
 					<BarChart2WithLegend
 				            key={i + "bar"}

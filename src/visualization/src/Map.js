@@ -20,8 +20,6 @@ class Map extends Component {
 	    neighborhood: "none"
 	};
 
-
-	console.log(this.props.dashboard)
 	this.onHoverBarChart = this.onHoverBarChart.bind(this);
 	this.onMouseOutBarChart = this.onMouseOutBarChart.bind(this);
 	this.onClickBarChart = this.onClickBarChart.bind(this);
@@ -147,7 +145,7 @@ class Map extends Component {
 	this.setState({ neighborhood: neighborhood });
     };
     
-    render() {	
+    render() {
 	var clicked = (this.state.neighborhood === "none") ?
 	    "none" :
 	    this.state.neighborhood[this.props.joinField];

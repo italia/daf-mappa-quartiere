@@ -19,7 +19,7 @@ class BarChart2 extends Component {
 	super(props);
 	
 	//set histogram parameters
-	this.barLength = props.style.width / 3; //max length of histogram bars
+	this.barLength = props.style.width / 4; //max length of histogram bars
 	this.barDistance = this.barLength / 2; //distance between left and right histogram 
 	this.fontSize = (props.barWidth - 1) + "px";
 

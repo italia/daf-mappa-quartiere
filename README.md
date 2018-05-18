@@ -8,4 +8,4 @@ https://github.com/drivendata/cookiecutter-data-science
 The visualization uses React and has been built with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 # Use
-To see the visualization cd into [src/visualization/](src/visualization) and then run `npm i` and `npm start`. You should see a dashboard at `localhost:3000`.
+To see the visualization first clone, install and build [this repo](https://github.com/esterpantaleo/daf-server) (which will start a server at `localhost:4000`), then cd into [src/visualization/](src/visualization) and then run `npm i` and `npm start`. You should see a dashboard at `localhost:3000`.
