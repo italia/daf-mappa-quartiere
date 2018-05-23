@@ -19,6 +19,7 @@ class Map extends Component {
 	    property: props.layer.id,
 	    neighborhood: "none"
 	};
+	console.log(props.layer)
 
 	this.onHoverBarChart = this.onHoverBarChart.bind(this);
 	this.onMouseOutBarChart = this.onMouseOutBarChart.bind(this);
@@ -26,13 +27,30 @@ class Map extends Component {
     };
     
     componentWillReceiveProps(nextProps) {
+	console.log("props");
+	console.log(this.props);
+	console.log("nextProps");
+	console.log(nextProps);
 	if (this.props.hoverElement !== nextProps.hoverElement) {
 	    this.setState({ hoverElement: nextProps.hoverElement });
 	}
 	if (this.props.neighborhood !== nextProps.neighborhood) {
 	    this.setState({ neighborhood: nextProps.neighborhood });
 	}
-	if (this.props.city != nextProps.options.city) {
+	if (this.props.layer.id != nextProps.layer.id) {
+	    if (this.map !== undefined) {
+		this.map.remove();
+		this.setState({
+                    property: nextProps.layer.id,
+		    neighborhood: "none"
+		});
+	    }
+	    this.createMap();
+	}
+	if (this.props.options.city != nextProps.options.city) {
+	    console.log(this.props.city);
+	    console.log(nextProps.options.city)
+	    console.log("changing city");
 	    if (this.map !== undefined) {
 		this.map.remove();
 		this.setState({
@@ -41,12 +59,17 @@ class Map extends Component {
 		    neighborhood: "none"
 		});
 	    }
+	    this.createMap(); //todo: do not update map if city doesn't change
 	}
+
+    };
+
+    componentDidMount() {
 	this.createMap();
     };
-	    
+    
     createMap() {
-	
+	console.log("create map");
 	this.map = new mapboxgl.Map({
             container: this.mapContainer,
             style: 'mapbox://styles/mapbox/light-v9',
@@ -59,8 +82,13 @@ class Map extends Component {
 	    var props = this.props;
 	    var self = this;
 	    
-	    map.addSource('Quartieri', {type: 'geojson', data: props.source});
+	    map.addSource('Quartieri', {
+		type: 'geojson',
+		data: props.source
+	    });
+	    
 	    var layers = map.getStyle().layers;
+
 	    // Find the index of the first symbol layer in the map style
 	    this.firstSymbolId;
 	    for (var i = 0; i < layers.length; i++) {
@@ -77,7 +105,9 @@ class Map extends Component {
 		layout: {},
 		source: 'Quartieri'
 	    }, this.firstSymbolId);
-	    map.setPaintProperty('Quartieri', 'fill-color', {
+	    map.setPaintProperty('Quartieri',
+				 'fill-color',
+				 {
 		property: props.layer.id,
 		stops: props.layer.colors.stops
 	    });
@@ -103,6 +133,25 @@ class Map extends Component {
                 paint: {"fill-color": "red", "fill-opacity": 1},
                 filter: ["==", props.joinField, ""]
             }, this.firstSymbolId);
+
+	    //add geojson with data points
+	    if (props.layer.raw !== "none") {
+		map.addSource(props.layer.id + "_raw", {
+		    type: 'geojson',
+		    data: props.layer.raw.data
+		})
+
+		map.addLayer({
+		    id: props.layer.id + "_raw_layer", 
+		    type: "circle",
+		    source: props.layer.id + "_raw",
+		    paint: {
+			"circle-radius": 6,
+			"circle-color": props.layer.raw.color
+		    }
+		});
+	    }
+	    
 	    map.on('mousemove', 'Quartieri', function(e) {
 		var hoverElement = e.features[0].properties[props.joinField];
 		self.setState({ hoverElement: hoverElement }); 
