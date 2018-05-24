@@ -50,8 +50,7 @@ class JsonMenu extends Component {
                         dataSource : m.dataSource,
                         default: c.default
                     };
-                }
-                if (m.type === "layer") {
+                } else if (m.type === "layer") {
 		    var dataSource = (c.dataSource === undefined) ? m.dataSource : c.dataSource;
                     var sourceUrl = self.data.filter(d => d.id === m.sourceId)[0].url;
                     return {
@@ -65,9 +64,13 @@ class JsonMenu extends Component {
                         sourceUrl: sourceUrl,
                         city: m.city,
                         default: c.default,
-			labels: c.labels
+			labels: c.labels,
+			colors: c.colors,
+			raw: c.raw
                     };
-                }
+                } else {
+		    console.log("unknown type in menu");
+		}
             }))
         });
 
@@ -161,7 +164,8 @@ class App extends Component {
             layer: "none",
 	    menu: null,
 	    features: null,
-	    dashboard: null
+	    dashboard: null,
+	    layerRaw: "none"
         };
 	
 	this.changeCity = this.changeCity.bind(this);
@@ -183,7 +187,7 @@ class App extends Component {
 		var defaultSource = jsonMenu.getDefaultSource(this.state.city, defaultLayer.sourceId);
 		
 		fetch(defaultSource.url)
-			.then(response => response.json())
+		    .then(response => response.json())
 		    .then(jsonSource => {
 			fetch(defaultLayer.layerUrl)
 			    .then(response => response.json())
@@ -193,7 +197,25 @@ class App extends Component {
 				var values = features.map((d) => d.properties[defaultLayer.id]);
 				this.setColors(values);
 
-				this.setState({ menu: jsonMenu, layer: defaultLayer, source: defaultSource, features: features });
+				if (defaultLayer.raw !== undefined){
+				    fetch(defaultLayer.raw.url)
+					.then(response => response.json())
+					.then(jsonLayerRawData => {
+					    
+					    this.setState({
+						menu: jsonMenu,
+						layer: defaultLayer,
+						source: defaultSource,
+						features: features,
+						layerRaw: {
+						    data: jsonLayerRawData,
+						    color: defaultLayer.raw.color
+						}
+					    });
+					});
+				} else {
+				    this.setState({ menu: jsonMenu, layer: defaultLayer, source: defaultSource, features: features });
+				}
 			    })
 		    });	    
 	    });
@@ -379,8 +401,11 @@ class App extends Component {
 
 	    var defaultLayer = this.state.menu.getDefaultLayer(nextState.city);
 	    var defaultSource = this.state.menu.getDefaultSource(nextState.city, defaultLayer.sourceId);
+	    
 	    this.fetchSourceAndLayer(defaultSource, defaultLayer);
+
 	    this.fetchDashboard(nextState.city);
+
 	} else if (nextState.layer !== this.state.layer) {
 	    
 	    this.fetchLayer(nextState.layer, this.state.features);
@@ -429,7 +454,8 @@ class App extends Component {
 		            dataSource: this.state.layer.dataSource,
 		            headers: [this.state.source.joinField, this.state.layer.id],
 			    values: this.state.features.map(d => [d.properties[self.state.source.joinField], d.properties[self.state.layer.id]]),
-			    colors: this.colors
+			    colors: this.colors,
+			    raw: this.state.layerRaw
 		        }}
 	                joinField={this.state.source.joinField}
 	                nameField={this.state.source.nameField}
