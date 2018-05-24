@@ -3,6 +3,9 @@ import geopandas as gpd
 from shapely.geometry import Point
 import json
 import os
+from geopy import distance as geodist
+from geopy import Point as geoPoint
+import numpy as np
 
 projRoot = os.path.dirname(os.path.dirname(__file__)) # expected to be in root/references
 
@@ -15,6 +18,18 @@ cityList = ['Milano', 'Torino', 'Roma']
 coordColNames = ['Long', 'Lat']
 tupleIndexName = 'PositionTuples'
 positionsCol = 'Positions'
+
+# Kernel evaluation speedup
+kernelValueCutoff = 5*1e-1  # interaction values below this level will be set to 0
+kernelStartZeroGuess = 3  # initial input for kernel in solving
+
+# Compute thresholds
+kmStep = geodist.great_circle(kilometers=1)
+center = (38.116667, 13.366667) # Get the long, lat tile around Palermo
+# Note that a value in the south is conservative, as it gives a higher threshold for longitude
+# deltas in degress to match a given level in kilometers
+approxTileDegToKm = 1/np.array([kmStep.destination(geoPoint(center), 90).longitude - center[1],
+                    kmStep.destination(geoPoint(center), 0).latitude - center[0]])
 
 # Istat parameters
 cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')

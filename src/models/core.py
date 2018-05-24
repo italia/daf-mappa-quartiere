@@ -16,6 +16,8 @@ if rootDir not in sys.path:
 from references import common_cfg, istat_kpi, city_settings
 from src.models.city_items import AgeGroup, ServiceType # enum classes for the model
 
+from scipy.optimize import fsolve
+
 gaussKern = gaussian_process.kernels.RBF
 
 
@@ -51,17 +53,43 @@ class ServiceUnit:
             
         # define kernel taking scale into account
         self.kernel = {g: gaussKern(length_scale=l*self.scale) for g, l in self.ageDiffusion.items()}
+
+        # precompute kernel threshold per AgeGroup
+        self.kerThresholds = {g: np.Inf for g in AgeGroup.all()}
         
-        
+        for ageGroup in self.kernel.keys():
+            kern = self.kernel[ageGroup]
+            thrValue = np.Inf # initialise
+            if isinstance(kern, gaussKern):
+                def fun_to_solve(x):
+                    out = self.kernel[ageGroup](x, np.array([[0], ])) - common_cfg.kernelValueCutoff
+                    return out.flatten()
+
+                initGuess = common_cfg.kernelStartZeroGuess
+
+                for k in range(3): # try 3 alternatives
+                        solValue, _, flag, msg = fsolve(fun_to_solve, np.array(initGuess),
+                                                        full_output=True)
+                        if flag == 1:
+                            thrValue = solValue # assign found value
+                            break
+                        else:
+                            initGuess = initGuess*0.8
+            else:
+                print('WARNING: could not compute thresholds for kernel type %s' % \
+                      type(kern))
+
+            # assign positive value as threshold
+            self.kerThresholds[ageGroup] = abs(thrValue)
+
     def evaluate(self, targetPositions, ageGroup):
-        assert all([isinstance(t, geopy.Point) for t in targetPositions]),'Geopy Points expected'
-        
-        # get distances
-        distances = np.zeros(shape=(len(targetPositions),1))
-        distances[:,0] = [geopy.distance.great_circle(x, self.site).km for x in targetPositions]
-        
         # evaluate kernel to get level service score. If age group is not relevant to the service, return 0 as default
         if self.kernel.__contains__(ageGroup):
+            assert all([isinstance(t, geopy.Point) for t in targetPositions]),'Geopy Points expected'
+            # get distances
+            distances = np.zeros(shape=(len(targetPositions),1))
+            distances[:,0] = [geopy.distance.great_circle(x, self.site).km for x in targetPositions]
+            
             score = self.kernel[ageGroup](distances, np.array([[0],]))
             # check conversion from tuple to nparray
             #targetPositions= np.array(targetPositions)
@@ -143,12 +171,12 @@ class ServiceValues(dict):
         
     @property     
     def positions(self): 
-        return list(self.mappedPositions.Positions.values)    
-    
-    
+        return list(self.mappedPositions.Positions.values)
+
+
 class ServiceEvaluator:
     '''A class to evaluate a given list of service units'''
-    
+
     def __init__(self, unitList, outputServicesIn=[t for t in ServiceType]):
         assert isinstance(unitList, list), 'List expected, got %s' % type(unitList)
         assert all([isinstance(t, ServiceUnit) for t in unitList]), 'ServiceUnits expected in list'
@@ -156,25 +184,55 @@ class ServiceEvaluator:
         self.outputServices = outputServicesIn
         self.servicePositions = MappedPositionsFrame(positions=[u.site for u in unitList])
 
-    def evaluate_services_at(self, mappedPositions):
-        assert isinstance(mappedPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
+    def evaluate_services_at(self, targetPositions):
+        assert isinstance(targetPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
         # set all age groups as output default
         outputAgeGroups = AgeGroup.all()
+
+        targetsCoordArray = targetPositions[common_cfg.coordColNames].as_matrix()
+        targetGeopyArray = targetPositions[common_cfg.positionsCol].values
         # initialise output with dedicated class
-        valuesStore = ServiceValues(mappedPositions)
-        
+        valuesStore = ServiceValues(targetPositions)
+
         # loop over different services
         for thisServType in self.outputServices:
             serviceUnits = [u for u in self.units if u.service == thisServType]
+
             if not serviceUnits:
                 continue
             else:
+                servicesCoordArray = \
+                    self.servicePositions[common_cfg.coordColNames].as_matrix()
+                start = time()
+                # compute a lower bound for pairwise distances - if this is larger than threshold, set to zero.
+                Dmatrix = eucliDistance(servicesCoordArray, targetsCoordArray) * min(
+                    common_cfg.approxTileDegToKm)
+                print(time() - start)
+
                 for thisAgeGroup in outputAgeGroups:
-                    unitValues = np.stack(list(map(
-                        lambda x: x.evaluate(
-                            valuesStore.positions, thisAgeGroup), serviceUnits)), axis=-1)
-                    # aggregate unit contributions according to the service type norm
-                    valuesStore[thisServType][thisAgeGroup] = thisServType.aggregate_units(unitValues)
+                    if thisAgeGroup in thisServType.demandAges:  # the service can serve this agegroup
+                        print('Computing', thisServType, thisAgeGroup)
+                        startGroup = time()
+                        # each row can be used to drop positions that are too far
+                        serviceInteractions = np.zeros(
+                            [servicesCoordArray.shape[0], targetsCoordArray.shape[0]])
+
+                        meanVals = []
+                        for iUnit in range(len(serviceUnits)):
+                            if iUnit % 10 == 0: print('.')
+                            thisUnit = serviceUnits[iUnit]
+                            # flag the positions that are within the threshold and their values have to be computed
+                            bActiveUnit = Dmatrix[iUnit, :] < thisUnit.kerThresholds[thisAgeGroup]
+                            serviceInteractions[iUnit, bActiveUnit] = thisUnit.evaluate(
+                                targetGeopyArray[bActiveUnit], thisAgeGroup)
+
+                        # aggregate unit contributions according to the service type norm
+                        valuesStore[thisServType][thisAgeGroup] = \
+                            thisServType.aggregate_units(serviceInteractions, axis=0)
+                        print(thisServType, thisAgeGroup, time() - startGroup)
+                    else:
+                        pass  # leave default value in valuesStore
+
         return valuesStore
 
 
