@@ -20,7 +20,7 @@ tupleIndexName = 'PositionTuples'
 positionsCol = 'Positions'
 
 # Kernel evaluation speedup
-kernelValueCutoff = 5*1e-1  # interaction values below this level will be set to 0
+kernelValueCutoff = 1e-2  # interaction values below this level will be set to 0
 kernelStartZeroGuess = 3  # initial input for kernel in solving
 
 # Compute thresholds

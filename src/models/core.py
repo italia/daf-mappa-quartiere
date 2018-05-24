@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -6,9 +5,12 @@ import geopy, geopy.distance
 import shapely
 from sklearn import gaussian_process
 
+from time import time
+
 ## TODO: find way to put this into some global settings
 import os
 import sys
+
 rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
     sys.path.append(rootDir)
@@ -17,8 +19,16 @@ from references import common_cfg, istat_kpi, city_settings
 from src.models.city_items import AgeGroup, ServiceType # enum classes for the model
 
 from scipy.optimize import fsolve
+from scipy.spatial.distance import cdist
+
+import functools
 
 gaussKern = gaussian_process.kernels.RBF
+
+
+@functools.lru_cache(maxsize=1e7) # cache expensive distance calculation
+def compute_distance(x,y):
+    return geopy.distance.great_circle(x, y).km
 
 
 ## ServiceUnit class
@@ -38,6 +48,7 @@ class ServiceUnit:
         # A ServiceType can have many sites, so each unit has its own. 
         # Moreover, a site is not uniquely assigned to a service
         self.site = position
+        self.coordTuple = (position.latitude, position.longitude)
         
         self.scale = scaleIn # store scale info
         self.attributes = attributesIn# dictionary
@@ -82,21 +93,23 @@ class ServiceUnit:
             # assign positive value as threshold
             self.kerThresholds[ageGroup] = abs(thrValue)
 
-    def evaluate(self, targetPositions, ageGroup):
-        # evaluate kernel to get level service score. If age group is not relevant to the service, return 0 as default
+    def evaluate(self, targetCoords, ageGroup):
+        # evaluate kernel to get service level score.
+        # If age group is not relevant to the service, return 0 as default
         if self.kernel.__contains__(ageGroup):
-            assert all([isinstance(t, geopy.Point) for t in targetPositions]),'Geopy Points expected'
+            assert isinstance(targetCoords, np.ndarray) ,'ndarray expected'
+            assert targetCoords.shape[1] == 2, 'lat and lon columns expected'
             # get distances
-            distances = np.zeros(shape=(len(targetPositions),1))
-            distances[:,0] = [geopy.distance.great_circle(x, self.site).km for x in targetPositions]
+            distances = np.zeros(shape=(len(targetCoords), 1))
+            distances[:,0] = np.apply_along_axis(
+                lambda x: compute_distance(tuple(x), self.coordTuple),
+                axis=1, arr=targetCoords)
             
             score = self.kernel[ageGroup](distances, np.array([[0],]))
-            # check conversion from tuple to nparray
-            #targetPositions= np.array(targetPositions)
-            #score2 = self.kernel[ageGroup](targetPositions, reshapedPos)
-            #assert all(score-score2==0)
+
         else:
-            score = np.zeros_like(targetPositions)
+            score = np.zeros(shape=targetCoords.shape[0])
+        
         return np.squeeze(score)
     
     @property
@@ -189,8 +202,8 @@ class ServiceEvaluator:
         # set all age groups as output default
         outputAgeGroups = AgeGroup.all()
 
-        targetsCoordArray = targetPositions[common_cfg.coordColNames].as_matrix()
-        targetGeopyArray = targetPositions[common_cfg.positionsCol].values
+        targetsCoordArray = targetPositions[common_cfg.coordColNames[::-1]].as_matrix()
+        # targetGeopyArray = targetPositions[common_cfg.positionsCol].values
         # initialise output with dedicated class
         valuesStore = ServiceValues(targetPositions)
 
@@ -202,16 +215,16 @@ class ServiceEvaluator:
                 continue
             else:
                 servicesCoordArray = \
-                    self.servicePositions[common_cfg.coordColNames].as_matrix()
+                    self.servicePositions[common_cfg.coordColNames[::-1]].as_matrix()
                 start = time()
                 # compute a lower bound for pairwise distances - if this is larger than threshold, set to zero.
-                Dmatrix = eucliDistance(servicesCoordArray, targetsCoordArray) * min(
+                Dmatrix = cdist(servicesCoordArray, targetsCoordArray) * min(
                     common_cfg.approxTileDegToKm)
-                print(time() - start)
+                print(thisServType, 'Approx distance matrix in %.4f' % (time() - start))
 
                 for thisAgeGroup in outputAgeGroups:
                     if thisAgeGroup in thisServType.demandAges:  # the service can serve this agegroup
-                        print('Computing', thisServType, thisAgeGroup)
+                        print('\n Computing', thisServType, thisAgeGroup)
                         startGroup = time()
                         # each row can be used to drop positions that are too far
                         serviceInteractions = np.zeros(
@@ -219,17 +232,18 @@ class ServiceEvaluator:
 
                         meanVals = []
                         for iUnit in range(len(serviceUnits)):
-                            if iUnit % 10 == 0: print('.')
+                            if iUnit % 100 == 0: print('... %i units done' % iUnit)
                             thisUnit = serviceUnits[iUnit]
                             # flag the positions that are within the threshold and their values have to be computed
                             bActiveUnit = Dmatrix[iUnit, :] < thisUnit.kerThresholds[thisAgeGroup]
-                            serviceInteractions[iUnit, bActiveUnit] = thisUnit.evaluate(
-                                targetGeopyArray[bActiveUnit], thisAgeGroup)
+                            if any(bActiveUnit):
+                                serviceInteractions[iUnit, bActiveUnit] = thisUnit.evaluate(
+                                    targetsCoordArray[bActiveUnit, :], thisAgeGroup)
 
                         # aggregate unit contributions according to the service type norm
                         valuesStore[thisServType][thisAgeGroup] = \
                             thisServType.aggregate_units(serviceInteractions, axis=0)
-                        print(thisServType, thisAgeGroup, time() - startGroup)
+                        print('AgeGroup time %.4f' % (time() - startGroup))
                     else:
                         pass  # leave default value in valuesStore
 
