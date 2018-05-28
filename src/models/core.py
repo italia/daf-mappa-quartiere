@@ -26,7 +26,7 @@ import functools
 gaussKern = gaussian_process.kernels.RBF
 
 
-@functools.lru_cache(maxsize=int(1e7)) # cache expensive distance calculation
+@functools.lru_cache(maxsize=int(1e8)) # cache expensive distance calculation
 def compute_distance(x,y):
     return geopy.distance.great_circle(x, y).km
 
@@ -74,7 +74,7 @@ class ServiceUnit:
                 'Unexpected kernel type in ServiceUnit'
 
             assert all([val>0 for val in kernelThresholds.values()]), 'Thresholds must be positive'
-            self.kerThresholds = self.kerThresholds.update(kernelThresholds)
+            self.kerThresholds.update(kernelThresholds)
         else:
             for ageGroup in self.kernel.keys():
                 kern = self.kernel[ageGroup]
@@ -226,7 +226,8 @@ class ServiceEvaluator:
                 servicesCoordArray = \
                     self.servicePositions[common_cfg.coordColNames[::-1]].as_matrix()
                 start = time()
-                # compute a lower bound for pairwise distances - if this is larger than threshold, set to zero.
+                # compute a lower bound for pairwise distances
+                # if this is larger than threshold, set the interaction to zero.
                 Dmatrix = cdist(servicesCoordArray, targetsCoordArray) * min(
                     common_cfg.approxTileDegToKm)
                 print(thisServType, 'Approx distance matrix in %.4f' % (time() - start))
@@ -240,10 +241,10 @@ class ServiceEvaluator:
                             [servicesCoordArray.shape[0], targetsCoordArray.shape[0]])
 
                         meanVals = []
-                        for iUnit in range(len(serviceUnits)):
-                            if iUnit % 100 == 0: print('... %i units done' % iUnit)
-                            thisUnit = serviceUnits[iUnit]
-                            # flag the positions that are within the threshold and their values have to be computed
+                        for iUnit, thisUnit in enumerate(serviceUnits):
+                            if iUnit>0 and iUnit % 100 == 0: print('... %i units done' % iUnit)
+                            # flag the positions that are within
+                            # the threshold and their values have to be computed
                             bActiveUnit = Dmatrix[iUnit, :] < thisUnit.kerThresholds[thisAgeGroup]
                             if any(bActiveUnit):
                                 serviceInteractions[iUnit, bActiveUnit] = thisUnit.evaluate(
