@@ -220,16 +220,21 @@ class PharmacyFactory(UnitFactory):
         colAttributes = {'Descrizione': 'DESCRIZIONEFARMACIA', 'PartitaIva': 'PARTITAIVA'}
 
         unitList = []
+        cachedThresholds = None # unique value as all pharmacies share the same scale
         for iUnit in range(propertData.shape[0]):
             rowData = propertData.iloc[iUnit, :]
             attrDict = {name:rowData[col] for name, col in colAttributes.items()}
             thisUnit = ServiceUnit(self.servicetype,
                                    name=rowData[nameCol].astype(str),
                                    position=locations[iUnit],
-                                   ageDiffusionIn={g: 1 for g in AgeGroup.all()},
                                    scaleIn=meanRadius,
+                                   ageDiffusionIn={g: 1 for g in AgeGroup.all()},
+                                   kernelThresholds=cachedThresholds,
                                    attributesIn=attrDict)
             unitList.append(thisUnit)
+            # if there were no thresholds, cache the computed ones
+            if not cachedThresholds:
+                cachedThresholds = thisUnit.kerThresholds
 
         return unitList
 
