@@ -182,19 +182,26 @@ class TransportStopFactory(UnitFactory):
         typeCol = 'routeDesc'
 
         scaleDict = {0:meanRadius, 1: 2*meanRadius, 3: meanRadius}
+        thresholdsDict = {t: None for t in scaleDict.keys()}
 
         unitList = []
         for iUnit in range(propertData.shape[0]):
             rowData = propertData.iloc[iUnit, :]
+            unitRouteType = rowData[routeTypeCol]
             attrDict = {'routeType': rowData[typeCol]}
+            cachedThresholds = thresholdsDict[unitRouteType] # this is None by default
             thisUnit = ServiceUnit(self.servicetype,
                                    name=rowData[nameCol],
                                    position=locations[iUnit],
+                                   scaleIn=scaleDict[unitRouteType],
                                    ageDiffusionIn={g:1 for g in AgeGroup.all_but(
                                        [AgeGroup.Newborn, AgeGroup.Kinder])},
-                                   scaleIn=scaleDict[rowData[routeTypeCol]],
+                                   kernelThresholds=cachedThresholds,
                                    attributesIn=attrDict)
             unitList.append(thisUnit)
+            # if there were no thresholds for this unit type, cache the computed ones
+            if not cachedThresholds:
+                thresholdsDict[unitRouteType] = thisUnit.kerThresholds
 
         return unitList
 

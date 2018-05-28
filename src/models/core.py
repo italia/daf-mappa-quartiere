@@ -26,22 +26,29 @@ import functools
 gaussKern = gaussian_process.kernels.RBF
 
 
-@functools.lru_cache(maxsize=1e7) # cache expensive distance calculation
+@functools.lru_cache(maxsize=int(1e7)) # cache expensive distance calculation
 def compute_distance(x,y):
     return geopy.distance.great_circle(x, y).km
 
 
 ## ServiceUnit class
 class ServiceUnit:
-    def __init__(self, service, name='', position=geopy.Point(45.4641, 9.1919),
-                 ageDiffusionIn={}, scaleIn=1, attributesIn={}):
+    def __init__(self, service, name, position, scaleIn,
+                 ageDiffusionIn={}, kernelThresholds=None, attributesIn={}):
         assert isinstance(position, geopy.Point), 'Position must be a geopy Point' 
         assert isinstance(service, ServiceType), 'Service must belong to the Eum'
         assert isinstance(name, str), 'Name must be a string'
-        
         assert (np.isscalar(scaleIn)) & (scaleIn>0) , 'Scale must be a positive scalar'
+        assert set(ageDiffusionIn.keys()) <= set(
+            AgeGroup.all()), 'Diffusion keys should be AgeGroups'
         assert isinstance(attributesIn, dict), 'Attributes can be provided in a dict'
-        
+        if kernelThresholds:
+            assert set(kernelThresholds.keys()) >= set(ageDiffusionIn.keys()), \
+                'Kernel thresholds if provided must be defined for every age diffusion key'
+            bThresholdsInput = True
+        else:
+            bThresholdsInput = False
+
         self.name = name
         self.service = service
         
@@ -50,48 +57,50 @@ class ServiceUnit:
         self.site = position
         self.coordTuple = (position.latitude, position.longitude)
         
-        self.scale = scaleIn # store scale info
-        self.attributes = attributesIn# dictionary
+        self.scale = scaleIn  # store scale info
+        self.attributes = attributesIn  # dictionary
         
-        # how the service availablity area varies for different age groups
-        if ageDiffusionIn==None:
-            self.ageDiffusion = {g: (
-                1 + .005*np.round(np.random.normal(),2))*self.scale for g in AgeGroup.all()} 
-        else:
-            assert set(ageDiffusionIn.keys()) <= set(AgeGroup.all()), 'Diffusion keys should be AgeGroups'
-            #assert all
-            self.ageDiffusion = ageDiffusionIn
+        # how the service availability area varies for different age groups
+        self.ageDiffusion = ageDiffusionIn
             
         # define kernel taking scale into account
-        self.kernel = {g: gaussKern(length_scale=l*self.scale) for g, l in self.ageDiffusion.items()}
+        self.kernel = {
+            g: gaussKern(length_scale=l*self.scale) for g, l in self.ageDiffusion.items()}
 
         # precompute kernel threshold per AgeGroup
-        self.kerThresholds = {g: np.Inf for g in AgeGroup.all()}
-        
-        for ageGroup in self.kernel.keys():
-            kern = self.kernel[ageGroup]
-            thrValue = np.Inf # initialise
-            if isinstance(kern, gaussKern):
-                def fun_to_solve(x):
-                    out = self.kernel[ageGroup](x, np.array([[0], ])) - common_cfg.kernelValueCutoff
-                    return out.flatten()
+        self.kerThresholds = {g: np.Inf for g in AgeGroup.all()}  # initialise to Inf
+        if bThresholdsInput:
+            assert all([isinstance(kern, gaussKern) for kern in self.kernel.values()]), \
+                'Unexpected kernel type in ServiceUnit'
 
-                initGuess = common_cfg.kernelStartZeroGuess
+            assert all([val>0 for val in kernelThresholds.values()]), 'Thresholds must be positive'
+            self.kerThresholds = self.kerThresholds.update(kernelThresholds)
+        else:
+            for ageGroup in self.kernel.keys():
+                kern = self.kernel[ageGroup]
+                thrValue = np.Inf
+                if isinstance(kern, gaussKern):
+                    def fun_to_solve(x):
+                        out = self.kernel[ageGroup](
+                            x, np.array([[0], ])) - common_cfg.kernelValueCutoff
+                        return out.flatten()
 
-                for k in range(3): # try 3 alternatives
-                        solValue, _, flag, msg = fsolve(fun_to_solve, np.array(initGuess),
-                                                        full_output=True)
-                        if flag == 1:
-                            thrValue = solValue # assign found value
-                            break
-                        else:
-                            initGuess = initGuess*0.8
-            else:
-                print('WARNING: could not compute thresholds for kernel type %s' % \
-                      type(kern))
+                    initGuess = common_cfg.kernelStartZeroGuess
 
-            # assign positive value as threshold
-            self.kerThresholds[ageGroup] = abs(thrValue)
+                    for k in range(3): # try 3 alternatives
+                            solValue, _, flag, msg = fsolve(fun_to_solve, np.array(initGuess),
+                                                            full_output=True)
+                            if flag == 1:
+                                thrValue = solValue # assign found value
+                                break
+                            else:
+                                initGuess = initGuess*0.8
+                else:
+                    print('WARNING: could not compute thresholds for kernel type %s' % \
+                          type(kern))
+
+                # assign positive value as threshold
+                self.kerThresholds[ageGroup] = abs(thrValue)
 
     def evaluate(self, targetCoords, ageGroup):
         # evaluate kernel to get service level score.

@@ -28,8 +28,9 @@ kmStep = geodist.great_circle(kilometers=1)
 center = (38.116667, 13.366667) # Get the long, lat tile around Palermo
 # Note that a value in the south is conservative, as it gives a higher threshold for longitude
 # deltas in degress to match a given level in kilometers
-approxTileDegToKm = 1/np.array([kmStep.destination(geoPoint(center), 90).longitude - center[1],
-                    kmStep.destination(geoPoint(center), 0).latitude - center[0]])
+approxTileDegToKm = 1/np.array(
+    [kmStep.destination(geoPoint(center), 90).longitude - center[1],
+     kmStep.destination(geoPoint(center), 0).latitude - center[0]])
 
 # Istat parameters
 cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
