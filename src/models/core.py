@@ -206,17 +206,25 @@ class ServiceEvaluator:
         self.outputServices = outputServicesIn
         self.servicePositions = MappedPositionsFrame(positions=[u.site for u in unitList])
 
-    def evaluate_services_at(self, targetPositions):
-        assert isinstance(targetPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
+    def evaluate_services_at(self, demandData):
+        assert isinstance(demandData, DemandFrame), 'Expected MappedPositionsFrame'
+
+        agesData = demandData.agesFrameNew
 
         # initialise output with dedicated class
-        valuesStore = ServiceValues(targetPositions)
+        valuesStore = ServiceValues(agesData)
 
         # STEP 1: evaluate service interactions at demand locations
-        targetsCoordArray = targetPositions[common_cfg.coordColNames[::-1]].as_matrix()
+        # using (lat, long) format for evaluations
+        targetsCoordArray = agesData[common_cfg.coordColNames[::-1]].as_matrix()
         self._evaluate_interactions_at(targetsCoordArray)
 
-        # FINAL STEP: aggregate unit contributions according to the service type norm
+        # STEPS 2 & 3: get estimate of attendance for each serviceunit
+        self._compute_attendance_from_interactions(agesData)
+
+        # STEP 4 & FINAL STEP: correct interactions (NOT IMPLEMENTED YET)
+        #  with unit attendance and aggregate unit contributions
+        #  according to the service type norm
         for sType, ages in self.interactions.items():
             for ageGroup in ages:
                 valuesStore[sType][ageGroup] = \
@@ -253,14 +261,16 @@ class ServiceEvaluator:
                     if thisAgeGroup in thisServType.demandAges:  # the service can serve this agegroup
                         print('\n Computing', thisServType, thisAgeGroup)
                         startGroup = time()
-                        # each row can be used to drop positions that are too far
+                        # assign default value of zero to interactions
                         self.interactions[thisServType][thisAgeGroup] = np.zeros(
                             [servicesCoordArray.shape[0], targetsCoordArray.shape[0]])
 
                         for iUnit, thisUnit in enumerate(serviceUnits):
+
                             if iUnit>0 and iUnit % 100 == 0: print('... %i units done' % iUnit)
-                            # flag the positions that are within
-                            # the threshold and their values have to be computed
+                            # each row can be used to drop positions that are too far:
+                            # we flag the positions that are within
+                            # the threshold and we compute values just for them
                             bActiveUnit = Dmatrix[iUnit, :] < thisUnit.kerThresholds[thisAgeGroup]
                             if any(bActiveUnit):
                                 self.interactions[
@@ -270,9 +280,17 @@ class ServiceEvaluator:
 
                         print('AgeGroup time %.4f' % (time() - startGroup))
                     else:
-                        pass  # leave default value in valuesStore
+                        continue  # leave default value in valuesStore
 
         return self.interactions
+
+    def _compute_attendance_from_interactions(self, agesData):
+
+        for sType, ages in self.interactions.items():
+            for ageGroup in ages:
+                continue
+
+        return None
 
 
 ### Demand modelling
@@ -319,6 +337,21 @@ class DemandFrame(pd.DataFrame):
         ageMIndex = [self[common_cfg.IdQuartiereColName],
                      self[common_cfg.positionsCol].apply(tuple)]
         return self[AgeGroup.all()].set_index(ageMIndex)
+
+    @property
+    def agesFrameNew(self):
+        # start from the mappedPositions
+        out = self.mappedPositions
+
+        # prepare agesData with matching index
+        ageMIndex = [self[common_cfg.IdQuartiereColName],
+                     self[common_cfg.positionsCol].apply(tuple)]
+        agesData = self[AgeGroup.all()].set_index(ageMIndex)
+
+        # concatenate
+        out[agesData.columns] = agesData
+
+        return out
 
     def get_age_sample(self, ageGroup=None, nSample=1000):
 
@@ -368,8 +401,7 @@ class KPICalculator:
         self.agesTotals = self.agesFrame.groupby(level=0).sum()
         
     def evaluate_services_at_demand(self):
-        self.serviceValues = self.evaluator.evaluate_services_at(
-            self.demand.mappedPositions)
+        self.serviceValues = self.evaluator.evaluate_services_at(self.demand)
         # set the evaluation flag to True
         self.bEvaluated = True
         return self.serviceValues
