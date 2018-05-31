@@ -208,13 +208,30 @@ class ServiceEvaluator:
 
     def evaluate_services_at(self, targetPositions):
         assert isinstance(targetPositions, MappedPositionsFrame), 'Expected MappedPositionsFrame'
-        # set all age groups as output default
-        outputAgeGroups = AgeGroup.all()
 
-        targetsCoordArray = targetPositions[common_cfg.coordColNames[::-1]].as_matrix()
-        # targetGeopyArray = targetPositions[common_cfg.positionsCol].values
         # initialise output with dedicated class
         valuesStore = ServiceValues(targetPositions)
+
+        # STEP 1: evaluate service interactions at demand locations
+        targetsCoordArray = targetPositions[common_cfg.coordColNames[::-1]].as_matrix()
+        self._evaluate_interactions_at(targetsCoordArray)
+
+        # FINAL STEP: aggregate unit contributions according to the service type norm
+        for sType, ages in self.interactions.items():
+            for ageGroup in ages:
+                valuesStore[sType][ageGroup] = \
+                    sType.aggregate_units(self.interactions[sType][ageGroup], axis=0)
+
+        return valuesStore
+
+    def _evaluate_interactions_at(self, targetsCoordArray):
+        '''
+        STEP 1
+
+        Evaluates the initial service availabilities at demand location, before correcting
+        for attendance'''
+
+        self.interactions= {s: {} for s in self.outputServices}
 
         # loop over different services
         for thisServType in self.outputServices:
@@ -232,32 +249,30 @@ class ServiceEvaluator:
                     common_cfg.approxTileDegToKm)
                 print(thisServType, 'Approx distance matrix in %.4f' % (time() - start))
 
-                for thisAgeGroup in outputAgeGroups:
+                for thisAgeGroup in AgeGroup.all():
                     if thisAgeGroup in thisServType.demandAges:  # the service can serve this agegroup
                         print('\n Computing', thisServType, thisAgeGroup)
                         startGroup = time()
                         # each row can be used to drop positions that are too far
-                        serviceInteractions = np.zeros(
+                        self.interactions[thisServType][thisAgeGroup] = np.zeros(
                             [servicesCoordArray.shape[0], targetsCoordArray.shape[0]])
 
-                        meanVals = []
                         for iUnit, thisUnit in enumerate(serviceUnits):
                             if iUnit>0 and iUnit % 100 == 0: print('... %i units done' % iUnit)
                             # flag the positions that are within
                             # the threshold and their values have to be computed
                             bActiveUnit = Dmatrix[iUnit, :] < thisUnit.kerThresholds[thisAgeGroup]
                             if any(bActiveUnit):
-                                serviceInteractions[iUnit, bActiveUnit] = thisUnit.evaluate(
-                                    targetsCoordArray[bActiveUnit, :], thisAgeGroup)
+                                self.interactions[
+                                    thisServType][thisAgeGroup][iUnit, bActiveUnit] = \
+                                    thisUnit.evaluate(targetsCoordArray[bActiveUnit, :],
+                                                      thisAgeGroup)
 
-                        # aggregate unit contributions according to the service type norm
-                        valuesStore[thisServType][thisAgeGroup] = \
-                            thisServType.aggregate_units(serviceInteractions, axis=0)
                         print('AgeGroup time %.4f' % (time() - startGroup))
                     else:
                         pass  # leave default value in valuesStore
 
-        return valuesStore
+        return self.interactions
 
 
 ### Demand modelling
