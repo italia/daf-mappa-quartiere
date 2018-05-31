@@ -133,6 +133,8 @@ class MappedPositionsFrame(pd.DataFrame):
         
         # build positions data
         if not positions:
+            assert long or lat, 'Expected input if positions are not given'
+
             if idQuartiere is None:
                 idQuartiere = np.full(long.shape, np.nan)
             # create mapping dict from coordinates
@@ -202,14 +204,24 @@ class ServiceEvaluator:
     def __init__(self, unitList, outputServicesIn=[t for t in ServiceType]):
         assert isinstance(unitList, list), 'List expected, got %s' % type(unitList)
         assert all([isinstance(t, ServiceUnit) for t in unitList]), 'ServiceUnits expected in list'
-        self.units = unitList
+        self.units = tuple(unitList) # lock ordering
         self.outputServices = outputServicesIn
-        self.servicePositions = MappedPositionsFrame(positions=[u.site for u in unitList])
+        self.unitsTree = {}
+        for sType in self.outputServices:
+            self.unitsTree[sType] =  tuple([u for u in self.units if u.service == sType])
+
+        self.servicePositions = {}
+        for sType, serviceUnits in self.unitsTree.items():
+            if serviceUnits:
+                self.servicePositions[sType]=MappedPositionsFrame(
+                    positions=[u.site for u in serviceUnits])
+            else:
+                continue  # no units for this servicetype, do not create key
 
     def evaluate_services_at(self, demandData):
         assert isinstance(demandData, DemandFrame), 'Expected MappedPositionsFrame'
 
-        agesData = demandData.agesFrameNew
+        agesData = demandData.agesFrame
 
         # initialise output with dedicated class
         valuesStore = ServiceValues(agesData)
@@ -219,7 +231,7 @@ class ServiceEvaluator:
         targetsCoordArray = agesData[common_cfg.coordColNames[::-1]].as_matrix()
         self._evaluate_interactions_at(targetsCoordArray)
 
-        # STEPS 2 & 3: get estimate of attendance for each serviceunit
+        # STEPS 2 & 3: get estimates of attendance for each service unit
         self._compute_attendance_from_interactions(agesData)
 
         # STEP 4 & FINAL STEP: correct interactions (NOT IMPLEMENTED YET)
@@ -237,57 +249,64 @@ class ServiceEvaluator:
         STEP 1
 
         Evaluates the initial service availabilities at demand location, before correcting
-        for attendance'''
+        for attendance
+        '''
 
         self.interactions= {s: {} for s in self.outputServices}
 
         # loop over different services
-        for thisServType in self.outputServices:
-            serviceUnits = [u for u in self.units if u.service == thisServType]
+        for serviceType, serviceMappedPositions in self.servicePositions.items():
 
-            if not serviceUnits:
-                continue
-            else:
-                servicesCoordArray = \
-                    self.servicePositions[common_cfg.coordColNames[::-1]].as_matrix()
-                start = time()
-                # compute a lower bound for pairwise distances
-                # if this is larger than threshold, set the interaction to zero.
-                Dmatrix = cdist(servicesCoordArray, targetsCoordArray) * min(
-                    common_cfg.approxTileDegToKm)
-                print(thisServType, 'Approx distance matrix in %.4f' % (time() - start))
+            # get lat-long data for this servicetype units
+            serviceCoordArray = serviceMappedPositions[
+                common_cfg.coordColNames[::-1]].as_matrix()
 
-                for thisAgeGroup in AgeGroup.all():
-                    if thisAgeGroup in thisServType.demandAges:  # the service can serve this agegroup
-                        print('\n Computing', thisServType, thisAgeGroup)
-                        startGroup = time()
-                        # assign default value of zero to interactions
-                        self.interactions[thisServType][thisAgeGroup] = np.zeros(
-                            [servicesCoordArray.shape[0], targetsCoordArray.shape[0]])
+            start = time()
+            # compute a lower bound for pairwise distances
+            # if this is larger than threshold, set the interaction to zero.
+            Dmatrix = cdist(serviceCoordArray, targetsCoordArray) * min(
+                common_cfg.approxTileDegToKm)
+            print(serviceType, 'Approx distance matrix in %.4f' % (time() - start))
 
-                        for iUnit, thisUnit in enumerate(serviceUnits):
+            for thisAgeGroup in AgeGroup.all():
+                if thisAgeGroup in serviceType.demandAges:  # the service can serve this agegroup
+                    print('\n Computing', serviceType, thisAgeGroup)
+                    startGroup = time()
+                    # assign default value of zero to interactions
+                    self.interactions[serviceType][thisAgeGroup] = np.zeros(
+                        [serviceCoordArray.shape[0], targetsCoordArray.shape[0]])
 
-                            if iUnit>0 and iUnit % 100 == 0: print('... %i units done' % iUnit)
-                            # each row can be used to drop positions that are too far:
-                            # we flag the positions that are within
-                            # the threshold and we compute values just for them
-                            bActiveUnit = Dmatrix[iUnit, :] < thisUnit.kerThresholds[thisAgeGroup]
-                            if any(bActiveUnit):
-                                self.interactions[
-                                    thisServType][thisAgeGroup][iUnit, bActiveUnit] = \
-                                    thisUnit.evaluate(targetsCoordArray[bActiveUnit, :],
-                                                      thisAgeGroup)
+                    for iUnit, thisUnit in enumerate(self.unitsTree[serviceType]):
 
-                        print('AgeGroup time %.4f' % (time() - startGroup))
-                    else:
-                        continue  # leave default value in valuesStore
+                        if iUnit>0 and iUnit % 100 == 0: print('... %i units done' % iUnit)
+                        # each row can be used to drop positions that are too far:
+                        # we flag the positions that are within
+                        # the threshold and we compute values just for them
+                        bActiveUnit = Dmatrix[iUnit, :] < thisUnit.kerThresholds[thisAgeGroup]
+                        if any(bActiveUnit):
+                            self.interactions[
+                                serviceType][thisAgeGroup][iUnit, bActiveUnit] = \
+                                thisUnit.evaluate(targetsCoordArray[bActiveUnit, :],
+                                                  thisAgeGroup)
+                    print('AgeGroup time %.4f' % (time() - startGroup))
+                else:
+                    continue  # leave default value in valuesStore
 
         return self.interactions
 
     def _compute_attendance_from_interactions(self, agesData):
+        '''
+        STEP 2 & 3: get estimates of attendance for each service unit
+        '''
+        # initialise units loads
+        #self.unit
 
         for sType, ages in self.interactions.items():
-            for ageGroup in ages:
+
+            groupLoads = np.zeros([interactions.shape[0], len(ageGroup.all())])
+            for iAge, ageGroup in enumerate(ages):
+                interactions = self.interactions[sType][ageGroup]
+                groupLoads[:,iAge] = interactions/interactions.sum(axis=1)*agesData[ageGroup]
                 continue
 
         return None
@@ -334,23 +353,14 @@ class DemandFrame(pd.DataFrame):
 
     @property
     def agesFrame(self):
-        ageMIndex = [self[common_cfg.IdQuartiereColName],
-                     self[common_cfg.positionsCol].apply(tuple)]
-        return self[AgeGroup.all()].set_index(ageMIndex)
-
-    @property
-    def agesFrameNew(self):
         # start from the mappedPositions
         out = self.mappedPositions
-
         # prepare agesData with matching index
         ageMIndex = [self[common_cfg.IdQuartiereColName],
                      self[common_cfg.positionsCol].apply(tuple)]
         agesData = self[AgeGroup.all()].set_index(ageMIndex)
-
         # concatenate
         out[agesData.columns] = agesData
-
         return out
 
     def get_age_sample(self, ageGroup=None, nSample=1000):
