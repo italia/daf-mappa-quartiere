@@ -85,16 +85,19 @@ class ServiceUnit:
                             x, np.array([[0], ])) - common_cfg.kernelValueCutoff
                         return out.flatten()
 
-                    initGuess = common_cfg.kernelStartZeroGuess
+                    initGuess = common_cfg.kernelStartZeroGuess*self.scale
 
                     for k in range(3): # try 3 alternatives
-                            solValue, _, flag, msg = fsolve(fun_to_solve, np.array(initGuess),
-                                                            full_output=True)
-                            if flag == 1:
-                                thrValue = solValue # assign found value
-                                break
-                            else:
-                                initGuess = initGuess*0.8
+                        solValue, _, flag, msg = fsolve(fun_to_solve, np.array(initGuess),
+                                                        full_output=True)
+                        if flag == 1:
+                            thrValue = solValue # assign found value
+                            break
+                        else:
+                            initGuess = initGuess*1.1
+                    if flag != 1:
+                        print('WARNING: could not compute thresholds for unit %s, age %s' % \
+                          (self.name, ageGroup))
                 else:
                     print('WARNING: could not compute thresholds for kernel type %s' % \
                           type(kern))
@@ -208,7 +211,9 @@ class ServiceEvaluator:
         self.outputServices = outputServicesIn
         self.unitsTree = {}
         for sType in self.outputServices:
-            self.unitsTree[sType] =  tuple([u for u in self.units if u.service == sType])
+            typeUnits = tuple([u for u in self.units if u.service == sType])
+            if typeUnits:
+                self.unitsTree[sType] = typeUnits
 
         self.servicePositions = {}
         for sType, serviceUnits in self.unitsTree.items():
@@ -252,11 +257,11 @@ class ServiceEvaluator:
         for attendance
         '''
 
-        self.interactions= {s: {} for s in self.outputServices}
+        self.interactions = {}
 
         # loop over different services
         for serviceType, serviceMappedPositions in self.servicePositions.items():
-
+            self.interactions[serviceType] = {}  # initialise
             # get lat-long data for this servicetype units
             serviceCoordArray = serviceMappedPositions[
                 common_cfg.coordColNames[::-1]].as_matrix()
@@ -302,13 +307,18 @@ class ServiceEvaluator:
         #self.unit
 
         for sType, ages in self.interactions.items():
-
-            groupLoads = np.zeros([interactions.shape[0], len(ageGroup.all())])
+            # initialise group loads for every unit given by current ageGroup
+            groupLoads = np.zeros([self.servicePositions[sType].shape[0], len(AgeGroup.all())])
             for iAge, ageGroup in enumerate(ages):
                 interactions = self.interactions[sType][ageGroup]
-                groupLoads[:,iAge] = interactions/interactions.sum(axis=1)*agesData[ageGroup]
-                continue
+                groupLoads[:,iAge] = np.matmul(interactions,
+                                               1/(interactions.sum(axis=0))*agesData[ageGroup])
+            totalLoads = groupLoads.sum(axis=1)
 
+            for iUnit, unit in enumerate(self.unitsTree[sType]):
+                unit.attendance = totalLoads[iUnit]
+
+            print(totalLoads.sum())
         return None
 
 
