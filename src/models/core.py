@@ -26,7 +26,7 @@ import functools
 gaussKern = gaussian_process.kernels.RBF
 
 
-@functools.lru_cache(maxsize=int(1e8)) # cache expensive distance calculation
+@functools.lru_cache(maxsize=int(1e6)) # cache expensive distance calculation
 def compute_distance(x,y):
     return geopy.distance.great_circle(x, y).km
 
@@ -265,6 +265,7 @@ class ServiceEvaluator:
 
         # loop over different services
         for serviceType, serviceMappedPositions in self.servicePositions.items():
+
             self.interactions[serviceType] = {}  # initialise
             # get lat-long data for this servicetype units
             serviceCoordArray = serviceMappedPositions[
@@ -287,7 +288,7 @@ class ServiceEvaluator:
 
                     for iUnit, thisUnit in enumerate(self.unitsTree[serviceType]):
 
-                        if iUnit>0 and iUnit % 100 == 0: print('... %i units done' % iUnit)
+                        if iUnit>0 and iUnit % 500 == 0: print('... %i units done' % iUnit)
                         # each row can be used to drop positions that are too far:
                         # we flag the positions that are within
                         # the threshold and we compute values just for them
@@ -307,28 +308,30 @@ class ServiceEvaluator:
         '''
         STEP 2 & 3: get estimates of attendance for each service unit
         '''
-        # initialise units loads
-        #self.unit
-
         for sType, ages in self.interactions.items():
             # initialise group loads for every unit given by current ageGroup
             groupLoads = np.zeros([self.servicePositions[sType].shape[0], len(AgeGroup.all())])
+            unassignedPop = np.zeros(len(AgeGroup.all()))
             for iAge, ageGroup in enumerate(ages):
                 interactions = self.interactions[sType][ageGroup]
                 sumsAtPositions = interactions.sum(axis=0)
                 bAboveThr = sumsAtPositions > common_cfg.kernelValueCutoff
                 # compute coefficients to apply to population values
                 loadCoefficients = np.zeros_like(interactions)
-                loadCoefficients[:,bAboveThr] = interactions[bAboveThr]/sumsAtPositions[bAboveThr]
-
+                loadCoefficients[:,bAboveThr] = interactions[:,bAboveThr]/sumsAtPositions[bAboveThr]
                 # compute coefficients to apply to population values
                 groupLoads[:,iAge] = np.matmul(loadCoefficients, agesData[ageGroup])
+                unassignedPop[iAge] = agesData[ageGroup][~bAboveThr].sum()
+                print('%s: %s -- unassigned: %i | Total: %i' % (
+                    sType, ageGroup, unassignedPop[iAge], agesData[ageGroup].sum()))
+
+            # collect loads for the different age groups
             totalLoads = groupLoads.sum(axis=1)
 
+            # store unit loads in existing instances
             for iUnit, unit in enumerate(self.unitsTree[sType]):
                 unit.attendance = totalLoads[iUnit]
 
-            print(totalLoads.sum())
         return None
 
 
