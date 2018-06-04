@@ -223,7 +223,7 @@ class ServiceEvaluator:
             else:
                 continue  # no units for this servicetype, do not create key
 
-    def evaluate_services_at(self, demandData):
+    def evaluate_services_at(self, demandData, bEvaluateAttendance=False):
         assert isinstance(demandData, DemandFrame), 'Expected MappedPositionsFrame'
 
         agesData = demandData.agesFrame
@@ -236,12 +236,16 @@ class ServiceEvaluator:
         targetsCoordArray = agesData[common_cfg.coordColNames[::-1]].as_matrix()
         self._evaluate_interactions_at(targetsCoordArray)
 
-        # STEPS 2 & 3: get estimates of attendance for each service unit
-        self._compute_attendance_from_interactions(agesData)
+        if bEvaluateAttendance:
 
-        # STEP 4 & FINAL STEP: correct interactions (NOT IMPLEMENTED YET)
-        #  with unit attendance and aggregate unit contributions
-        #  according to the service type norm
+            # STEPS 2 & 3: get estimates of attendance for each service unit
+            self._compute_attendance_from_interactions(agesData)
+
+            # STEP 4: correct interactions (NOT IMPLEMENTED YET)
+            #  with unit attendance and
+            pass
+
+        # FINAL STEP: aggregate unit contributions according to the service type norm
         for sType, ages in self.interactions.items():
             for ageGroup in ages:
                 valuesStore[sType][ageGroup] = \
@@ -311,8 +315,14 @@ class ServiceEvaluator:
             groupLoads = np.zeros([self.servicePositions[sType].shape[0], len(AgeGroup.all())])
             for iAge, ageGroup in enumerate(ages):
                 interactions = self.interactions[sType][ageGroup]
-                groupLoads[:,iAge] = np.matmul(interactions,
-                                               1/(interactions.sum(axis=0))*agesData[ageGroup])
+                sumsAtPositions = interactions.sum(axis=0)
+                bAboveThr = sumsAtPositions > common_cfg.kernelValueCutoff
+                # compute coefficients to apply to population values
+                loadCoefficients = np.zeros_like(interactions)
+                loadCoefficients[:,bAboveThr] = interactions[bAboveThr]/sumsAtPositions[bAboveThr]
+
+                # compute coefficients to apply to population values
+                groupLoads[:,iAge] = np.matmul(loadCoefficients, agesData[ageGroup])
             totalLoads = groupLoads.sum(axis=1)
 
             for iUnit, unit in enumerate(self.unitsTree[sType]):
