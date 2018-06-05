@@ -22,6 +22,10 @@ positionsCol = 'Positions'
 # Kernel evaluation speedup
 kernelValueCutoff = 1e-4  # interaction values below this level will be set to 0
 kernelStartZeroGuess = 1  # initial input for kernel in solving
+# Clip level for demand correction - maximum multiple that can be applied in correcting service
+# level
+demandCorrectionClip = 1.01
+assert demandCorrectionClip > 1, 'The clipping factor should be greater than 1'
 
 # Compute thresholds
 kmStep = geodist.great_circle(kilometers=1)
@@ -119,4 +123,3 @@ def csv_to_geojson(input_fp, output_fp):
                             .to_json())
     with open(output_fp, 'w') as geojson_file:
         geojson_file.write(geojson_data)
-

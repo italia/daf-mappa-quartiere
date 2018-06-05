@@ -127,11 +127,6 @@ class ServiceUnit:
 
         return np.squeeze(score)
 
-    @property
-    def users(self):
-        return list(self.propagation.keys())
-
-
 ## Mapped positions frame class
 class MappedPositionsFrame(pd.DataFrame):
     '''A class to collect an array of positions alongside areas labels'''
@@ -286,8 +281,9 @@ class ServiceEvaluator:
             # FINAL STEP: aggregate unit contributions according to the service type norm
             for sType, ages in self.interactions.items():
                 for ageGroup in ages:
-                    valuesStore[sType][ageGroup] = \
-                        sType.aggregate_units(self.interactions[sType][ageGroup], axis=0)
+                    valuesStore[sType][ageGroup] = sType.aggregate_units(
+                        self.interactions[sType][ageGroup],
+                        axis=0)
 
         return valuesStore
 
@@ -445,7 +441,6 @@ class DemandFrame(pd.DataFrame):
 
 
 ### KPI calculation
-
 class KPICalculator:
     '''Class to aggregate demand and evaluate section based and position based KPIs'''
 
