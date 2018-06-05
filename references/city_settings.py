@@ -5,6 +5,7 @@ if rootDir not in sys.path:
     sys.path.append(rootDir)
 
 import geopandas as gpd
+import shapely
 
 from src.models.city_items import ServiceType
 from references import common_cfg
@@ -16,9 +17,14 @@ class ModelCity(dict):
         self.name = name
         self.source = zonesPath
         self.zoomCenter = zoomCenterTuple
+        self.istatCpaData = self._get_istat_cpa_data()
+        # precompute city boundary
+        self.boundary = shapely.ops.cascaded_union(self.istatCpaData.geometry)
+        self.convhull = self.boundary.convex_hull
+
         super().__init__(serviceLayersDict)
 
-    def get_istat_cpa_data(self):
+    def _get_istat_cpa_data(self):
         # hardcoded filename standard
         loaded = gpd.read_file(os.path.join(self.loadFolder, self.name + '_sezioni.geojson'))
 

@@ -436,7 +436,7 @@ class DemandFrame(pd.DataFrame):
     def create_from_istat_cpa(cityName):
         '''Constructor caller for DemandFrame'''
         cityConfig = city_settings.get_city_config(cityName)
-        frame = DemandFrame(cityConfig.get_istat_cpa_data(), bDuplicatesCheck=False)
+        frame = DemandFrame(cityConfig.istatCpaData, bDuplicatesCheck=False)
         return frame
 
 
