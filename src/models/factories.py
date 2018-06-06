@@ -48,7 +48,7 @@ class UnitFactory:
             if not all(bWithinBoundary):
                 print('%s -- dropping %i units outside city.' % (self.servicetype, sum(
                     ~bWithinBoundary)))
-                self._rawData = self._rawData.iloc[bWithinBoundary, :]
+                self._rawData = self._rawData.iloc[bWithinBoundary, :].reset_index()
 
             # store geolocations as geopy Point
             locations = [geopy.Point(yx) for yx in zip(
@@ -93,7 +93,7 @@ class SchoolFactory(UnitFactory):
 
     servicetype = ServiceType.School
         
-    def load(self, meanRadius):
+    def load(self, meanRadius, privateRescaling=1):
         
         assert meanRadius, 'Please provide a reference radius for the mean school size'
         (propertData, locations) = super().extract_locations()
@@ -108,10 +108,13 @@ class SchoolFactory(UnitFactory):
         
         schoolTypes = propertData[typeCol].unique()
         assert set(schoolTypes) <= set(typeAgeDict.keys()), 'Unrecognized types in input'
-        
+
         # set the scale to be proportional to the square root of number of children
         scaleData = propertData[scaleCol]**.5
-        scaleData = scaleData/scaleData.mean() * meanRadius #mean value is mapped to input parameter
+        # do the normalization on public schools
+        publicAttendanceMean = scaleData[propertData.bStatale].mean()
+        # mean value is mapped to input parameter
+        scaleData = scaleData/publicAttendanceMean* meanRadius
         propertData[scaleCol] = scaleData 
         unitList = []
                 
@@ -122,13 +125,17 @@ class SchoolFactory(UnitFactory):
 
             for iUnit in range(typeData.shape[0]):
                 rowData = typeData.iloc[iUnit,:]
-                attrDict = {'level':scType}
+                attrDict = {'level':scType, 'Public':rowData['bStatale']}
                 thisUnit = ServiceUnit(self.servicetype, 
                         name=rowData[nameCol], 
                         position=typeLocations[iUnit], 
                         ageDiffusionIn=typeAgeDict[scType], 
                         scaleIn=rowData[scaleCol],
                         attributesIn=attrDict)
+
+                if not attrDict['Public'] and privateRescaling !=1:
+                    thisUnit.transform_kernels_with_factor(privateRescaling)
+
                 unitList.append(thisUnit)
         
         return unitList

@@ -71,42 +71,56 @@ class ServiceUnit:
         if bThresholdsInput:
             assert all([isinstance(kern, gaussKern) for kern in self.kernel.values()]), \
                 'Unexpected kernel type in ServiceUnit'
-
             assert all(
                 [val > 0 for val in kernelThresholds.values()]), 'Thresholds must be positive'
             self.kerThresholds.update(kernelThresholds)
         else:
-            for ageGroup in self.kernel.keys():
-                kern = self.kernel[ageGroup]
-                thrValue = np.Inf
-                if isinstance(kern, gaussKern):
-                    def fun_to_solve(x):
-                        out = self.kernel[ageGroup](
-                            x, np.array([[0], ])) - common_cfg.kernelValueCutoff
-                        return out.flatten()
+            self._compute_kernel_thresholds()
 
-                    initGuess = common_cfg.kernelStartZeroGuess * self.scale
+        # initialise attendance
+        self.attendance = np.nan
 
-                    for k in range(3):  # try 3 alternatives
-                        solValue, _, flag, msg = fsolve(fun_to_solve, np.array(initGuess),
-                                                        full_output=True)
-                        if flag == 1:
-                            thrValue = solValue  # assign found value
-                            break
-                        else:
-                            initGuess = initGuess * 1.1
-                    if flag != 1:
-                        print('WARNING: could not compute thresholds for unit %s, age %s' % \
-                              (self.name, ageGroup))
+    def _compute_kernel_thresholds(self):
+        '''Triggers kernel thresholds computation for all ages groups'''
+        for ageGroup in self.kernel.keys():
+            kern = self.kernel[ageGroup]
+            thrValue = np.Inf
+            if not isinstance(kern, gaussKern):
+                print('WARNING: non gaussian class found in kernel: type is %s' % \
+                      type(kern))
+            def fun_to_solve(x):
+                out = self.kernel[ageGroup](
+                    x, np.array([[0], ])) - common_cfg.kernelValueCutoff
+                return out.flatten()
+
+            initGuess = common_cfg.kernelStartZeroGuess * self.scale
+
+            for k in range(3):  # try 3 alternatives
+                solValue, _, flag, msg = fsolve(fun_to_solve,
+                                                np.array(initGuess), full_output=True)
+                if flag == 1:
+                    thrValue = solValue  # assign found value
+                    break
                 else:
-                    print('WARNING: could not compute thresholds for kernel type %s' % \
-                          type(kern))
+                    initGuess = initGuess * 1.1
+            if flag != 1:
+                print('WARNING: could not compute thresholds for unit %s, age %s' % \
+                      (self.name, ageGroup))
 
-                # assign positive value as threshold
-                self.kerThresholds[ageGroup] = abs(thrValue)
+            # assign positive value as threshold
+            self.kerThresholds[ageGroup] = abs(thrValue)
 
-            # initialise attendance
-            self.attendance = np.nan
+    def transform_kernels_with_factor(self, kValue):
+        '''This function applies the transformation:
+          newKernel = k * oldKernel(x/k) '''
+        assert kValue > 0, 'Expected positive factor'
+        for ageGroup in self.kernel.keys():
+            # change lengthscale
+            self.kernel[ageGroup].length_scale = self.kernel[ageGroup].length_scale/kValue
+            self.kernel[ageGroup] = kValue * self.kernel[ageGroup]
+
+        # trigger threshold recomputation
+        self._compute_kernel_thresholds()
 
     def evaluate(self, targetCoords, ageGroup):
         # evaluate kernel to get service level score.
