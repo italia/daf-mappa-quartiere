@@ -11,6 +11,8 @@ from sklearn import gaussian_process
 ## TODO: find way to put this into some global settings
 import os
 import sys
+import shapely
+
 rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
     sys.path.append(rootDir)
@@ -23,10 +25,13 @@ from src.models.core import ServiceUnit, ServiceEvaluator, ServiceValues, Mapped
     
 ## UnitFactory father class
 class UnitFactory:
-    def __init__(self, path, sepInput=';', decimalInput=','):
+    def __init__(self, path, boundary, sepInput=';', decimalInput=','):
         assert os.path.isfile(path), 'File "%s" not found' % path
         self.filepath = path
-
+        if boundary:
+            assert isinstance(boundary,  (shapely.geometry.MultiPolygon, shapely.geometry.Polygon)),\
+                'Boundary expected as Polygon or MultiPolygon'
+        self.boundary = boundary
         self._rawData = pd.read_csv(self.filepath, sep=sepInput, decimal=decimalInput)
         
     def extract_locations(self):
@@ -34,12 +39,26 @@ class UnitFactory:
         defaultLocationColumns = ['Lat', 'Long']
         if set(defaultLocationColumns).issubset(set(self._rawData.columns)):
             print('Location data found')
+            # check and drop units outside provided city boundary
+            geometry = [shapely.geometry.Point(xy) for xy in zip(
+                self._rawData[defaultLocationColumns[1]],
+                self._rawData[defaultLocationColumns[0]])]
+            bWithinBoundary = np.array(list(map(lambda p: p.within(self.boundary), geometry)))
+
+            if not all(bWithinBoundary):
+                print('%s -- dropping %i units outside city.' % (self.servicetype, sum(
+                    ~bWithinBoundary)))
+                self._rawData = self._rawData.iloc[bWithinBoundary, :]
+
             # store geolocations as geopy Point
-            locations = [geopy.Point(
-                self._rawData.loc[i, defaultLocationColumns]) for i in range(self.nUnits)]
+            locations = [geopy.Point(yx) for yx in zip(
+                self._rawData[defaultLocationColumns[0]],
+                self._rawData[defaultLocationColumns[1]])]
+
             propertData = self._rawData.drop(defaultLocationColumns, axis=1)
+
         else:
-            raise 'Locations not found - not implemented!'
+            raise NotImplementedError('Locations not found - not implemented!')
 
         return propertData, locations
 
@@ -48,30 +67,31 @@ class UnitFactory:
         return self._rawData.shape[0]
 
     @staticmethod
-    def createLoader(serviceType, path):
-        if serviceType == ServiceType.School:
-            return SchoolFactory(path)
-        elif serviceType == ServiceType.Library:
-            return LibraryFactory(path)
-        elif serviceType == ServiceType.TransportStop:
-            return TransportStopFactory(path)
-        elif serviceType == ServiceType.Pharmacy:
-            return PharmacyFactory(path)
+    def createLoader(serviceType, path, boundary):
+        typeFactory = [factory for factory in UnitFactory.__subclasses__() \
+                       if factory.servicetype ==serviceType]
+        assert len(typeFactory) <= 1, 'Duplicates in loaders types'
+        if typeFactory:
+            return typeFactory[0](path, boundary)
         else:
             print ("We're sorry, this service has not been implemented yet!")
+            return []
 
     @staticmethod
     def make_loaders_for_city(modelCity):
-        paths = modelCity.servicePaths
-        return {s.label: UnitFactory.createLoader(s, paths[s]) for s in modelCity.keys()}
+        loadersDict = {}
+        for sType in modelCity.keys():
+            loadersDict[sType.label] = UnitFactory.createLoader(
+                serviceType=sType,
+                path=modelCity.servicePaths[sType],
+                boundary=modelCity.convhull)
+        return loadersDict
 
             
 ## UnitFactory children classes
 class SchoolFactory(UnitFactory):
-    
-    def __init__(self, path):
-        super().__init__(path)
-        self.servicetype = ServiceType.School
+
+    servicetype = ServiceType.School
         
     def load(self, meanRadius):
         
@@ -115,10 +135,11 @@ class SchoolFactory(UnitFactory):
 
 
 class LibraryFactory(UnitFactory):
-    
-    def __init__(self, path):
-        super().__init__(path, decimalInput='.')
-        self.servicetype = ServiceType.Library
+
+    servicetype = ServiceType.Library
+
+    def __init__(self, path, boundary):
+        super().__init__(path, boundary, decimalInput='.')
         
     def load(self, meanRadius):
         
@@ -162,9 +183,10 @@ class LibraryFactory(UnitFactory):
 
 class TransportStopFactory(UnitFactory):
 
-    def __init__(self, path):
-        super().__init__(path, decimalInput='.')
-        self.servicetype = ServiceType.TransportStop
+    servicetype = ServiceType.TransportStop
+
+    def __init__(self, path, boundary):
+        super().__init__(path, boundary, decimalInput='.')
 
     def load(self, meanRadius):
 
@@ -208,9 +230,10 @@ class TransportStopFactory(UnitFactory):
 
 class PharmacyFactory(UnitFactory):
 
-    def __init__(self, path):
-        super().__init__(path)
-        self.servicetype = ServiceType.Pharmacy
+    servicetype = ServiceType.Pharmacy
+
+    def __init__(self, path, boundary):
+        super().__init__(path, boundary, decimalInput='.')
 
     def load(self, meanRadius):
         assert meanRadius, 'Please provide a reference radius for pharmacies'
@@ -241,9 +264,7 @@ class PharmacyFactory(UnitFactory):
 
 class UrbanGreenFactory(UnitFactory):
 
-    def __init__(self, path):
-        super().__init__(path)
-        self.servicetype = ServiceType.UrbanGreen
+    servicetype = ServiceType.UrbanGreen
 
     def load(self, meanRadius):
         assert meanRadius, 'Please provide a reference radius for urban green'
