@@ -19,7 +19,6 @@ class Map extends Component {
 	    property: props.layer.id,
 	    neighborhood: "none"
 	};
-	console.log(props.layer)
 
 	this.onHoverBarChart = this.onHoverBarChart.bind(this);
 	this.onMouseOutBarChart = this.onMouseOutBarChart.bind(this);
@@ -27,10 +26,6 @@ class Map extends Component {
     };
     
     componentWillReceiveProps(nextProps) {
-	console.log("props");
-	console.log(this.props);
-	console.log("nextProps");
-	console.log(nextProps);
 	if (this.props.hoverElement !== nextProps.hoverElement) {
 	    this.setState({ hoverElement: nextProps.hoverElement });
 	}
@@ -48,9 +43,6 @@ class Map extends Component {
 	    this.createMap();
 	}
 	if (this.props.options.city != nextProps.options.city) {
-	    console.log(this.props.city);
-	    console.log(nextProps.options.city)
-	    console.log("changing city");
 	    if (this.map !== undefined) {
 		this.map.remove();
 		this.setState({
@@ -69,7 +61,6 @@ class Map extends Component {
     };
     
     createMap() {
-	console.log("create map");
 	this.map = new mapboxgl.Map({
             container: this.mapContainer,
             style: 'mapbox://styles/mapbox/light-v9',
@@ -133,7 +124,7 @@ class Map extends Component {
                 paint: {"fill-color": "red", "fill-opacity": 1},
                 filter: ["==", props.joinField, ""]
             }, this.firstSymbolId);
-
+/*
 	    //add geojson with data points
 	    if (props.layer.raw !== "none") {
 		map.addSource(props.layer.id + "_raw", {
@@ -146,12 +137,12 @@ class Map extends Component {
 		    type: "circle",
 		    source: props.layer.id + "_raw",
 		    paint: {
-			"circle-radius": 6,
+			"circle-radius": 3,
 			"circle-color": props.layer.raw.color
 		    }
 		});
 	    }
-	    
+*/	    
 	    map.on('mousemove', 'Quartieri', function(e) {
 		var hoverElement = e.features[0].properties[props.joinField];
 		self.setState({ hoverElement: hoverElement }); 
