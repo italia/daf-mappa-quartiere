@@ -5,6 +5,7 @@ if rootDir not in sys.path:
     sys.path.append(rootDir)
 
 import geopandas as gpd
+import shapely
 
 from src.models.city_items import ServiceType
 from references import common_cfg
@@ -16,9 +17,14 @@ class ModelCity(dict):
         self.name = name
         self.source = zonesPath
         self.zoomCenter = zoomCenterTuple
+        self.istatCpaData = self._get_istat_cpa_data()
+        # precompute city boundary
+        self.boundary = shapely.ops.cascaded_union(self.istatCpaData.geometry)
+        self.convhull = self.boundary.convex_hull
+
         super().__init__(serviceLayersDict)
 
-    def get_istat_cpa_data(self):
+    def _get_istat_cpa_data(self):
         # hardcoded filename standard
         loaded = gpd.read_file(os.path.join(self.loadFolder, self.name + '_sezioni.geojson'))
 
@@ -44,7 +50,7 @@ defaultCities = [
         '',
         (11,[9.191383, 45.464211]), #zoom level and center for d3
         {ServiceType.School: 'Milano_scuole.csv',
-         ServiceType.Library: 'Milano_biblioteche.csv',
+         #ServiceType.Library: 'Milano_biblioteche.csv',
          ServiceType.TransportStop: 'Milano_TPL.csv',
          ServiceType.Pharmacy: 'Milano_farmacie.csv',
          }),
@@ -53,7 +59,7 @@ defaultCities = [
         '',
         (12,[7.191383, 46]), #zoom level and center for d3
         {ServiceType.School: 'Torino_scuole.csv',
-         ServiceType.Library: 'Torino_biblioteche.csv',
+         #ServiceType.Library: 'Torino_biblioteche.csv',
          ServiceType.TransportStop: 'Torino_TPL.csv',
          ServiceType.Pharmacy: 'Torino_farmacie.csv',
          })

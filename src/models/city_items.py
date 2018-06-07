@@ -56,9 +56,9 @@ class ServiceArea(Enum):
     
     
 class SummaryNorm(Enum):
-    l1= lambda x: sum(abs(x))
-    l2= lambda x: (sum(x**2))**0.5
-    lInf= lambda x: max(x)
+    l1 = 1
+    l2 = 2
+    lInf = np.inf
     
 
 class ServiceType(Enum):
@@ -112,7 +112,8 @@ class ServiceType(Enum):
     
     def aggregate_units(self, unitValues, axis=1):
         # assumes positions are stacked in rows
-        return np.apply_along_axis(self.aggrNorm, axis, unitValues)
+        return np.apply_along_axis(
+            lambda x: np.linalg.norm(x, ord=self.aggrNorm.value), axis, unitValues)
     
     @staticmethod
     def all():

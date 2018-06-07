@@ -30,3 +30,5 @@ src/visualization/README.txt
 \.idea/
 
 *.pickle
+
+src/visualization/package-lock\.json
