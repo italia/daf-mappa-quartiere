@@ -32,7 +32,7 @@ def compute_distance(x, y):
 
 ## ServiceUnit class
 class ServiceUnit:
-    def __init__(self, service, name, position, scaleIn,
+    def __init__(self, service, name, id, position, scaleIn,
                  ageDiffusionIn={}, kernelThresholds=None, attributesIn={}):
         assert isinstance(position, geopy.Point), 'Position must be a geopy Point'
         assert isinstance(service, ServiceType), 'Service must belong to the Eum'
@@ -49,6 +49,7 @@ class ServiceUnit:
             bThresholdsInput = False
 
         self.name = name
+        self.id = id
         self.service = service
 
         # A ServiceType can have many sites, so each unit has its own. 

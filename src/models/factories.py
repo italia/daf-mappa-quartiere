@@ -17,7 +17,7 @@ rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
     sys.path.append(rootDir)
 
-from references import common_cfg
+from references import city_settings
 
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
 from src.models.core import ServiceUnit, ServiceEvaluator, ServiceValues, MappedPositionsFrame
@@ -62,6 +62,10 @@ class UnitFactory:
 
         return propertData, locations
 
+    def save_attendance_to_units_geojson(self, attendance):
+        ''' Adds attendance data and export loaded units as geojson'''
+        pass
+
     @property
     def nUnits(self):
         return self._rawData.shape[0]
@@ -92,34 +96,34 @@ class UnitFactory:
 class SchoolFactory(UnitFactory):
 
     servicetype = ServiceType.School
-        
+    nameCol = 'DENOMINAZIONESCUOLA'
+    typeCol = 'ORDINESCUOLA'
+    scaleCol = 'ALUNNI'
+    idCol = 'CODSCUOLA'
+
     def load(self, meanRadius, privateRescaling=1):
         
         assert meanRadius, 'Please provide a reference radius for the mean school size'
         (propertData, locations) = super().extract_locations()
-        
-        nameCol = 'DENOMINAZIONESCUOLA'
-        typeCol = 'ORDINESCUOLA'
-        scaleCol = 'ALUNNI'
-        
+
         typeAgeDict = {'SCUOLA PRIMARIA': {AgeGroup.ChildPrimary:1},
                       'SCUOLA SECONDARIA I GRADO': {AgeGroup.ChildMid:1},
                       'SCUOLA SECONDARIA II GRADO': {AgeGroup.ChildHigh:1},}
         
-        schoolTypes = propertData[typeCol].unique()
+        schoolTypes = propertData[self.typeCol].unique()
         assert set(schoolTypes) <= set(typeAgeDict.keys()), 'Unrecognized types in input'
 
         # set the scale to be proportional to the square root of number of children
-        scaleData = propertData[scaleCol]**.5
+        scaleData = propertData[self.scaleCol]**.5
         # do the normalization on public schools
         publicAttendanceMean = scaleData[propertData.bStatale].mean()
         # mean value is mapped to input parameter
         scaleData = scaleData/publicAttendanceMean* meanRadius
-        propertData[scaleCol] = scaleData 
+        propertData[self.scaleCol] = scaleData
         unitList = []
                 
         for scType in schoolTypes:
-            bThisGroup = propertData[typeCol]==scType
+            bThisGroup = propertData[self.typeCol]==scType
             typeData = propertData[bThisGroup]
             typeLocations = [l for i,l in enumerate(locations) if bThisGroup[i]]
 
@@ -127,10 +131,11 @@ class SchoolFactory(UnitFactory):
                 rowData = typeData.iloc[iUnit,:]
                 attrDict = {'level':scType, 'Public':rowData['bStatale']}
                 thisUnit = ServiceUnit(self.servicetype, 
-                        name=rowData[nameCol], 
+                        name=rowData[self.nameCol],
+                        id=rowData[self.idCol],
                         position=typeLocations[iUnit], 
                         ageDiffusionIn=typeAgeDict[scType], 
-                        scaleIn=rowData[scaleCol],
+                        scaleIn=rowData[self.scaleCol],
                         attributesIn=attrDict)
 
                 if not attrDict['Public'] and privateRescaling !=1:
@@ -144,6 +149,8 @@ class SchoolFactory(UnitFactory):
 class LibraryFactory(UnitFactory):
 
     servicetype = ServiceType.Library
+    nameCol = 'denominazioni.ufficiale'
+    typeCol = 'tipologia-funzionale'
 
     def __init__(self, path, boundary):
         super().__init__(path, boundary, decimalInput='.')
@@ -152,9 +159,6 @@ class LibraryFactory(UnitFactory):
         
         assert meanRadius, 'Please provide a reference radius for the mean library size'
         (propertData, locations) = super().extract_locations()
-        
-        nameCol = 'denominazioni.ufficiale'
-        typeCol = 'tipologia-funzionale'
         
         # Modifica e specifica che per le fasce d'età
         typeAgeDict = {'Specializzata': {group:1 for group in AgeGroup.all()},
@@ -165,13 +169,13 @@ class LibraryFactory(UnitFactory):
                       'Istituto di insegnamento superiore': {AgeGroup.ChildPrimary:1},
                       'Nazionale': {AgeGroup.ChildPrimary:1},}
         
-        libraryTypes = propertData[typeCol].unique()
+        libraryTypes = propertData[self.typeCol].unique()
         assert set(libraryTypes) <= set(typeAgeDict.keys()), 'Unrecognized types in input'
         
         unitList = []
                 
         for libType in libraryTypes:
-            bThisGroup = propertData[typeCol]==libType
+            bThisGroup = propertData[self.typeCol]==libType
             typeData = propertData[bThisGroup]
             typeLocations = [l for i,l in enumerate(locations) if bThisGroup[i]]
 
@@ -179,7 +183,8 @@ class LibraryFactory(UnitFactory):
                 rowData = typeData.iloc[iUnit,:]
                 attrDict = {'level':libType}
                 thisUnit = ServiceUnit(self.servicetype, 
-                        name=rowData[nameCol], 
+                        name=rowData[self.nameCol],
+                        id=None,
                         position=typeLocations[iUnit], 
                         ageDiffusionIn=typeAgeDict[libType],
                         attributesIn=attrDict)
@@ -191,6 +196,9 @@ class LibraryFactory(UnitFactory):
 class TransportStopFactory(UnitFactory):
 
     servicetype = ServiceType.TransportStop
+    nameCol = 'stopCode'
+    typeCol = 'routeDesc'
+    idCol = 'stopCode'
 
     def __init__(self, path, boundary):
         super().__init__(path, boundary, decimalInput='.')
@@ -207,9 +215,6 @@ class TransportStopFactory(UnitFactory):
         assert all(propertData[routeTypeCol].isin(gtfsTypesDict.keys())), 'Unexpected route type'
         propertData['routeDesc'] = propertData[routeTypeCol].replace(gtfsTypesDict)
 
-        nameCol = 'stopCode'
-        typeCol = 'routeDesc'
-
         scaleDict = {0:meanRadius, 1: 2*meanRadius, 3: meanRadius}
         thresholdsDict = {t: None for t in scaleDict.keys()}
 
@@ -217,10 +222,11 @@ class TransportStopFactory(UnitFactory):
         for iUnit in range(propertData.shape[0]):
             rowData = propertData.iloc[iUnit, :]
             unitRouteType = rowData[routeTypeCol]
-            attrDict = {'routeType': rowData[typeCol]}
+            attrDict = {'routeType': rowData[self.typeCol]}
             cachedThresholds = thresholdsDict[unitRouteType] # this is None by default
             thisUnit = ServiceUnit(self.servicetype,
-                                   name=rowData[nameCol],
+                                   name=rowData[self.nameCol],
+                                   id=rowData[self.idCol],
                                    position=locations[iUnit],
                                    scaleIn=scaleDict[unitRouteType],
                                    ageDiffusionIn={g:1 for g in AgeGroup.all_but(
@@ -238,6 +244,8 @@ class TransportStopFactory(UnitFactory):
 class PharmacyFactory(UnitFactory):
 
     servicetype = ServiceType.Pharmacy
+    nameCol = 'CODICEIDENTIFICATIVOFARMACIA'
+    idCol = nameCol
 
     def __init__(self, path, boundary):
         super().__init__(path, boundary, decimalInput='.')
@@ -246,7 +254,6 @@ class PharmacyFactory(UnitFactory):
         assert meanRadius, 'Please provide a reference radius for pharmacies'
         (propertData, locations) = super().extract_locations()
 
-        nameCol = 'CODICEIDENTIFICATIVOFARMACIA'
         colAttributes = {'Descrizione': 'DESCRIZIONEFARMACIA', 'PartitaIva': 'PARTITAIVA'}
 
         unitList = []
@@ -255,7 +262,8 @@ class PharmacyFactory(UnitFactory):
             rowData = propertData.iloc[iUnit, :]
             attrDict = {name:rowData[col] for name, col in colAttributes.items()}
             thisUnit = ServiceUnit(self.servicetype,
-                                   name=rowData[nameCol].astype(str),
+                                   name=rowData[self.nameCol].astype(str),
+                                   id = rowData[self.idCol].astype(str),
                                    position=locations[iUnit],
                                    scaleIn=meanRadius,
                                    ageDiffusionIn={g: 1 for g in AgeGroup.all()},
