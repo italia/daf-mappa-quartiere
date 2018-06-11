@@ -149,9 +149,10 @@ class App extends Component {
             });
     };
 
-    /*
-    writeDashboardFile(jsonLayer) {
-	jsonLayer = jsonLayer.map(v => {
+    
+    /*writeDashboardFile(jsonLayer) {
+	var m = jsonLayer.map(v => {
+	    console.log(v)
             v["DAF1"] = v.P60 - v.P61 - v.P62;
             v["DAF2"] = v.P1 - v.ST14;
             v["DAF3"] = v.P14 + v.P15 - v.P30 - v.P31;
@@ -162,7 +163,7 @@ class App extends Component {
             v["DAF8"] = v.P24 + v.P25 - v.P40 - v.P41;
             v["DAF9"] = v.P26 + v.P27 - v.P42 - v.P43;
             v["DAF10"] = v.P28 + v.P29 - v.P44 - v.P45;
-                    v["DAF11"] = v.P30 + v.P31;
+            v["DAF11"] = v.P30 + v.P31;
             v["DAF12"] = v.P32 + v.P33;
             v["DAF13"] = v.P34 + v.P35;
             v["DAF14"] = v.P36 + v.P37;
@@ -174,7 +175,7 @@ class App extends Component {
             v["DAF20"] = v.P139/(v.P138+v.P139);
             return v;
         });
-        console.log(JSON.stringify(jsonLayer.map(v => {return {
+        console.log(JSON.stringify(m.map(v => {return {
             P1: v.P1,
             P61: v.P61,
             P62: v.P62,
