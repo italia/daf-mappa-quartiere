@@ -269,8 +269,7 @@ class JSONWriter:
 
     def write_all_files_to_default_path(self):
         # build and write menu
-        with open(os.path.join(
-                '../', common_cfg.vizOutputPath, 'menu.json'), 'w') as menuFile:
+        with open(os.path.join(common_cfg.vizOutputPath, 'menu.json'), 'w') as menuFile:
             json.dump(self.make_menu(), menuFile, sort_keys=True,
                       indent=4, separators=(',', ' : '))
 
@@ -278,7 +277,7 @@ class JSONWriter:
         areasOutput = self.make_serviceareas_output()
         for name, data in areasOutput.items():
             filename = '%s_%s.json' % (self.city.name, name)
-            with open(os.path.join('../', common_cfg.outputPath,
+            with open(os.path.join(common_cfg.outputPath,
                                    filename), 'w') as areaFile:
                 json.dump(data, areaFile, sort_keys=True,
                           indent=4, separators=(',', ' : '))

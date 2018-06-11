@@ -48,8 +48,9 @@ excludedColumns = ['A44', 'E27']+['PF%i'%(i+1) for i in range(9)] +\
     ['SEZ', 'SHAPE_LEN', ]
 
 # Json/GeoJson path parameters
-outputPath = 'data/output'
-vizOutputPath = 'data/output'
+outputPath = os.path.join(projRoot,'data/output')
+unitsOutputPath = os.path.join(projRoot,'data/output/units')
+vizOutputPath = os.path.join(projRoot,'data/output')
 istatLayerName = 'Istat'
 vitalityLayerName = 'Vitality'
 menuGroupTemplate = { 

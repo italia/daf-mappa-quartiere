@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import geopy, geopy.distance
-import shapely
 from sklearn import gaussian_process
 
 ## TODO: find way to put this into some global settings
@@ -17,7 +16,7 @@ rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
     sys.path.append(rootDir)
 
-from references import city_settings
+from references import city_settings, common_cfg
 
 from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
 from src.models.core import ServiceUnit, ServiceEvaluator, ServiceValues, MappedPositionsFrame
@@ -25,13 +24,9 @@ from src.models.core import ServiceUnit, ServiceEvaluator, ServiceValues, Mapped
     
 ## UnitFactory father class
 class UnitFactory:
-    def __init__(self, path, boundary, sepInput=';', decimalInput=','):
-        assert os.path.isfile(path), 'File "%s" not found' % path
-        self.filepath = path
-        if boundary:
-            assert isinstance(boundary,  (shapely.geometry.MultiPolygon, shapely.geometry.Polygon)),\
-                'Boundary expected as Polygon or MultiPolygon'
-        self.boundary = boundary
+    def __init__(self, model_city, sepInput=';', decimalInput=','):
+        assert isinstance(model_city, city_settings.ModelCity), 'ModelCity expected'
+        self.model_city = model_city
         self._rawData = pd.read_csv(self.filepath, sep=sepInput, decimal=decimalInput)
         
     def extract_locations(self):
@@ -43,7 +38,8 @@ class UnitFactory:
             geometry = [shapely.geometry.Point(xy) for xy in zip(
                 self._rawData[defaultLocationColumns[1]],
                 self._rawData[defaultLocationColumns[0]])]
-            bWithinBoundary = np.array(list(map(lambda p: p.within(self.boundary), geometry)))
+            bWithinBoundary = np.array(list(map(
+                lambda p: p.within(self.model_city.convhull), geometry)))
 
             if not all(bWithinBoundary):
                 print('%s -- dropping %i units outside city.' % (self.servicetype, sum(
@@ -62,21 +58,57 @@ class UnitFactory:
 
         return propertData, locations
 
-    def save_attendance_to_units_geojson(self, attendance):
-        ''' Adds attendance data and export loaded units as geojson'''
-        pass
+    def save_units_with_attendance_to_geojson(self, unitsList):
+        ''' Trim units to the ones of this loader type and append attendance for matching id.
+        Then export original unit data completed with attendance in geojson format'''
+        data = gpd.GeoDataFrame(self._rawData).copy()
+        # convert bool in GeoDataFrame to str in order to save it
+        for col in data.columns:
+            if data[col].dtype in (np.bool, bool):
+                data[col] = data[col].astype(str)
+        # build geometry column
+        longCol, latCol = common_cfg.coordColNames
+        data = data.set_geometry(
+            [shapely.geometry.Point(xy) for xy in zip(data[longCol], data[latCol])])
+
+        # append attendance
+        compatibleUnits = [u for u in unitsList if u.service == self.servicetype]
+        if compatibleUnits:
+            unitFrame = pd.DataFrame({self.idCol: [u.id for u in compatibleUnits],
+                                      'Affluenza': [u.attendance for u in compatibleUnits]})
+            data = data.merge(unitFrame, on=self.idCol)
+
+        # save file and overwrite if it already exists
+        try:
+            os.remove(self.output_path)
+        except OSError:
+            pass
+
+        data.to_file(self.output_path, driver='GeoJSON')
+
+        return data
 
     @property
     def nUnits(self):
         return self._rawData.shape[0]
 
+    @property
+    def filepath(self):
+        return self.model_city.servicePaths[self.servicetype]
+
+    @property
+    def output_path(self):
+        _, fullfile = os.path.split(self.filepath)
+        filename, _ =os.path.splitext(fullfile)
+        return os.path.join(common_cfg.unitsOutputPath, filename + '.geojson')
+
     @staticmethod
-    def createLoader(serviceType, path, boundary):
+    def get_factory(serviceType):
         typeFactory = [factory for factory in UnitFactory.__subclasses__() \
                        if factory.servicetype ==serviceType]
         assert len(typeFactory) <= 1, 'Duplicates in loaders types'
         if typeFactory:
-            return typeFactory[0](path, boundary)
+            return typeFactory[0]
         else:
             print ("We're sorry, this service has not been implemented yet!")
             return []
@@ -85,10 +117,7 @@ class UnitFactory:
     def make_loaders_for_city(modelCity):
         loadersDict = {}
         for sType in modelCity.keys():
-            loadersDict[sType.label] = UnitFactory.createLoader(
-                serviceType=sType,
-                path=modelCity.servicePaths[sType],
-                boundary=modelCity.convhull)
+            loadersDict[sType.label] = UnitFactory.get_factory(sType)(modelCity)
         return loadersDict
 
             
@@ -152,8 +181,8 @@ class LibraryFactory(UnitFactory):
     nameCol = 'denominazioni.ufficiale'
     typeCol = 'tipologia-funzionale'
 
-    def __init__(self, path, boundary):
-        super().__init__(path, boundary, decimalInput='.')
+    def __init__(self, model_city):
+        super().__init__(model_city, decimalInput='.')
         
     def load(self, meanRadius):
         
@@ -200,8 +229,8 @@ class TransportStopFactory(UnitFactory):
     typeCol = 'routeDesc'
     idCol = 'stopCode'
 
-    def __init__(self, path, boundary):
-        super().__init__(path, boundary, decimalInput='.')
+    def __init__(self, model_city):
+        super().__init__(model_city, decimalInput='.')
 
     def load(self, meanRadius):
 
@@ -247,8 +276,8 @@ class PharmacyFactory(UnitFactory):
     nameCol = 'CODICEIDENTIFICATIVOFARMACIA'
     idCol = nameCol
 
-    def __init__(self, path, boundary):
-        super().__init__(path, boundary, decimalInput='.')
+    def __init__(self, model_city):
+        super().__init__(model_city, decimalInput='.')
 
     def load(self, meanRadius):
         assert meanRadius, 'Please provide a reference radius for pharmacies'
@@ -263,7 +292,7 @@ class PharmacyFactory(UnitFactory):
             attrDict = {name:rowData[col] for name, col in colAttributes.items()}
             thisUnit = ServiceUnit(self.servicetype,
                                    name=rowData[self.nameCol].astype(str),
-                                   id = rowData[self.idCol].astype(str),
+                                   id = rowData[self.idCol],
                                    position=locations[iUnit],
                                    scaleIn=meanRadius,
                                    ageDiffusionIn={g: 1 for g in AgeGroup.all()},
