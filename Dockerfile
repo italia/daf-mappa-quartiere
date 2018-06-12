@@ -12,17 +12,7 @@ RUN apt-get update && apt-get install -y \
 #RUN npm install -g node-gyp  
 
 # Copy all local files into the image.
-RUN git clone https://github.com/esterpantaleo/daf-server
-
-WORKDIR /daf-server
-
-RUN npm install
-
-CMD [ "npm", "start" ]
-
-WORKDIR /
-
-RUN git clone https://github.com/esterpantaleo/daf-mappa-quartiere
+RUN git clone https://github.com/italia/daf-mappa-quartiere
 
 WORKDIR /daf-mappa-quartiere/src/visualization
 
@@ -38,4 +28,4 @@ RUN npm install -g serve
 CMD serve -l 3000 -s build
 
 # Tell Docker about the port we'll run on.
-EXPOSE 3000 4000
+EXPOSE 3000
