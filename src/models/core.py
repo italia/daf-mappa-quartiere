@@ -87,8 +87,14 @@ class ServiceUnit:
             kern = self.kernel[ageGroup]
             thrValue = np.Inf
             if not isinstance(kern, gaussKern):
-                print('WARNING: non gaussian class found in kernel: type is %s' % \
-                      type(kern))
+                # check it's a rescaled gaussian
+                if not (isinstance(kern, gaussian_process.kernels.Product) and
+                        isinstance(kern.k1, gaussian_process.kernels.ConstantKernel) and
+                        isinstance(kern.k2, gaussKern)):
+                    print('WARNING: skipping kernel thresholds for type %s'% type(kern))
+                    # skip this age group
+                    continue
+
             def fun_to_solve(x):
                 out = self.kernel[ageGroup](
                     x, np.array([[0], ])) - common_cfg.kernelValueCutoff

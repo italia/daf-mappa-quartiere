@@ -30,7 +30,7 @@ class UnitFactory:
         self._rawData = pd.read_csv(self.filepath, sep=sepInput, decimal=decimalInput)
         
     def extract_locations(self):
-           
+
         defaultLocationColumns = ['Lat', 'Long']
         if set(defaultLocationColumns).issubset(set(self._rawData.columns)):
             print('Location data found')
@@ -130,7 +130,7 @@ class SchoolFactory(UnitFactory):
     scaleCol = 'ALUNNI'
     idCol = 'CODSCUOLA'
 
-    def load(self, meanRadius, privateRescaling=1):
+    def load(self, meanRadius, privateRescaling=1, sizePowerLaw=0):
         
         assert meanRadius, 'Please provide a reference radius for the mean school size'
         (propertData, locations) = super().extract_locations()
@@ -142,15 +142,19 @@ class SchoolFactory(UnitFactory):
         schoolTypes = propertData[self.typeCol].unique()
         assert set(schoolTypes) <= set(typeAgeDict.keys()), 'Unrecognized types in input'
 
+        attendanceProxy = propertData[self.scaleCol].copy()
+
         # set the scale to be proportional to the square root of number of children
-        scaleData = propertData[self.scaleCol]**.5
-        # do the normalization on public schools
-        publicAttendanceMean = scaleData[propertData.bStatale].mean()
+        scaleData = attendanceProxy**sizePowerLaw
+
         # mean value is mapped to input parameter
-        scaleData = scaleData/publicAttendanceMean* meanRadius
-        propertData[self.scaleCol] = scaleData
+        scaleData = scaleData/scaleData.mean()* meanRadius
+
+        # assign to new column
+        rescaledName = 'SCALE'
+        propertData[rescaledName] = scaleData
         unitList = []
-                
+
         for scType in schoolTypes:
             bThisGroup = propertData[self.typeCol]==scType
             typeData = propertData[bThisGroup]
@@ -164,7 +168,7 @@ class SchoolFactory(UnitFactory):
                         id=rowData[self.idCol],
                         position=typeLocations[iUnit], 
                         ageDiffusionIn=typeAgeDict[scType], 
-                        scaleIn=rowData[self.scaleCol],
+                        scaleIn=rowData[rescaledName],
                         attributesIn=attrDict)
 
                 if not attrDict['Public'] and privateRescaling !=1:
@@ -180,9 +184,10 @@ class LibraryFactory(UnitFactory):
     servicetype = ServiceType.Library
     nameCol = 'denominazioni.ufficiale'
     typeCol = 'tipologia-funzionale'
+    idCol = 'codiceIsil'
 
-    def __init__(self, model_city):
-        super().__init__(model_city, decimalInput='.')
+    #def __init__(self, model_city):
+        #super().__init__(model_city, decimalInput='.')
         
     def load(self, meanRadius):
         
@@ -190,13 +195,19 @@ class LibraryFactory(UnitFactory):
         (propertData, locations) = super().extract_locations()
         
         # Modifica e specifica che per le fasce d'età
-        typeAgeDict = {'Specializzata': {group:1 for group in AgeGroup.all()},
-                      'Importante non specializzata': {group:1 for group in AgeGroup.all()},
-                      'Pubblica': {group:1 for group in AgeGroup.all()},
-                      'NON SPECIFICATA': {AgeGroup.ChildPrimary:1},
-                      'Scolastica': {AgeGroup.ChildPrimary:1},
-                      'Istituto di insegnamento superiore': {AgeGroup.ChildPrimary:1},
-                      'Nazionale': {AgeGroup.ChildPrimary:1},}
+        possibleUsers = AgeGroup.all_but([AgeGroup.Newborn,AgeGroup.Kinder])
+        typeAgeDict = {'Specializzata': {group:1 for group in possibleUsers},
+                      'Importante non specializzata': {group:1 for group in possibleUsers},
+                      'Pubblica': {group:1 for group in possibleUsers},
+                      'NON SPECIFICATA': {group:1 for group in possibleUsers},
+                      'Scolastica': {group:1 for group in [
+                          AgeGroup.ChildPrimary, AgeGroup.ChildMid, AgeGroup.ChildHigh]},
+                      'Istituto di insegnamento superiore': {
+                          group:1 for group in AgeGroup.all_but([AgeGroup.Newborn,
+                                                                 AgeGroup.Kinder,
+                                                                 AgeGroup.ChildPrimary,
+                                                                 AgeGroup.ChildMid])},
+                      'Nazionale': {group:1 for group in possibleUsers},}
         
         libraryTypes = propertData[self.typeCol].unique()
         assert set(libraryTypes) <= set(typeAgeDict.keys()), 'Unrecognized types in input'
@@ -213,7 +224,8 @@ class LibraryFactory(UnitFactory):
                 attrDict = {'level':libType}
                 thisUnit = ServiceUnit(self.servicetype, 
                         name=rowData[self.nameCol],
-                        id=None,
+                        id=rowData[self.idCol],
+                        scaleIn=meanRadius,
                         position=typeLocations[iUnit], 
                         ageDiffusionIn=typeAgeDict[libType],
                         attributesIn=attrDict)

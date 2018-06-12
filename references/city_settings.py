@@ -50,7 +50,7 @@ defaultCities = [
         '',
         (11,[9.191383, 45.464211]), #zoom level and center for d3
         {ServiceType.School: 'Milano_scuole.csv',
-         #ServiceType.Library: 'Milano_biblioteche.csv',
+         ServiceType.Library: 'Milano_biblioteche.csv',
          ServiceType.TransportStop: 'Milano_TPL.csv',
          ServiceType.Pharmacy: 'Milano_farmacie.csv',
          }),
@@ -59,7 +59,7 @@ defaultCities = [
         '',
         (12,[7.191383, 46]), #zoom level and center for d3
         {ServiceType.School: 'Torino_scuole.csv',
-         #ServiceType.Library: 'Torino_biblioteche.csv',
+         ServiceType.Library: 'Torino_biblioteche.csv',
          ServiceType.TransportStop: 'Torino_TPL.csv',
          ServiceType.Pharmacy: 'Torino_farmacie.csv',
          })
