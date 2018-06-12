@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 #RUN npm install -g node-gyp  
 
 # Copy all local files into the image.
-RUN git clone https://github.com/giux78/daf-server
+RUN git clone https://github.com/esterpantaleo/daf-server
 
 WORKDIR /daf-server
 
@@ -22,7 +22,7 @@ CMD [ "npm", "start" ]
 
 WORKDIR /
 
-RUN git clone https://github.com/giux78/daf-mappa-quartiere
+RUN git clone https://github.com/esterpantaleo/daf-mappa-quartiere
 
 WORKDIR /daf-mappa-quartiere/src/visualization
 
