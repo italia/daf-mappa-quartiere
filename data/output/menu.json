@@ -23,23 +23,6 @@
     },
     {
         "city" : "Milano",
-        "id" : "Milano_Salute",
-        "indicators" : [
-            [
-                {
-                    "category" : "Salute",
-                    "dataSource" : "Min. Salute",
-                    "id" : "Pharmacy",
-                    "label" : "Farmacie"
-                }
-            ]
-        ],
-        "sourceId" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
         "id" : "Milano_EducazioneCultura",
         "indicators" : [
             [
@@ -71,6 +54,23 @@
                     "dataSource" : "GTFS Comuni",
                     "id" : "TransportStop",
                     "label" : "Fermate TPL"
+                }
+            ]
+        ],
+        "sourceId" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_Salute",
+        "indicators" : [
+            [
+                {
+                    "category" : "Salute",
+                    "dataSource" : "Min. Salute",
+                    "id" : "Pharmacy",
+                    "label" : "Farmacie"
                 }
             ]
         ],
@@ -143,29 +143,6 @@
     },
     {
         "city" : "Torino",
-        "id" : "Torino_EducazioneCultura",
-        "indicators" : [
-            [
-                {
-                    "category" : "EducazioneCultura",
-                    "dataSource" : "MIUR",
-                    "id" : "School",
-                    "label" : "Scuole"
-                },
-                {
-                    "category" : "EducazioneCultura",
-                    "dataSource" : "MIBACT",
-                    "id" : "Library",
-                    "label" : "Biblioteche"
-                }
-            ]
-        ],
-        "sourceId" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Torino",
         "id" : "Torino_Trasporti",
         "indicators" : [
             [
@@ -208,6 +185,29 @@
                     "dataSource" : "Open Data Comuni",
                     "id" : "UrbanGreen",
                     "label" : "Aree Verdi"
+                }
+            ]
+        ],
+        "sourceId" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_EducazioneCultura",
+        "indicators" : [
+            [
+                {
+                    "category" : "EducazioneCultura",
+                    "dataSource" : "MIBACT",
+                    "id" : "Library",
+                    "label" : "Biblioteche"
+                },
+                {
+                    "category" : "EducazioneCultura",
+                    "dataSource" : "MIUR",
+                    "id" : "School",
+                    "label" : "Scuole"
                 }
             ]
         ],
