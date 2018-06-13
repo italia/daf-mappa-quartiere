@@ -148,32 +148,15 @@
             [
                 {
                     "category" : "EducazioneCultura",
-                    "dataSource" : "MIBACT",
-                    "id" : "Library",
-                    "label" : "Biblioteche"
-                },
-                {
-                    "category" : "EducazioneCultura",
                     "dataSource" : "MIUR",
                     "id" : "School",
                     "label" : "Scuole"
-                }
-            ]
-        ],
-        "sourceId" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Torino",
-        "id" : "Torino_Salute",
-        "indicators" : [
-            [
+                },
                 {
-                    "category" : "Salute",
-                    "dataSource" : "Min. Salute",
-                    "id" : "Pharmacy",
-                    "label" : "Farmacie"
+                    "category" : "EducazioneCultura",
+                    "dataSource" : "MIBACT",
+                    "id" : "Library",
+                    "label" : "Biblioteche"
                 }
             ]
         ],
@@ -191,6 +174,23 @@
                     "dataSource" : "GTFS Comuni",
                     "id" : "TransportStop",
                     "label" : "Fermate TPL"
+                }
+            ]
+        ],
+        "sourceId" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Salute",
+        "indicators" : [
+            [
+                {
+                    "category" : "Salute",
+                    "dataSource" : "Min. Salute",
+                    "id" : "Pharmacy",
+                    "label" : "Farmacie"
                 }
             ]
         ],
@@ -225,6 +225,12 @@
                     "dataSource" : "ISTAT",
                     "id" : "tipo_di_alloggi",
                     "label" : "tipo_di_alloggi"
+                },
+                {
+                    "category" : "Vitalita",
+                    "dataSource" : "ISTAT",
+                    "id" : "densita_occupati",
+                    "label" : "densita_occupati"
                 }
             ],
             null

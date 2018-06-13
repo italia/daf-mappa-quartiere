@@ -154,6 +154,13 @@ class ValuesPlotter:
         return None
 
 class JSONWriter:
+    '''A class to handle all the IO actions
+    from model pipeline to JSON for visualization'''
+
+    writeOptionsDict = {'sort_keys':True,
+                        'indent':4,
+                        'separators':(',', ' : ')}
+
     def __init__(self, kpiCalc):
         assert isinstance(kpiCalc, KPICalculator), 'KPI calculator is needed'
         self.layersData = kpiCalc.quartiereKPI
@@ -267,11 +274,20 @@ class JSONWriter:
 
         return out
 
-    def write_all_files_to_default_path(self):
-        # build and write menu
+    def _update_menu_in_default_path(self):
+        # Load current menu from json and replace the calculator city info with new data
+        with open(os.path.join(common_cfg.vizOutputPath, 'menu.json'), 'r') as f:
+            currentMenu = json.load(f)
+
+        otherItems = [v for v in currentMenu if v['city'] != self.city.name]
+        updatedMenu = otherItems + self.make_menu()
+
         with open(os.path.join(common_cfg.vizOutputPath, 'menu.json'), 'w') as menuFile:
-            json.dump(self.make_menu(), menuFile, sort_keys=True,
-                      indent=4, separators=(',', ' : '))
+            json.dump(updatedMenu, menuFile, **self.writeOptionsDict)
+
+    def write_all_files_to_default_path(self):
+        # update menu
+        self._update_menu_in_default_path()
 
         # build and write all areas
         areasOutput = self.make_serviceareas_output()
@@ -279,5 +295,4 @@ class JSONWriter:
             filename = '%s_%s.json' % (self.city.name, name)
             with open(os.path.join(common_cfg.outputPath,
                                    filename), 'w') as areaFile:
-                json.dump(data, areaFile, sort_keys=True,
-                          indent=4, separators=(',', ' : '))
+                json.dump(data, areaFile, **self.writeOptionsDict)
