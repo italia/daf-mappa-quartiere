@@ -8,7 +8,7 @@ import geopy.distance
 import numpy as np
 import pandas as pd
 from sklearn import gaussian_process
-from sqlalchemy.sql.operators import comma_op
+from matplotlib import pyplot as plt
 
 rootDir = os.path.dirname(os.path.dirname(__file__))
 if rootDir not in sys.path:
@@ -473,7 +473,6 @@ class KPICalculator:
 
         self.city = cityName
         self.demand = demandFrame
-        self.sources = serviceUnits
         # initialise the service evaluator
         self.evaluator = ServiceEvaluator(serviceUnits)
         self.servicePositions = self.evaluator.servicePositions
@@ -542,3 +541,22 @@ class KPICalculator:
         self.istatVitality = istat_kpi.compute_vitality_cpa2011(quartiereData)
 
         return self.istatKPI, self.istatVitality
+
+    def plot_unit_attendance(self, sType, thrMin=0, thrMax=np.Inf):
+        '''Scatter units of a ServiceType according '''
+        units = self.evaluator.unitsTree[sType]
+        plotUnits = [p for p in units if thrMin < p.attendance < thrMax]
+        plt.scatter(self.demand.mappedPositions.Long, self.demand.mappedPositions.Lat,
+                    c='b', s=self.demand.P1, marker='.')
+        for a in plotUnits:
+            plt.scatter(a.site.longitude, a.site.latitude,
+                        c='red', marker='.', s=a.attendance / 10)
+        if not plotUnits: print('NO UNITS!')
+        plt.xlabel('Long')
+        plt.ylabel('Lat')
+        plt.title(
+            '%s di %s con bacino stimato fra %s e %s' % (sType.label, self.city, thrMin, thrMax))
+        plt.legend(['Residenti', sType.label])
+        plt.show()
+
+        return None
