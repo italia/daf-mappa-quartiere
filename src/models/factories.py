@@ -31,13 +31,13 @@ class UnitFactory:
         
     def extract_locations(self):
 
-        defaultLocationColumns = ['Lat', 'Long']
+        defaultLocationColumns = common_cfg.coordColNames
         if set(defaultLocationColumns).issubset(set(self._rawData.columns)):
             print('Location data found')
             # check and drop units outside provided city boundary
             geometry = [shapely.geometry.Point(xy) for xy in zip(
-                self._rawData[defaultLocationColumns[1]],
-                self._rawData[defaultLocationColumns[0]])]
+                self._rawData[defaultLocationColumns[0]],  # Long
+                self._rawData[defaultLocationColumns[1]])]  # Lat
             bWithinBoundary = np.array(list(map(
                 lambda p: p.within(self.model_city.convhull), geometry)))
 
@@ -48,8 +48,8 @@ class UnitFactory:
 
             # store geolocations as geopy Point
             locations = [geopy.Point(yx) for yx in zip(
-                self._rawData[defaultLocationColumns[0]],
-                self._rawData[defaultLocationColumns[1]])]
+                self._rawData[defaultLocationColumns[1]],  # Lat
+                self._rawData[defaultLocationColumns[0]])]  # Long
 
             propertData = self._rawData.drop(defaultLocationColumns, axis=1)
 

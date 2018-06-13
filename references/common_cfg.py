@@ -105,7 +105,7 @@ def df_to_gdf(input_df):
     to a GeoDataFrame. WSG84
     """
     df = input_df.copy()
-    geometry = [Point(xy) for xy in zip(df.longitude, df.latitude)]
+    geometry = [Point(xy) for xy in zip(df[coordColNames[0]], df[coordColNames[1]])]
     geo = gpd.GeoDataFrame(df, crs=4326, geometry=geometry)
     geo.crs = {'init' :'epsg:4326'}
     return geo
