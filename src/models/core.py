@@ -60,7 +60,7 @@ class ServiceUnit:
         self.id = unit_id
         self.service = service
 
-        # A ServiceType can have many sites, so each unit has its own. 
+        # A ServiceType can have many sites, so each unit has its own.
         # Moreover, a site is not uniquely assigned to a service
         self.site = position
         self.coord_tuple = (position.latitude, position.longitude)
@@ -72,7 +72,7 @@ class ServiceUnit:
         self.age_diffusion = age_diffusion
 
         # define kernel taking scale into account
-        self.kernel = {g: gaussKern(length_scale=l*self.scale)
+        self.kernel = {g: gaussKern(length_scale=l * self.scale)
                        for g, l in self.age_diffusion.items()}
 
         # precompute kernel threshold per AgeGroup
@@ -180,7 +180,7 @@ class MappedPositionsFrame(pd.DataFrame):
                 common_cfg.coord_col_names[0]: long,
                 common_cfg.coord_col_names[1]: lat,
                 common_cfg.id_quartiere_col_name: id_quartiere
-                }
+            }
             # instantiate geopy positions
             geopy_points = list(map(lambda y, x: geopy.Point(y, x), lat, long))
             mapping_dict[common_cfg.positions_col] = geopy_points
@@ -194,7 +194,7 @@ class MappedPositionsFrame(pd.DataFrame):
             assert not lat, 'Lat input not expected if positions provided'
             if id_quartiere is None:
                 id_quartiere = np.full(len(positions), np.nan)
-            # create mapping dict from positions    
+            # create mapping dict from positions
             mapping_dict = {
                 common_cfg.coord_col_names[0]: [
                     x.longitude for x in positions],
@@ -618,7 +618,7 @@ class KPICalculator:
             weighted_sums.iloc[:, ~weighted_sums.columns.isin(
                 service.demand_ages)] = np.nan
             self.quartiere_kpi[service] = (
-                    weighted_sums / self.ages_totals).reindex(
+                weighted_sums / self.ages_totals).reindex(
                 columns=AgeGroup.all(), copy=False)
 
             # check that the weighted mean lies
@@ -627,7 +627,7 @@ class KPICalculator:
                 b_good = (self.quartiere_kpi[service][col].between(
                     check_range[0][col],
                     check_range[1][col]) | self.quartiere_kpi[service][
-                             col].isnull())
+                    col].isnull())
                 assert all(b_good), 'Unexpected error in mean computation'
 
         return self.quartiere_kpi
