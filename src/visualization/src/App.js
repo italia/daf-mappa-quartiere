@@ -10,11 +10,11 @@ import MenuObject from './MenuObject';
 var localhost = "http://localhost:4000/";
 
 function getMenuUrl() {
-    return localhost + "menu.json";
+    return host + "menu";
 };
 
 function getDashboardUrl(c) {
-    return localhost + c + "/Dashboard" + c + ".json";
+    return host + c + "/Dashboard" + c;
 };
 
 class App extends Component { 
