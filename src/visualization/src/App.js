@@ -7,7 +7,7 @@ import Button from './Button';
 import Menu from './Menu';
 import MenuObject from './MenuObject';
 
-var localhost = "http://localhost:4000/";
+var host = "https://api.daf.teamdigitale.it/mappa/";
 var colors = ['#FFFFDD',
               '#AAF191',
               '#80D385',
@@ -19,11 +19,11 @@ var colors = ['#FFFFDD',
               '#000086'];
 
 function getMenuUrl() {
-    return localhost + "menu.json";
+    return host + "menu";
 };
 
 function getDashboardUrl(c) {
-    return localhost + c + "/Dashboard" + c + ".json";
+    return host + c + "/Dashboard" + c;
 };
 
 class App extends Component {
