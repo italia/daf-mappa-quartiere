@@ -363,76 +363,20 @@ class ServiceEvaluator:
             {service_type: attendance.mean() for service_type, attendance
              in self.attendance_tree.items()})
 
-    @property
-    def attendance_factors(self):
-        """
-        This function gets the relative correction factors
-        """
-        out = {}
-        for service_type, attendance_values in self.attendance_tree.items():
-            # get ratios
-            raw_ratios = attendance_values / attendance_values.mean()
-            np.nan_to_num(raw_ratios, copy=False)  # this replaces Nan with 0
-            # [1/m, m] clipping
-            out[service_type] = 1/np.clip(
-                raw_ratios, 1 / common_cfg.demand_correction_clip,
-                common_cfg.demand_correction_clip)
-        return out
-
-    def evaluate_services_at(self, demand_data, b_evaluate_attendance=False):
-        assert isinstance(demand_data, DemandFrame),\
-            'Expected MappedPositionsFrame'
-
-        ages_data = demand_data.ages_frame
-        # initialise output with dedicated class
-        values_store = ServiceValues(ages_data)
-
-        # STEP 1: evaluate service interactions at demand locations
-        # using (lat, long) format for evaluations
-        targets_coord_array = ages_data[
-            common_cfg.coord_col_names[::-1]].as_matrix()
-        self._evaluate_interactions_at(targets_coord_array)
-
-        if b_evaluate_attendance:
-            # STEPS 2 & 3: get estimates of attendance for each service unit
-            self._compute_attendance_from_interactions(ages_data)
-
-            # STEP 4 & FINAL STEP:
-            # correct interactions with unit attendance and aggregate
-            for service_type, ages in self.interactions.items():
-                for age_group in ages:
-                    values_store[service_type][age_group] = \
-                        service_type.aggregate_units(
-                            self.interactions[service_type][age_group] *
-                            self.attendance_factors[service_type]
-                            [:, np.newaxis],
-                            axis=0)
-        else:
-            # FINAL STEP:
-            # aggregate unit contributions according to the service type norm
-            for service_type, ages in self.interactions.items():
-                for age_group in ages:
-                    values_store[service_type][age_group] = \
-                        service_type.aggregate_units(
-                            self.interactions[service_type][age_group],
-                            axis=0)
-
-        return values_store
-
-    def _evaluate_interactions_at(self, targets_coord_array):
+    def get_interactions_at(self, targets_coord_array):
         """
         STEP 1
         Evaluates the initial service availabilities at demand location
         before correcting for attendance
         """
 
-        self.interactions = {}
+        interactions = {}
 
         # loop over different services
         for service_type, service_mapped_positions \
                 in self.service_positions.items():
 
-            self.interactions[service_type] = {}  # initialise
+            interactions[service_type] = {}  # initialise
             # get lat-long data for this servicetype units
             service_coord_array = service_mapped_positions[
                 common_cfg.coord_col_names[::-1]].as_matrix()
@@ -453,7 +397,7 @@ class ServiceEvaluator:
                 print('\n Computing', service_type, this_age_group)
                 start_group = time()
                 # assign default value of zero to interactions
-                self.interactions[service_type][this_age_group] = \
+                interactions[service_type][this_age_group] = \
                     np.zeros([service_coord_array.shape[0],
                               targets_coord_array.shape[0]])
 
@@ -469,33 +413,36 @@ class ServiceEvaluator:
                     b_active_unit = distance_matrix[iUnit, :] <\
                         thisUnit.ker_thresholds[this_age_group]
                     if any(b_active_unit):
-                        self.interactions[service_type][this_age_group][
+                        interactions[service_type][this_age_group][
                             iUnit, b_active_unit] = thisUnit.evaluate(
                             targets_coord_array[b_active_unit, :],
                             this_age_group)
                 print('AgeGroup time %.4f' % (time() - start_group))
 
-        return self.interactions
+        return interactions
 
-    def _compute_attendance_from_interactions(self, ages_data):
+    def _compute_attendance_from_interactions(self, interactions, ages_data):
         """
-        STEP 2 & 3: get estimates of attendance for each service unit
+        STEP 2 & 3
+        Get estimates of attendance for each service unit
         """
-        for service_type, ages in self.interactions.items():
+        for service_type, ages in interactions.items():
             # initialise group loads for every unit given by current age_group
             group_loads = np.zeros(
                 [self.service_positions[service_type].shape[0],
                  len(AgeGroup.all())])
+
             unassigned_pop = np.zeros(len(AgeGroup.all()))
+
             for i_age, age_group in enumerate(ages):
-                interactions = self.interactions[service_type][age_group]
-                sums_at_positions = interactions.sum(axis=0)
+                this_interactions = interactions[service_type][age_group]
+                sums_at_positions = this_interactions.sum(axis=0)
                 b_above_thr = \
                     sums_at_positions > common_cfg.kernel_value_cutoff
                 # compute coefficients to apply to population values
-                load_coefficients = np.zeros_like(interactions)
+                load_coefficients = np.zeros_like(this_interactions)
                 load_coefficients[:, b_above_thr] = \
-                    interactions[:, b_above_thr] / \
+                    this_interactions[:, b_above_thr] / \
                     sums_at_positions[b_above_thr]
 
                 group_loads[:, i_age] = np.matmul(
@@ -514,6 +461,58 @@ class ServiceEvaluator:
                 unit.attendance = total_loads[iUnit]
 
         return None
+
+    def _compute_attendance_factors(self, clip_level):
+        """
+        This function gets the relative correction factors
+        from the computed attendance values
+        """
+        assert clip_level > 1, 'The clipping factor should be greater than 1'
+        out = {}
+
+        for service_type, attendance_values in self.attendance_tree.items():
+            # get ratios
+            raw_ratios = attendance_values / attendance_values.mean()
+            np.nan_to_num(raw_ratios, copy=False)  # this replaces Nan with 0
+            # Apply [1/m, m] clipping to raw ratios
+            out[service_type] = 1 / np.clip(
+                raw_ratios, 1 / clip_level, clip_level)
+        return out
+
+    def get_aggregate_values_from_interactions(
+            self, interactions, ages_data, b_evaluate_attendance, clip_level):
+
+        assert isinstance(ages_data, pd.DataFrame), 'Ages frame should be a ' \
+                                                    'Dataframe'
+        # initialise output with dedicated class
+        values_store = ServiceValues(ages_data)
+
+        if b_evaluate_attendance:
+            # STEPS 2 & 3: get estimates of attendance for each service unit
+            self._compute_attendance_from_interactions(interactions, ages_data)
+
+            # STEP 4 & FINAL STEP:
+            # correct interactions with unit attendance and aggregate
+            attendance_factors = self._compute_attendance_factors(clip_level)
+
+            for service_type, ages in interactions.items():
+                for age_group in ages:
+                    values_store[service_type][age_group] = \
+                        service_type.aggregate_units(
+                            interactions[service_type][age_group] *
+                            attendance_factors[service_type][:, np.newaxis],
+                            axis=0)
+        else:
+            # FINAL STEP:
+            # aggregate unit contributions according to the service type norm
+            for service_type, ages in interactions.items():
+                for age_group in ages:
+                    values_store[service_type][age_group] = \
+                        service_type.aggregate_units(
+                            interactions[service_type][age_group],
+                            axis=0)
+
+        return values_store
 
 
 # KPI calculation
@@ -535,8 +534,8 @@ class KPICalculator:
         self.evaluator = ServiceEvaluator(service_units)
         self.service_positions = self.evaluator.service_positions
         # initialise output values
+        self.service_interactions = None
         self.service_values = ServiceValues(self.demand.mapped_positions)
-        self.b_evaluated = False
         self.weighted_values = ServiceValues(self.demand.mapped_positions)
         self.quartiere_kpi = {}
         self.istat_kpi = pd.DataFrame()
@@ -550,15 +549,48 @@ class KPICalculator:
             demand_frame[AgeGroup.all()].set_index(age_multi_index)
         self.ages_totals = self.ages_frame.groupby(level=0).sum()
 
-    def evaluate_services_at_demand(self, b_evaluate_attendance):
-        self.service_values = self.evaluator.evaluate_services_at(
-            self.demand, b_evaluate_attendance)
-        # set the evaluation flag to True
-        self.b_evaluated = True
+    def evaluate_services_at_demand(
+            self,
+            b_evaluate_attendance=True,
+            clip_level=common_cfg.demand_correction_clip):
+        """
+        Wrapper on the ServiceEvaluator that triggers the
+        computation pipeline. Once interactions are first evaluated,
+        different aggregations use the computed values.
+        """
+        ages_data = self.demand.ages_frame
+
+        if not self.service_interactions:
+            # trigger service interaction evaluation
+            self.evaluate_interactions_at_demand()
+        else:
+            print('Found existing interactions, using them')
+
+        # aggregate interactions using the providing clip level to adjust
+        # for attendance
+        self.service_values = \
+            self.evaluator.get_aggregate_values_from_interactions(
+                self.service_interactions,
+                ages_data,
+                b_evaluate_attendance=b_evaluate_attendance,
+                clip_level=clip_level)
+
         return self.service_values
 
+    def evaluate_interactions_at_demand(self):
+        # extract demand coordinates from demand data and evaluate
+        # interaction values at them
+        ages_data = self.demand.ages_frame
+        targets_coord_array = ages_data[
+            common_cfg.coord_col_names[::-1]].as_matrix()
+
+        self.service_interactions = self.evaluator.get_interactions_at(
+            targets_coord_array)
+
+        return self.service_interactions
+
     def compute_kpi_for_localized_services(self):
-        assert self.b_evaluated, \
+        assert self.service_interactions, \
             'Have we evaluated service values before making averages for KPIs?'
         # get mean service levels by quartiere,
         # weighting according to the number of citizens
