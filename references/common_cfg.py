@@ -60,11 +60,11 @@ viz_output_path = os.path.join(project_root, 'data/output')
 istat_layer_name = 'Istat'
 vitality_layer_name = 'Vitality'
 menu_group_template = {
-                'id': '',
-                'city': '',  # es:'Torino'
-                'type': "source",  # or 'layer'
-                'url': '',
-                'sourceId': '',  # id of the source geojson
+    'id': '',
+    'city': '',  # es:'Torino'
+    'type': "source",  # or 'layer'
+    'url': '',
+    'sourceId': '',  # id of the source geojson
                 'indicators': [   # list of different indicators
                     {'category': '',
                      'label': '',
@@ -72,7 +72,7 @@ menu_group_template = {
                      'default': False,
                      'data_source': '',
                      }]
-                        }
+}
 
 # TPL parameters
 tpl_path = os.path.join(project_root, 'data/raw/tpl/')
@@ -85,7 +85,7 @@ tpl_route_type = {
     "5": "Cable car",
     "6": "Gondola, Suspended cable car",
     "7": "Funicular"
-    }
+}
 
 # Loading tools
 cached_metadata = pd.read_csv(os.path.join(
@@ -106,9 +106,9 @@ def fill_sample_ages_in_cpa_columns(frame_in):
     age-band columns in standard istat data
     """
     assert isinstance(frame_in, pd.DataFrame), 'Series expected in input'
-    istat_age_dict = {'P%i' % (i+14): 3+5*i for i in range(16)}
+    istat_age_dict = {'P%i' % (i + 14): 3 + 5 * i for i in range(16)}
     istat_ages = frame_in.loc[:, list(istat_age_dict.keys())].copy()
-     
+
     return istat_ages.rename(istat_age_dict, axis='columns')
 
 

@@ -15,7 +15,7 @@ if rootDir not in sys.path:
 
 def append_geolocation_and_save(
         api_key, orig_data, query_addresses, target_file):
-                       
+
     gmaps = googlemaps.Client(key=api_key)
     # Geocoding an address
     locations_full = pd.Series.from_array([{}] * len(query_addresses))
@@ -26,7 +26,7 @@ def append_geolocation_and_save(
     multiple_results = pd.Series.from_array([] * len(query_addresses))
 
     for (i, address) in enumerate(query_addresses):
-        geocode_result = gmaps.geocode(address)  #components={'location':CITY}
+        geocode_result = gmaps.geocode(address)  # components={'location':CITY}
         if geocode_result:
             assert isinstance(geocode_result, list), 'Unexpected type'
             if len(geocode_result) > 1:  # multiple results, report first and

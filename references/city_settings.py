@@ -68,7 +68,7 @@ default_cities = [
          ServiceType.TransportStop: 'Torino_TPL.csv',
          ServiceType.Pharmacy: 'Torino_farmacie.csv',
          })
-                ]
+]
 
 city_names_list = [city.name for city in default_cities]
 
