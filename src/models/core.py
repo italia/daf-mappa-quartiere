@@ -97,10 +97,10 @@ class ServiceUnit:
 
             def fun_to_solve(x):
                 out = self.kernel[ageGroup](
-                    x, np.array([[0], ])) - common_cfg.kernelValueCutoff
+                    x, np.array([[0], ])) - common_cfg.kernel_value_cutoff
                 return out.flatten()
 
-            initGuess = common_cfg.kernelStartZeroGuess * self.scale
+            initGuess = common_cfg.kernel_start_zero_guess * self.scale
 
             for k in range(3):  # try 3 alternatives
                 solValue, _, flag, msg = fsolve(fun_to_solve,
@@ -162,14 +162,14 @@ class MappedPositionsFrame(pd.DataFrame):
                 idQuartiere = np.full(long.shape, np.nan)
             # create mapping dict from coordinates
             mappingDict = {
-                common_cfg.coordColNames[0]: long,  # long
-                common_cfg.coordColNames[1]: lat,  # lat
-                common_cfg.IdQuartiereColName: idQuartiere,  # quartiere aggregation
+                common_cfg.coord_col_names[0]: long,  # long
+                common_cfg.coord_col_names[1]: lat,  # lat
+                common_cfg.id_quartiere_col_name: idQuartiere,  # quartiere aggregation
             }
             # istantiate geopy positions
             geopyPoints = list(map(lambda y, x: geopy.Point(y, x), lat, long))
-            mappingDict[common_cfg.positionsCol] = geopyPoints
-            mappingDict[common_cfg.tupleIndexName] = [tuple(p) for p in geopyPoints]
+            mappingDict[common_cfg.positions_col] = geopyPoints
+            mappingDict[common_cfg.tuple_index_name] = [tuple(p) for p in geopyPoints]
 
         else:
             assert all([isinstance(t, geopy.Point) for t in positions]), 'Geopy Points expected'
@@ -179,15 +179,15 @@ class MappedPositionsFrame(pd.DataFrame):
                 idQuartiere = np.full(len(positions), np.nan)
             # create mapping dict from positions    
             mappingDict = {
-                common_cfg.coordColNames[0]: [x.longitude for x in positions],  # long
-                common_cfg.coordColNames[1]: [x.latitude for x in positions],  # lat
-                common_cfg.IdQuartiereColName: idQuartiere,  # quartiere aggregation
-                common_cfg.positionsCol: positions,
-                common_cfg.tupleIndexName: [tuple(p) for p in positions]}
+                common_cfg.coord_col_names[0]: [x.longitude for x in positions],  # long
+                common_cfg.coord_col_names[1]: [x.latitude for x in positions],  # lat
+                common_cfg.id_quartiere_col_name: idQuartiere,  # quartiere aggregation
+                common_cfg.positions_col: positions,
+                common_cfg.tuple_index_name: [tuple(p) for p in positions]}
 
         # finally call DataFrame constructor
         super().__init__(mappingDict)
-        self.set_index([common_cfg.IdQuartiereColName, common_cfg.tupleIndexName], inplace=True)
+        self.set_index([common_cfg.id_quartiere_col_name, common_cfg.tuple_index_name], inplace=True)
 
 
 class ServiceValues(dict):
@@ -212,8 +212,8 @@ class ServiceValues(dict):
 
         # format output as (x,y,z) surface
         z = valuesSeries.values
-        x = joined[common_cfg.coordColNames[0]].values
-        y = joined[common_cfg.coordColNames[1]].values
+        x = joined[common_cfg.coord_col_names[0]].values
+        y = joined[common_cfg.coord_col_names[1]].values
         return x, y, z
 
     @property
@@ -268,8 +268,8 @@ class ServiceEvaluator:
             # get ratios
             rawRatios = attendanceValues / attendanceValues.mean()
             np.nan_to_num(rawRatios, copy=False)  # this replaces Nan with 0
-            out[sType] = 1/np.clip(rawRatios, 1 / common_cfg.demandCorrectionClip,
-                                 common_cfg.demandCorrectionClip) # [1/m, m] clipping
+            out[sType] = 1/np.clip(rawRatios, 1 / common_cfg.demand_correction_clip,
+                                   common_cfg.demand_correction_clip) # [1/m, m] clipping
         return out
 
 
@@ -283,7 +283,7 @@ class ServiceEvaluator:
 
         # STEP 1: evaluate service interactions at demand locations
         # using (lat, long) format for evaluations
-        targetsCoordArray = agesData[common_cfg.coordColNames[::-1]].as_matrix()
+        targetsCoordArray = agesData[common_cfg.coord_col_names[::-1]].as_matrix()
         self._evaluate_interactions_at(targetsCoordArray)
 
         if bEvaluateAttendance:
@@ -324,13 +324,13 @@ class ServiceEvaluator:
             self.interactions[serviceType] = {}  # initialise
             # get lat-long data for this servicetype units
             serviceCoordArray = serviceMappedPositions[
-                common_cfg.coordColNames[::-1]].as_matrix()
+                common_cfg.coord_col_names[::-1]].as_matrix()
 
             start = time()
             # compute a lower bound for pairwise distances
             # if this is larger than threshold, set the interaction to zero.
             Dmatrix = cdist(serviceCoordArray, targetsCoordArray) * min(
-                common_cfg.approxTileDegToKm)
+                common_cfg.approx_tile_deg_to_km)
             print(serviceType, 'Approx distance matrix in %.4f' % (time() - start))
 
             for thisAgeGroup in AgeGroup.all():
@@ -370,7 +370,7 @@ class ServiceEvaluator:
             for iAge, ageGroup in enumerate(ages):
                 interactions = self.interactions[sType][ageGroup]
                 sumsAtPositions = interactions.sum(axis=0)
-                bAboveThr = sumsAtPositions > common_cfg.kernelValueCutoff
+                bAboveThr = sumsAtPositions > common_cfg.kernel_value_cutoff
                 # compute coefficients to apply to population values
                 loadCoefficients = np.zeros_like(interactions)
                 loadCoefficients[:, bAboveThr] = interactions[:, bAboveThr] / sumsAtPositions[
@@ -419,24 +419,24 @@ class DemandFrame(pd.DataFrame):
         # assign centroid as position
         geopyValues = self['geometry'].apply(
             lambda pos: geopy.Point(pos.centroid.y, pos.centroid.x))
-        self[common_cfg.positionsCol] = geopyValues
+        self[common_cfg.positions_col] = geopyValues
 
         if bDuplicatesCheck:
             # check no location is repeated - takes a while
-            assert not any(self[common_cfg.positionsCol].duplicated()), 'Repeated position found'
+            assert not any(self[common_cfg.positions_col].duplicated()), 'Repeated position found'
 
     @property
     def mappedPositions(self):
-        return MappedPositionsFrame(positions=self[common_cfg.positionsCol].tolist(),
-                                    idQuartiere=self[common_cfg.IdQuartiereColName].tolist())
+        return MappedPositionsFrame(positions=self[common_cfg.positions_col].tolist(),
+                                    idQuartiere=self[common_cfg.id_quartiere_col_name].tolist())
 
     @property
     def agesFrame(self):
         # start from the mappedPositions
         out = self.mappedPositions
         # prepare agesData with matching index
-        ageMIndex = [self[common_cfg.IdQuartiereColName],
-                     self[common_cfg.positionsCol].apply(tuple)]
+        ageMIndex = [self[common_cfg.id_quartiere_col_name],
+                     self[common_cfg.positions_col].apply(tuple)]
         agesData = self[AgeGroup.all()].set_index(ageMIndex)
         # concatenate
         out[agesData.columns] = agesData
@@ -449,7 +449,7 @@ class DemandFrame(pd.DataFrame):
         else:
             coord, nRep = self.mappedPositions.align(self.agesFrame.sum(axis=1), axis=0)
         idx = np.repeat(range(coord.shape[0]), nRep)
-        coord = coord[common_cfg.coordColNames].iloc[idx]
+        coord = coord[common_cfg.coord_col_names].iloc[idx]
         sample = coord.sample(int(nSample)).as_matrix()
         return sample[:, 0], sample[:, 1]
 
@@ -484,8 +484,8 @@ class KPICalculator:
         self.istatKPI = pd.DataFrame()
 
         # derive Ages frame
-        ageMIndex = [demandFrame[common_cfg.IdQuartiereColName],
-                     demandFrame[common_cfg.positionsCol].apply(tuple)]
+        ageMIndex = [demandFrame[common_cfg.id_quartiere_col_name],
+                     demandFrame[common_cfg.positions_col].apply(tuple)]
         self.agesFrame = demandFrame[AgeGroup.all()].set_index(ageMIndex)
         self.agesTotals = self.agesFrame.groupby(level=0).sum()
 
@@ -507,11 +507,11 @@ class KPICalculator:
                 else:
                     self.weightedValues[service][col] = np.nan * data[col]
 
-            checkRange = (data.groupby(common_cfg.IdQuartiereColName).min() - np.finfo(float).eps,
-                          data.groupby(common_cfg.IdQuartiereColName).max() + np.finfo(float).eps)
+            checkRange = (data.groupby(common_cfg.id_quartiere_col_name).min() - np.finfo(float).eps,
+                          data.groupby(common_cfg.id_quartiere_col_name).max() + np.finfo(float).eps)
 
             # sum weighted fractions by neighbourhood
-            weightedSums = self.weightedValues[service].groupby(common_cfg.IdQuartiereColName).sum()
+            weightedSums = self.weightedValues[service].groupby(common_cfg.id_quartiere_col_name).sum()
             # set to NaN value the AgeGroups that have no people or there is no demand for the service
             weightedSums[self.agesTotals == 0] = np.nan
             weightedSums.iloc[:, ~weightedSums.columns.isin(service.demandAges)] = np.nan
@@ -529,9 +529,9 @@ class KPICalculator:
         return self.quartiereKPI
 
     def compute_kpi_for_istat_values(self):
-        allQuartiere = self.demand.groupby(common_cfg.IdQuartiereColName).sum()
+        allQuartiere = self.demand.groupby(common_cfg.id_quartiere_col_name).sum()
 
-        dropColumns = [c for c in AgeGroup.all() + common_cfg.excludedColumns \
+        dropColumns = [c for c in AgeGroup.all() + common_cfg.excluded_columns \
                        if c in allQuartiere.columns]
         quartiereData = allQuartiere.drop(dropColumns, axis=1)
 

@@ -66,7 +66,7 @@ class GridMaker():
                     if thisQuartierePolygon.contains(shplyPoint):
                         # assign found ID
                         self._IDquartiere[i,j] = self.subdivisions[
-                            self._quartiereKey][common_cfg.IdQuartiereColName][iRow]
+                            self._quartiereKey][common_cfg.id_quartiere_col_name][iRow]
                         bFound = True
                         break # skip remanining zones
                 assert bFound, 'Point within city boundary was not assigned to any zone'
@@ -108,7 +108,7 @@ class ValuesPlotter:
         '''
         Plots the locations of the provided ServiceValues'
         '''
-        coordNames = common_cfg.coordColNames
+        coordNames = common_cfg.coord_col_names
         plt.figure()
         plt.scatter(self.values.mappedPositions[coordNames[0]],
                     self.values.mappedPositions[coordNames[1]])
@@ -181,7 +181,7 @@ class JSONWriter:
 
             # source element
             sourceId = city.name + '_quartieri'
-            sourceItem = common_cfg.menuGroupTemplate.copy()
+            sourceItem = common_cfg.menu_group_template.copy()
             sourceItem['city'] = city.name
             sourceItem['url'] = city.source
             sourceItem['id'] = sourceId
@@ -190,7 +190,7 @@ class JSONWriter:
             sourceItem['center'] = city.zoomCenter[1]
 
             # declare the joinField
-            sourceItem['joinField'] = common_cfg.IdQuartiereColName
+            sourceItem['joinField'] = common_cfg.id_quartiere_col_name
 
             #  Does a source have a dataSource?
             # 'dataSource': '',
@@ -200,7 +200,7 @@ class JSONWriter:
             areas = set(s.serviceArea for s in services)
             for area in areas:
                 thisServices = [s for s in services if s.serviceArea == area]
-                layerItem = common_cfg.menuGroupTemplate.copy()
+                layerItem = common_cfg.menu_group_template.copy()
                 layerItem['type'] = 'layer'
                 layerItem['city'] = city.name
                 layerItem['id'] = city.name + '_' + area.value
@@ -218,7 +218,7 @@ class JSONWriter:
             # istat layers items
             if istatLayers:
                 for istatArea, indicators in istatLayers.items():
-                    istatItem = common_cfg.menuGroupTemplate.copy()
+                    istatItem = common_cfg.menu_group_template.copy()
                     istatItem['type'] = 'layer'
                     istatItem['city'] = city.name
                     istatItem['id'] = city.name + '_' + istatArea
@@ -249,17 +249,17 @@ class JSONWriter:
             dataDict = frameIn.reset_index().to_dict(orient='records')
             # restore type as pandas has a bug and casts to float if int
             for quartiereData in dataDict:
-                oldValue = quartiereData[common_cfg.IdQuartiereColName]
+                oldValue = quartiereData[common_cfg.id_quartiere_col_name]
                 if origType in (np.int32, np.int64, int):
-                    quartiereData[common_cfg.IdQuartiereColName] = int(oldValue)
+                    quartiereData[common_cfg.id_quartiere_col_name] = int(oldValue)
 
             return dataDict
 
         # make istat layer
-        out[common_cfg.istatLayerName] = prepare_frame_data(self.istatData)
+        out[common_cfg.istat_layer_name] = prepare_frame_data(self.istatData)
 
         # make vitality layer
-        out[common_cfg.vitalityLayerName] = prepare_frame_data(self.vitalityData)
+        out[common_cfg.vitality_layer_name] = prepare_frame_data(self.vitalityData)
 
         # make layers
         for area, layers in self.areasTree.items():
@@ -276,13 +276,13 @@ class JSONWriter:
 
     def _update_menu_in_default_path(self):
         # Load current menu from json and replace the calculator city info with new data
-        with open(os.path.join(common_cfg.vizOutputPath, 'menu.json'), 'r') as f:
+        with open(os.path.join(common_cfg.viz_output_path, 'menu.json'), 'r') as f:
             currentMenu = json.load(f)
 
         otherItems = [v for v in currentMenu if v['city'] != self.city.name]
         updatedMenu = otherItems + self.make_menu()
 
-        with open(os.path.join(common_cfg.vizOutputPath, 'menu.json'), 'w') as menuFile:
+        with open(os.path.join(common_cfg.viz_output_path, 'menu.json'), 'w') as menuFile:
             json.dump(updatedMenu, menuFile, **self.writeOptionsDict)
 
     def write_all_files_to_default_path(self):
@@ -293,6 +293,6 @@ class JSONWriter:
         areasOutput = self.make_serviceareas_output()
         for name, data in areasOutput.items():
             filename = '%s_%s.json' % (self.city.name, name)
-            with open(os.path.join(common_cfg.outputPath,
+            with open(os.path.join(common_cfg.output_path,
                                    filename), 'w') as areaFile:
                 json.dump(data, areaFile, **self.writeOptionsDict)

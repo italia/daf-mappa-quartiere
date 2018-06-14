@@ -11,7 +11,7 @@ from src.models.city_items import ServiceType
 from references import common_cfg
 
 class ModelCity(dict):
-    loadFolder = common_cfg.processedPath
+    loadFolder = common_cfg.processed_path
 
     def __init__(self, name, zonesPath, zoomCenterTuple, serviceLayersDict):
         self.name = name
@@ -31,14 +31,14 @@ class ModelCity(dict):
         # check coordinate system (we use epsg 4326)
         assert loaded.crs['init'] == 'epsg:4326',\
             'Please make sure the input coordinate ref system is epsg:4326'
-        assert {common_cfg.sezioneColName, common_cfg.IdQuartiereColName} \
+        assert {common_cfg.sezione_col_name, common_cfg.id_quartiere_col_name} \
                <= set(loaded.columns), \
             'Missing expected standard columns for city %s' % self.name
 
         # cast sezione ID as int
-        loaded[common_cfg.sezioneColName] = loaded[common_cfg.sezioneColName].astype(int)
+        loaded[common_cfg.sezione_col_name] = loaded[common_cfg.sezione_col_name].astype(int)
 
-        return loaded.set_index(common_cfg.sezioneColName)
+        return loaded.set_index(common_cfg.sezione_col_name)
 
     @property
     def servicePaths(self):

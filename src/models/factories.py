@@ -31,7 +31,7 @@ class UnitFactory:
         
     def extract_locations(self):
 
-        defaultLocationColumns = common_cfg.coordColNames
+        defaultLocationColumns = common_cfg.coord_col_names
         if set(defaultLocationColumns).issubset(set(self._rawData.columns)):
             print('Location data found')
             # check and drop units outside provided city boundary
@@ -67,7 +67,7 @@ class UnitFactory:
             if data[col].dtype in (np.bool, bool):
                 data[col] = data[col].astype(str)
         # build geometry column
-        longCol, latCol = common_cfg.coordColNames
+        longCol, latCol = common_cfg.coord_col_names
         data = data.set_geometry(
             [shapely.geometry.Point(xy) for xy in zip(data[longCol], data[latCol])])
 
@@ -100,7 +100,7 @@ class UnitFactory:
     def output_path(self):
         _, fullfile = os.path.split(self.filepath)
         filename, _ =os.path.splitext(fullfile)
-        return os.path.join(common_cfg.unitsOutputPath, filename + '.geojson')
+        return os.path.join(common_cfg.units_output_path, filename + '.geojson')
 
     @staticmethod
     def get_factory(serviceType):

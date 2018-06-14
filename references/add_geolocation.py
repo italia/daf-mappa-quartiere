@@ -18,8 +18,8 @@ def append_geolocation_and_save(APIkey, origData, queryAddresses, targetFile):
     # Geocoding an address
     locationsFull = pd.Series.from_array([{}]*len(queryAddresses))
     # hardcoded coordinates format
-    coordinates = pd.DataFrame([[np.nan, np.nan]]*len(queryAddresses),
-                               columns=common_cfg.coordColNames, index = origData.index)
+    coordinates = pd.DataFrame([[np.nan, np.nan]] * len(queryAddresses),
+                               columns=common_cfg.coord_col_names, index = origData.index)
     multipleResults = pd.Series.from_array([]*len(queryAddresses))
 
     for (i, address) in enumerate(queryAddresses):
@@ -44,8 +44,8 @@ def append_geolocation_and_save(APIkey, origData, queryAddresses, targetFile):
         if not locat:
             continue
         thisLocation = locat['geometry']['location']
-        coordinates[common_cfg.coordColNames[0]][i] = thisLocation['lng']
-        coordinates[common_cfg.coordColNames[1]][i] = thisLocation['lat']
+        coordinates[common_cfg.coord_col_names[0]][i] = thisLocation['lng']
+        coordinates[common_cfg.coord_col_names[1]][i] = thisLocation['lat']
         print(coordinates.iloc[i,:])
 
     # append coordinates
