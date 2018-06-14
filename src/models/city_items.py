@@ -16,14 +16,14 @@ class AgeGroup(Enum):
     Over50 = (50, 65)
     Over65 = (65, 74)
     Over74 = (74, 200)
-    
+
     def __init__(self, start_age, end_age):
         self.start = start_age
         self.end = end_age
-    
+
     def comprehends(self, value_in):
         return self.start <= value_in < self.end
-    
+
     @staticmethod
     def all():
         return [g for g in AgeGroup]
@@ -35,45 +35,45 @@ class AgeGroup(Enum):
     @staticmethod
     def classify_array(array_in):
         return [AgeGroup.find_age_group(y) for y in array_in]
-    
+
     @staticmethod
     def find_age_group(x):
-            for g in AgeGroup.all():
-                if g.comprehends(x):
-                    return g
-            raise 'Classes are not adjacent, failed to classify %s' % x
-            
+        for g in AgeGroup.all():
+            if g.comprehends(x):
+                return g
+        raise 'Classes are not adjacent, failed to classify %s' % x
+
     @property
-    def range(self): return self.end - self.start 
-    
-    
+    def range(self): return self.end - self.start
+
+
 class ServiceArea(Enum):
     EducationCulture = 'EducazioneCultura'
     Transport = 'Trasporti'
     PublicSafety = 'Sicurezza'
     Health = 'Salute'
     Environment = 'Ambiente'
-    
-    
+
+
 class SummaryNorm(Enum):
     l1 = 1
     l2 = 2
     lInf = np.inf
-    
+
 
 class ServiceType(Enum):
     School = (1,  # enum id
-              ServiceArea.EducationCulture, 
+              ServiceArea.EducationCulture,
               SummaryNorm.l2,
               [AgeGroup.ChildPrimary, AgeGroup.ChildMid, AgeGroup.ChildHigh],
-              'Scuole', 
+              'Scuole',
               'MIUR')
     #
     Library = (2,  # enum id
-               ServiceArea.EducationCulture, 
+               ServiceArea.EducationCulture,
                SummaryNorm.l2,
                AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
-               'Biblioteche', 
+               'Biblioteche',
                'MIBACT')
     #
     TransportStop = (3,  # enum id
@@ -96,7 +96,7 @@ class ServiceType(Enum):
                   AgeGroup.all(),
                   'Aree Verdi',
                   'Open Data Comuni')
-    
+
     def __init__(self, _, area_of_service,
                  aggr_norm_input=SummaryNorm.l2,
                  demand_ages_input=AgeGroup.all(),
@@ -118,7 +118,7 @@ class ServiceType(Enum):
             lambda x: np.linalg.norm(x, ord=self.aggregation_norm.value),
             axis,
             unit_values)
-    
+
     @staticmethod
     def all():
         return [g for g in ServiceType]
@@ -127,7 +127,7 @@ class ServiceType(Enum):
 # test utility
 def get_random_pos(n):
     out = list(map(geopy.Point, list(zip(np.round(
-                                np.random.uniform(45.40, 45.50, n), 5),  
-                                np.round(np.random.uniform(9.1, 9.3, n), 5)
-                                )))) 
+        np.random.uniform(45.40, 45.50, n), 5),
+        np.round(np.random.uniform(9.1, 9.3, n), 5)
+    ))))
     return out

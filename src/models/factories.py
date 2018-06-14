@@ -30,7 +30,7 @@ class UnitFactory:
         self.model_city = model_city
         self._raw_data = pd.read_csv(
             self.file_path, sep=sep_input, decimal=decimal_input)
-        
+
     def extract_locations(self):
         default_pos_columns = common_cfg.coord_col_names
         if set(default_pos_columns).issubset(set(self._raw_data.columns)):
@@ -47,7 +47,7 @@ class UnitFactory:
                       (self.servicetype, sum(~b_within_boundary)))
 
                 self._raw_data = self._raw_data.iloc[
-                                 b_within_boundary, :].reset_index()
+                    b_within_boundary, :].reset_index()
 
             # store geolocations as geopy Point
             locations = [geopy.Point(yx) for yx in zip(
@@ -129,7 +129,7 @@ class UnitFactory:
                 UnitFactory.get_factory(sType)(model_city)
         return loaders_dict
 
-            
+
 # UnitFactory children classes
 class SchoolFactory(UnitFactory):
 
@@ -140,7 +140,7 @@ class SchoolFactory(UnitFactory):
     id_col = 'CODSCUOLA'
 
     def load(self, mean_radius=None, private_rescaling=1, size_power_law=0):
-        
+
         assert mean_radius, \
             'Please provide a reference radius for the mean school size'
         (propert_data, locations) = super().extract_locations()
@@ -149,8 +149,8 @@ class SchoolFactory(UnitFactory):
             'SCUOLA PRIMARIA': {AgeGroup.ChildPrimary: 1},
             'SCUOLA SECONDARIA I GRADO': {AgeGroup.ChildMid: 1},
             'SCUOLA SECONDARIA II GRADO': {AgeGroup.ChildHigh: 1}
-                        }
-        
+        }
+
         school_types = propert_data[self.type_col].unique()
         assert set(school_types) <= set(type_age_dict.keys()), \
             'Unrecognized types in input'
@@ -193,7 +193,7 @@ class SchoolFactory(UnitFactory):
                     this_unit.transform_kernels_with_factor(private_rescaling)
 
                 unit_list.append(this_unit)
-        
+
         return unit_list
 
 
@@ -205,11 +205,11 @@ class LibraryFactory(UnitFactory):
     id_col = 'codiceIsil'
 
     def load(self, mean_radius=None):
-        
+
         assert mean_radius, \
             'Please provide a reference radius for the mean library size'
         (propert_data, locations) = super().extract_locations()
-        
+
         # Modifica e specifica che per le fasce d'età
         possible_users = AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder])
         type_age_dict = {
@@ -227,14 +227,14 @@ class LibraryFactory(UnitFactory):
                     AgeGroup.ChildPrimary,
                     AgeGroup.ChildMid])},
             'Nazionale': {group: 1 for group in possible_users}
-                        }
+        }
 
         library_types = propert_data[self.type_col].unique()
         assert set(library_types) <= set(type_age_dict.keys()), \
             'Unrecognized types in input'
-        
+
         unit_list = []
-                
+
         for lib_type in library_types:
             b_this_group = propert_data[self.type_col] == lib_type
             type_data = propert_data[b_this_group]
@@ -252,7 +252,7 @@ class LibraryFactory(UnitFactory):
                                         age_diffusion=type_age_dict[lib_type],
                                         attributes=attr_dict)
                 unit_list.append(this_unit)
-        
+
         return unit_list
 
 
@@ -297,8 +297,8 @@ class TransportStopFactory(UnitFactory):
                                     position=locations[i_unit],
                                     scale=scale_dict[unit_route_type],
                                     age_diffusion={
-                                       g: 1 for g in AgeGroup.all_but(
-                                        [AgeGroup.Newborn, AgeGroup.Kinder])},
+                                        g: 1 for g in AgeGroup.all_but(
+                                            [AgeGroup.Newborn, AgeGroup.Kinder])},
                                     kernel_thresholds=cached_thresholds,
                                     attributes=attr_dict)
             unit_list.append(this_unit)

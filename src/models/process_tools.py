@@ -21,26 +21,27 @@ if rootDir not in sys.path:
     sys.path.append(rootDir)
 
 plt.rcParams['figure.figsize'] = (20, 14)
-        
+
 
 # Grid maker
 class GridMaker:
     """
     A class to create a grid and map it to various given land subdivisions
     """
+
     def __init__(self, city_geo_files_dict, grid_step=0.1):  # grid_step in km
-        
+
         self._quartiere_key = 'quartieri'  # hardcoded
-        
+
         # load division geofiles with geopandas
         self.subdivisions = {}
         for name, file_name in city_geo_files_dict.items():
             self.subdivisions[name] = gpd.read_file(file_name)
-        
+
         # compute city boundary
         self.city_boundary = shapely.ops.cascaded_union(
             self.subdivisions[self._quartiere_key]['geometry'])
-        
+
         # precompute coordinate ranges
         self.long_range = (self.city_boundary.bounds[0],
                            self.city_boundary.bounds[2])
@@ -48,15 +49,15 @@ class GridMaker:
                           self.city_boundary.bounds[3])
         self.long_n_grid = int(self.longitude_range_km // grid_step) + 1
         self.lat_n_grid = int(self.latitude_range_km // grid_step) + 1
-        
+
         (self._x_plot, self._y_plot) = np.meshgrid(
             np.linspace(*self.long_range, self.long_n_grid),
             np.linspace(*self.lat_range, self.lat_n_grid), indexing='ij')
-        
+
         # construct point objects with same shape
         self._b_in_perimeter = np.empty_like(self._x_plot, dtype=bool)
         self._id_quartiere = np.empty_like(self._x_plot, dtype=object)
-        
+
         for (i, j), _ in np.ndenumerate(self._b_in_perimeter):
             shapely_point = shapely.geometry.Point(
                 (self._x_plot[i, j], self._y_plot[i, j]))
@@ -67,7 +68,7 @@ class GridMaker:
             if self._b_in_perimeter[i, j]:
                 b_found = False
                 for i_row in range(self.subdivisions[
-                                      self._quartiere_key].shape[0]):
+                        self._quartiere_key].shape[0]):
                     this_quartiere_polygon = self.subdivisions[
                         self._quartiere_key]['geometry'][i_row]
                     if this_quartiere_polygon.contains(shapely_point):
@@ -79,21 +80,21 @@ class GridMaker:
                         break  # skip remaining zones
                 assert b_found, \
                     'Point within city boundary was not assigned to any zone'
-            
+
             else:  # assign default value for points outside city perimeter
                 self._id_quartiere[i, j] = np.nan
-                
+
         # call common format constructor
         self.grid = MappedPositionsFrame(
             long=self._x_plot[self._b_in_perimeter].flatten(),
             lat=self._y_plot[self._b_in_perimeter].flatten(),
             id_quartiere=self._id_quartiere[self._b_in_perimeter].flatten())
-        
+
         self.full_grid = MappedPositionsFrame(
             long=self._x_plot.flatten(),
             lat=self._y_plot.flatten(),
             id_quartiere=self._id_quartiere.flatten())
-      
+
     @property
     def longitude_range_km(self):
         return geopy.distance.great_circle(
@@ -248,11 +249,11 @@ class JSONWriter:
                     istat_item['source_id'] = source_id
                     #
                     istat_item['indicators'] = (
-                       [{'category': istat_area,
-                         'label': indicator,
-                         'id': indicator,
-                         'data_source': 'ISTAT'
-                         } for indicator in indicators])
+                        [{'category': istat_area,
+                          'label': indicator,
+                          'id': indicator,
+                          'data_source': 'ISTAT'
+                          } for indicator in indicators])
                     out_list.append(istat_item)
 
             return out_list
@@ -261,7 +262,7 @@ class JSONWriter:
             self.city,
             services=list(self.layers_data.keys()),
             istat_layers={'Vitalita': list(self.vitality_data.columns)}
-                                    )
+        )
         return json_list
 
     def make_serviceareas_output(self, precision=4):
