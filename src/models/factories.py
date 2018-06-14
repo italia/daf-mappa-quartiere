@@ -94,7 +94,7 @@ class UnitFactory:
 
     @property
     def filepath(self):
-        return self.model_city.servicePaths[self.servicetype]
+        return self.model_city.service_paths[self.servicetype]
 
     @property
     def output_path(self):

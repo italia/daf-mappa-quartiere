@@ -186,14 +186,14 @@ class JSONWriter:
             sourceItem['url'] = city.source
             sourceItem['id'] = sourceId
             # add center and zoom info for the source layer only
-            sourceItem['zoom'] = city.zoomCenter[0]
-            sourceItem['center'] = city.zoomCenter[1]
+            sourceItem['zoom'] = city.zoom_center[0]
+            sourceItem['center'] = city.zoom_center[1]
 
             # declare the joinField
             sourceItem['joinField'] = common_cfg.id_quartiere_col_name
 
-            #  Does a source have a dataSource?
-            # 'dataSource': '',
+            #  Does a source have a data_source?
+            # 'data_source': '',
             outList.append(sourceItem)
 
             # service layer items
@@ -211,7 +211,7 @@ class JSONWriter:
                                               [{'category': service.serviceArea.value,
                                                 'label': service.label,
                                                 'id': service.name,
-                                                'dataSource': service.dataSource,
+                                                'data_source': service.dataSource,
                                                 } for service in thisServices]),
                 outList.append(layerItem)
 
@@ -228,7 +228,7 @@ class JSONWriter:
                     istatItem['indicators'] = ([{'category': istatArea,
                                                     'label': indicator,
                                                     'id': indicator,
-                                                    'dataSource': 'ISTAT',
+                                                    'data_source': 'ISTAT',
                                                     } for indicator in indicators]), \
                                               outList.append(istatItem)
 

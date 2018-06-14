@@ -70,7 +70,7 @@ menu_group_template = {
                      'label': '',
                      'id': '',
                      'default': False,
-                     'dataSource': '',
+                     'data_source': '',
                      }]
                         }
 

@@ -1,47 +1,47 @@
 import numpy as np
-import pandas as pd
 from enum import Enum
 import geopy
 
-## Enum classes
+
+# Enum classes
 class AgeGroup(Enum):
-    Newborn= (0, 3)
-    Kinder = (3,6)
-    ChildPrimary= (6,10)
-    ChildMid= (10,15)
-    ChildHigh= (15,19) 
-    Young= (19,25)
-    Junior= (25,35)
-    Senior= (35, 50) 
-    Over50= (50, 65)
-    Over65= (65, 74)
-    Over74= (74, 200)
+    Newborn = (0, 3)
+    Kinder = (3, 6)
+    ChildPrimary = (6, 10)
+    ChildMid = (10, 15)
+    ChildHigh = (15, 19)
+    Young = (19, 25)
+    Junior = (25, 35)
+    Senior = (35, 50)
+    Over50 = (50, 65)
+    Over65 = (65, 74)
+    Over74 = (74, 200)
     
-    def __init__(self, startAge, endAge):
-        self.start = startAge
-        self.end = endAge
+    def __init__(self, start_age, end_age):
+        self.start = start_age
+        self.end = end_age
     
-    def comprehends(self, valueIn):
-        return self.start <= valueIn < self.end
+    def comprehends(self, value_in):
+        return self.start <= value_in < self.end
     
     @staticmethod
     def all():
-        return([g for g in AgeGroup])
+        return [g for g in AgeGroup]
 
     @staticmethod
     def all_but(excluded):
-        return([g for g in AgeGroup if g not in excluded])
+        return [g for g in AgeGroup if g not in excluded]
 
     @staticmethod
-    def classify_array(arrayIn):
-        return [AgeGroup.find_AgeGroup(y) for y in arrayIn]
+    def classify_array(array_in):
+        return [AgeGroup.find_age_group(y) for y in array_in]
     
     @staticmethod
-    def find_AgeGroup(x):
+    def find_age_group(x):
             for g in AgeGroup.all():
                 if g.comprehends(x):
                     return g
-            raise 'Classes are not adiacent, failed to classify %s' % x
+            raise 'Classes are not adjacent, failed to classify %s' % x
             
     @property
     def range(self): return self.end - self.start 
@@ -62,66 +62,69 @@ class SummaryNorm(Enum):
     
 
 class ServiceType(Enum):
-    School = (1, #enum id 
+    School = (1,  # enum id
               ServiceArea.EducationCulture, 
               SummaryNorm.l2,
               [AgeGroup.ChildPrimary, AgeGroup.ChildMid, AgeGroup.ChildHigh],
               'Scuole', 
               'MIUR')
     #
-    Library = (2, #enum id
+    Library = (2,  # enum id
                ServiceArea.EducationCulture, 
                SummaryNorm.l2,
                AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
                'Biblioteche', 
                'MIBACT')
     #
-    TransportStop = (3, #enum id
-               ServiceArea.Transport,
-               SummaryNorm.l2,
-               AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
-               'Fermate TPL',
-               'GTFS Comuni')
+    TransportStop = (3,  # enum id
+                     ServiceArea.Transport,
+                     SummaryNorm.l2,
+                     AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder]),
+                     'Fermate TPL',
+                     'GTFS Comuni')
     #
-    Pharmacy = (4, #enum id
-               ServiceArea.Health,
-               SummaryNorm.lInf, # assume pharmacies are equivalent
-               AgeGroup.all(),
-               'Farmacie',
-               'Min. Salute')
+    Pharmacy = (4,  # enum id
+                ServiceArea.Health,
+                SummaryNorm.lInf,  # assume pharmacies are equivalent
+                AgeGroup.all(),
+                'Farmacie',
+                'Min. Salute')
 
-    UrbanGreen = (5, #enum id
-               ServiceArea.Environment,
-               SummaryNorm.l2,
-               AgeGroup.all(),
-               'Aree Verdi',
-               'Open Data Comuni')
-
+    UrbanGreen = (5,  # enum id
+                  ServiceArea.Environment,
+                  SummaryNorm.l2,
+                  AgeGroup.all(),
+                  'Aree Verdi',
+                  'Open Data Comuni')
     
-    def __init__(self, _, areaOfService,
-                 aggrNormInput=SummaryNorm.l2, demandAgesInput=AgeGroup.all(),
-                 label='', dataSource=''):
-        self.aggrNorm = aggrNormInput
-        self.serviceArea = areaOfService
+    def __init__(self, _, area_of_service,
+                 aggr_norm_input=SummaryNorm.l2,
+                 demand_ages_input=AgeGroup.all(),
+                 label='', data_source=''):
+        self.aggregation_norm = aggr_norm_input
+        self.service_area = area_of_service
         self.label = label
-        self.dataSource = dataSource
+        self.data_source = data_source
         # declare the AgeGroups that make use of this service
-        assert isinstance(demandAgesInput, list), 'list expected for demand ages'
-        assert all([isinstance(g, AgeGroup) for g in demandAgesInput]), 'AgeGroups expected'
-        self.demandAges = demandAgesInput
-    
-    def aggregate_units(self, unitValues, axis=1):
+        assert isinstance(demand_ages_input, list), \
+            'list expected for demand ages'
+        assert all([isinstance(g, AgeGroup) for g in demand_ages_input]),\
+            'AgeGroups expected'
+        self.demandAges = demand_ages_input
+
+    def aggregate_units(self, unit_values, axis=1):
         # assumes positions are stacked in rows
         return np.apply_along_axis(
-            lambda x: np.linalg.norm(x, ord=self.aggrNorm.value), axis, unitValues)
+            lambda x: np.linalg.norm(x, ord=self.aggregation_norm.value),
+            axis,
+            unit_values)
     
     @staticmethod
     def all():
-        return([g for g in ServiceType])
-    
-#demandFactors = pd.DataFrame(np.ones([len(AgeGroup.all()), len(ServiceType.all())]), 
-#                             index=AgeGroup.all(), columns=ServiceType.all())
-# test utility 
+        return [g for g in ServiceType]
+
+
+# test utility
 def get_random_pos(n):
     out = list(map(geopy.Point, list(zip(np.round(
                                 np.random.uniform(45.40, 45.50, n), 5),  

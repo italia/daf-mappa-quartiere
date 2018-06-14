@@ -405,7 +405,7 @@ class DemandFrame(pd.DataFrame):
         # prepare the AgeGroups cardinalities
         groupsCol = 'ageGroup'
         peopleBySampleAge = common_cfg.fill_sample_ages_in_cpa_columns(self)
-        dataByGroup = peopleBySampleAge.rename(AgeGroup.find_AgeGroup, axis='columns').T
+        dataByGroup = peopleBySampleAge.rename(AgeGroup.find_age_group, axis='columns').T
         dataByGroup.index.name = groupsCol  # index is now given by AgeGroup items
         dataByGroup = dataByGroup.reset_index()  # extract to convert to categorical and groupby
         dataByGroup[groupsCol] = dataByGroup[groupsCol].astype('category')
@@ -466,7 +466,7 @@ class KPICalculator:
     '''Class to aggregate demand and evaluate section based and position based KPIs'''
 
     def __init__(self, demandFrame, serviceUnits, cityName):
-        assert cityName in city_settings.cityNamesList, 'Unrecognized city name %s' % cityName
+        assert cityName in city_settings.city_names_list, 'Unrecognized city name %s' % cityName
         assert isinstance(demandFrame, DemandFrame), 'Demand frame expected'
         assert all(
             [isinstance(su, ServiceUnit) for su in serviceUnits]), 'Service units list expected'
