@@ -85,12 +85,12 @@ class GridMaker:
                 self._id_quartiere[i, j] = np.nan
 
         # call common format constructor
-        self.grid = MappedPositionsFrame(
+        self.grid = MappedPositionsFrame.from_coordinates_arrays(
             long=self._x_plot[self._b_in_perimeter].flatten(),
             lat=self._y_plot[self._b_in_perimeter].flatten(),
             id_quartiere=self._id_quartiere[self._b_in_perimeter].flatten())
 
-        self.full_grid = MappedPositionsFrame(
+        self.full_grid = MappedPositionsFrame.from_coordinates_arrays(
             long=self._x_plot.flatten(),
             lat=self._y_plot.flatten(),
             id_quartiere=self._id_quartiere.flatten())

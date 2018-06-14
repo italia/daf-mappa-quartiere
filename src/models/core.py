@@ -167,46 +167,61 @@ class ServiceUnit:
 class MappedPositionsFrame(pd.DataFrame):
     """A class to collect an array of positions alongside areas labels"""
 
-    def __init__(self, positions=None, long=None, lat=None, id_quartiere=None):
+    def __init__(self, long, lat, geopy_pos, id_quartiere):
+        # check id quartiere input
+        if id_quartiere:
+            assert len(long) == len(id_quartiere), 'Inconsistent lengths'
 
-        # build positions data
-        if not positions:
-            assert long or lat, 'Expected input if positions are not given'
-
-            if id_quartiere is None:
-                id_quartiere = np.full(long.shape, np.nan)
-            # create mapping dict from coordinates
-            mapping_dict = {
-                common_cfg.coord_col_names[0]: long,
-                common_cfg.coord_col_names[1]: lat,
-                common_cfg.id_quartiere_col_name: id_quartiere
+        # create mapping dict from all inputs
+        mapping_dict = {
+            common_cfg.coord_col_names[0]: long,
+            common_cfg.coord_col_names[1]: lat,
+            common_cfg.id_quartiere_col_name: id_quartiere,
+            common_cfg.positions_col: geopy_pos,
+            common_cfg.tuple_index_name: [tuple(p) for p in geopy_pos]
             }
-            # instantiate geopy positions
-            geopy_points = list(map(lambda y, x: geopy.Point(y, x), lat, long))
-            mapping_dict[common_cfg.positions_col] = geopy_points
-            mapping_dict[common_cfg.tuple_index_name] = \
-                [tuple(p) for p in geopy_points]
-
-        else:
-            assert all([isinstance(
-                t, geopy.Point) for t in positions]), 'Geopy Points expected'
-            assert not long, 'Long input not expected if positions provided'
-            assert not lat, 'Lat input not expected if positions provided'
-            if id_quartiere is None:
-                id_quartiere = np.full(len(positions), np.nan)
-            # create mapping dict from positions
-            mapping_dict = {
-                common_cfg.coord_col_names[0]: [
-                    x.longitude for x in positions],
-                common_cfg.coord_col_names[1]: [x.latitude for x in positions],
-                common_cfg.id_quartiere_col_name: id_quartiere,
-                common_cfg.positions_col: positions,
-                common_cfg.tuple_index_name: [tuple(p) for p in positions]}
 
         # finally call DataFrame constructor
         super().__init__(mapping_dict)
-        self.set_index([common_cfg.id_quartiere_col_name,
-                        common_cfg.tuple_index_name], inplace=True)
+        self.set_index(
+            [common_cfg.id_quartiere_col_name, common_cfg.tuple_index_name],
+            inplace=True)
+
+    @staticmethod
+    def from_geopy_points(geopy_points, id_quartiere=None):
+        assert all([isinstance(
+            t, geopy.Point) for t in geopy_points]), 'Geopy Points expected'
+
+        out = MappedPositionsFrame(
+            long=[x.longitude for x in geopy_points],
+            lat=[x.latitude for x in geopy_points],
+            geopy_pos=geopy_points,
+            id_quartiere=id_quartiere)
+        return out
+
+    @staticmethod
+    def from_coordinates_arrays(long, lat, id_quartiere=None):
+        assert len(long) == len(lat), 'Inconsistent lengths'
+
+        # geopy_points = list(map(lambda y, x: geopy.Point(y, x), lat, long))
+        geopy_points = [geopy.Point(yx) for yx in zip(lat, long)]
+
+        out = MappedPositionsFrame(long=long, lat=lat,
+                    geopy_pos=geopy_points, id_quartiere=id_quartiere)
+        return out
+
+    @staticmethod
+    def from_tuples(tuple_list, id_quartiere=None):
+        assert all([isinstance(
+            t, tuple) for t in tuple_list]), 'tuple positions expected'
+
+        geopy_points = [geopy.Point(t[1], t[0]) for t in tuple_list]
+
+        out = MappedPositionsFrame(
+            long=[x.longitude for x in geopy_points],
+            lat=[x.latitude for x in geopy_points],
+            geopy_pos=geopy_points, id_quartiere=id_quartiere)
+        return out
 
 
 class ServiceValues(dict):
@@ -283,8 +298,8 @@ class DemandFrame(pd.DataFrame):
 
     @property
     def mapped_positions(self):
-        return MappedPositionsFrame(
-            positions=self[common_cfg.positions_col].tolist(),
+        return MappedPositionsFrame.from_geopy_points(
+            geopy_points=self[common_cfg.positions_col].tolist(),
             id_quartiere=self[common_cfg.id_quartiere_col_name].tolist())
 
     @property
@@ -341,8 +356,9 @@ class ServiceEvaluator:
         self.service_positions = {}
         for service_type, service_units in self.units_tree.items():
             if service_units:
-                self.service_positions[service_type] = MappedPositionsFrame(
-                    positions=[u.site for u in service_units])
+                self.service_positions[service_type] = \
+                    MappedPositionsFrame.from_geopy_points(
+                        [u.site for u in service_units])
             else:
                 continue  # no units for this servicetype, do not create key
 
