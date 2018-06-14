@@ -16,6 +16,8 @@ RUN git clone https://github.com/italia/daf-mappa-quartiere
 
 WORKDIR /daf-mappa-quartiere/src/visualization
 
+RUN git checkout production
+
 RUN npm install
 
 # Build for production.
