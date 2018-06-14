@@ -169,7 +169,7 @@ class JSONWriter:
         self.city = city_settings.get_city_config(kpiCalc.city)
         self.areasTree = {}
         for s in self.layersData:
-            area = s.serviceArea
+            area = s.service_area
             self.areasTree[area] = [s] + self.areasTree.get(area, [])
 
     def make_menu(self):
@@ -197,9 +197,9 @@ class JSONWriter:
             outList.append(sourceItem)
 
             # service layer items
-            areas = set(s.serviceArea for s in services)
+            areas = set(s.service_area for s in services)
             for area in areas:
-                thisServices = [s for s in services if s.serviceArea == area]
+                thisServices = [s for s in services if s.service_area == area]
                 layerItem = common_cfg.menu_group_template.copy()
                 layerItem['type'] = 'layer'
                 layerItem['city'] = city.name
@@ -208,10 +208,10 @@ class JSONWriter:
                 layerItem['sourceId'] = sourceId  # link to defined source
                 #
                 layerItem['indicators'] = (
-                                              [{'category': service.serviceArea.value,
+                                              [{'category': service.service_area.value,
                                                 'label': service.label,
                                                 'id': service.name,
-                                                'data_source': service.dataSource,
+                                                'data_source': service.data_source,
                                                 } for service in thisServices]),
                 outList.append(layerItem)
 
