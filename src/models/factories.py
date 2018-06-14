@@ -163,13 +163,13 @@ class SchoolFactory(UnitFactory):
             for iUnit in range(typeData.shape[0]):
                 rowData = typeData.iloc[iUnit,:]
                 attrDict = {'level':scType, 'Public':rowData['bStatale']}
-                thisUnit = ServiceUnit(self.servicetype, 
-                        name=rowData[self.nameCol],
-                        id=rowData[self.idCol],
-                        position=typeLocations[iUnit], 
-                        ageDiffusionIn=typeAgeDict[scType], 
-                        scaleIn=rowData[rescaledName],
-                        attributesIn=attrDict)
+                thisUnit = ServiceUnit(self.servicetype,
+                                       name=rowData[self.nameCol],
+                                       unit_id=rowData[self.idCol],
+                                       position=typeLocations[iUnit],
+                                       age_diffusion=typeAgeDict[scType],
+                                       scale=rowData[rescaledName],
+                                       attributes=attrDict)
 
                 if not attrDict['Public'] and privateRescaling !=1:
                     thisUnit.transform_kernels_with_factor(privateRescaling)
@@ -222,13 +222,13 @@ class LibraryFactory(UnitFactory):
             for iUnit in range(typeData.shape[0]):
                 rowData = typeData.iloc[iUnit,:]
                 attrDict = {'level':libType}
-                thisUnit = ServiceUnit(self.servicetype, 
-                        name=rowData[self.nameCol],
-                        id=rowData[self.idCol],
-                        scaleIn=meanRadius,
-                        position=typeLocations[iUnit], 
-                        ageDiffusionIn=typeAgeDict[libType],
-                        attributesIn=attrDict)
+                thisUnit = ServiceUnit(self.servicetype,
+                                       name=rowData[self.nameCol],
+                                       unit_id=rowData[self.idCol],
+                                       scale=meanRadius,
+                                       position=typeLocations[iUnit],
+                                       age_diffusion=typeAgeDict[libType],
+                                       attributes=attrDict)
                 unitList.append(thisUnit)
         
         return unitList
@@ -267,17 +267,17 @@ class TransportStopFactory(UnitFactory):
             cachedThresholds = thresholdsDict[unitRouteType] # this is None by default
             thisUnit = ServiceUnit(self.servicetype,
                                    name=rowData[self.nameCol],
-                                   id=rowData[self.idCol],
+                                   unit_id=rowData[self.idCol],
                                    position=locations[iUnit],
-                                   scaleIn=scaleDict[unitRouteType],
-                                   ageDiffusionIn={g:1 for g in AgeGroup.all_but(
+                                   scale=scaleDict[unitRouteType],
+                                   age_diffusion={g:1 for g in AgeGroup.all_but(
                                        [AgeGroup.Newborn, AgeGroup.Kinder])},
-                                   kernelThresholds=cachedThresholds,
-                                   attributesIn=attrDict)
+                                   kernel_thresholds=cachedThresholds,
+                                   attributes=attrDict)
             unitList.append(thisUnit)
             # if there were no thresholds for this unit type, cache the computed ones
             if not cachedThresholds:
-                thresholdsDict[unitRouteType] = thisUnit.kerThresholds
+                thresholdsDict[unitRouteType] = thisUnit.ker_thresholds
 
         return unitList
 
@@ -304,16 +304,16 @@ class PharmacyFactory(UnitFactory):
             attrDict = {name:rowData[col] for name, col in colAttributes.items()}
             thisUnit = ServiceUnit(self.servicetype,
                                    name=rowData[self.nameCol].astype(str),
-                                   id = rowData[self.idCol],
+                                   unit_id= rowData[self.idCol],
                                    position=locations[iUnit],
-                                   scaleIn=meanRadius,
-                                   ageDiffusionIn={g: 1 for g in AgeGroup.all()},
-                                   kernelThresholds=cachedThresholds,
-                                   attributesIn=attrDict)
+                                   scale=meanRadius,
+                                   age_diffusion={g: 1 for g in AgeGroup.all()},
+                                   kernel_thresholds=cachedThresholds,
+                                   attributes=attrDict)
             unitList.append(thisUnit)
             # if there were no thresholds, cache the computed ones
             if not cachedThresholds:
-                cachedThresholds = thisUnit.kerThresholds
+                cachedThresholds = thisUnit.ker_thresholds
 
         return unitList
 
@@ -336,9 +336,9 @@ class UrbanGreenFactory(UnitFactory):
             thisUnit = ServiceUnit(self.servicetype,
                                    name=rowData[nameCol].astype(str),
                                    position=locations[iUnit],
-                                   ageDiffusionIn={g: 1 for g in AgeGroup.all()},
-                                   scaleIn=meanRadius,
-                                   attributesIn=attrDict)
+                                   age_diffusion={g: 1 for g in AgeGroup.all()},
+                                   scale=meanRadius,
+                                   attributes=attrDict)
             unitList.append(thisUnit)
 
         return unitList

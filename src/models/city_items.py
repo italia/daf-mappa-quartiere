@@ -110,7 +110,7 @@ class ServiceType(Enum):
             'list expected for demand ages'
         assert all([isinstance(g, AgeGroup) for g in demand_ages_input]),\
             'AgeGroups expected'
-        self.demandAges = demand_ages_input
+        self.demand_ages = demand_ages_input
 
     def aggregate_units(self, unit_values, axis=1):
         # assumes positions are stacked in rows

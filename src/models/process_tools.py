@@ -76,11 +76,12 @@ class GridMaker():
                 
         # call common format constructor
         self.grid = MappedPositionsFrame(long=self._xPlot[self._bInPerimeter].flatten(),
-                                                   lat=self._yPlot[self._bInPerimeter].flatten(),
-                                                   idQuartiere=self._IDquartiere[self._bInPerimeter].flatten())
+                                         lat=self._yPlot[self._bInPerimeter].flatten(),
+                                         id_quartiere=self._IDquartiere[self._bInPerimeter].flatten())
         
         self.fullGrid = MappedPositionsFrame(long=self._xPlot.flatten(), lat=self._yPlot.flatten(),
-                                                   idQuartiere=self._IDquartiere.flatten())
+                                             id_quartiere=self._IDquartiere
+                                             .flatten())
       
       
     @property
@@ -163,9 +164,9 @@ class JSONWriter:
 
     def __init__(self, kpiCalc):
         assert isinstance(kpiCalc, KPICalculator), 'KPI calculator is needed'
-        self.layersData = kpiCalc.quartiereKPI
-        self.istatData = kpiCalc.istatKPI
-        self.vitalityData = kpiCalc.istatVitality
+        self.layersData = kpiCalc.quartiere_kpi
+        self.istatData = kpiCalc.istat_kpi
+        self.vitalityData = kpiCalc.istat_vitality
         self.city = city_settings.get_city_config(kpiCalc.city)
         self.areasTree = {}
         for s in self.layersData:
