@@ -305,15 +305,10 @@ class DemandFrame(pd.DataFrame):
 
     @property
     def ages_frame(self):
-        # start from the mapped_positions
-        out = self.mapped_positions
-        # prepare ages_data with matching index
+        # prepare multi index
         age_multi_index = [self[common_cfg.id_quartiere_col_name],
                            self[common_cfg.positions_col].apply(tuple)]
-        ages_data = self[AgeGroup.all()].set_index(age_multi_index)
-        # concatenate
-        out[ages_data.columns] = ages_data
-        return out
+        return self[AgeGroup.all()].set_index(age_multi_index)
 
     def get_age_sample(self, age_group=None, n_sample=1000):
 
@@ -497,17 +492,19 @@ class ServiceEvaluator:
         return out
 
     def get_aggregate_values_from_interactions(
-            self, interactions, ages_data, b_evaluate_attendance, clip_level):
+            self, interactions, demand_data, b_evaluate_attendance,
+            clip_level):
 
-        assert isinstance(ages_data, MappedPositionsFrame), \
-                          'Ages frame should be a MappedPositionsFrame'
+        assert isinstance(demand_data, DemandFrame), \
+                          'Ages frame should be a DemandFrame'
 
         # initialise output with dedicated class
-        values_store = ServiceValues(ages_data)
+        values_store = ServiceValues(demand_data.mapped_positions)
 
         if b_evaluate_attendance:
             # STEPS 2 & 3: get estimates of attendance for each service unit
-            self._compute_attendance_from_interactions(interactions, ages_data)
+            self._compute_attendance_from_interactions(
+                interactions, demand_data.ages_frame)
 
             # STEP 4 & FINAL STEP:
             # correct interactions with unit attendance and aggregate
@@ -588,7 +585,7 @@ class KPICalculator:
         self.service_values = \
             self.evaluator.get_aggregate_values_from_interactions(
                 self.service_interactions,
-                self.demand.ages_frame,
+                self.demand,
                 b_evaluate_attendance=b_evaluate_attendance,
                 clip_level=clip_level)
 
