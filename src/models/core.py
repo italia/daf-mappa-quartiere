@@ -206,8 +206,9 @@ class MappedPositionsFrame(pd.DataFrame):
         # geopy_points = list(map(lambda y, x: geopy.Point(y, x), lat, long))
         geopy_points = [geopy.Point(yx) for yx in zip(lat, long)]
 
-        out = MappedPositionsFrame(long=long, lat=lat,
-                    geopy_pos=geopy_points, id_quartiere=id_quartiere)
+        out = MappedPositionsFrame(
+            long=long, lat=lat, geopy_pos=geopy_points,
+            id_quartiere=id_quartiere)
         return out
 
     @staticmethod
@@ -498,8 +499,9 @@ class ServiceEvaluator:
     def get_aggregate_values_from_interactions(
             self, interactions, ages_data, b_evaluate_attendance, clip_level):
 
-        assert isinstance(ages_data, pd.DataFrame), 'Ages frame should be a ' \
-                                                    'Dataframe'
+        assert isinstance(ages_data, MappedPositionsFrame), \
+                          'Ages frame should be a MappedPositionsFrame'
+
         # initialise output with dedicated class
         values_store = ServiceValues(ages_data)
 
@@ -574,7 +576,6 @@ class KPICalculator:
         computation pipeline. Once interactions are first evaluated,
         different aggregations use the computed values.
         """
-        ages_data = self.demand.ages_frame
 
         if not self.service_interactions:
             # trigger service interaction evaluation
@@ -587,7 +588,7 @@ class KPICalculator:
         self.service_values = \
             self.evaluator.get_aggregate_values_from_interactions(
                 self.service_interactions,
-                ages_data,
+                self.demand.ages_frame,
                 b_evaluate_attendance=b_evaluate_attendance,
                 clip_level=clip_level)
 
@@ -596,8 +597,7 @@ class KPICalculator:
     def evaluate_interactions_at_demand(self):
         # extract demand coordinates from demand data and evaluate
         # interaction values at them
-        ages_data = self.demand.ages_frame
-        targets_coord_array = ages_data[
+        targets_coord_array = self.demand.mapped_positions[
             common_cfg.coord_col_names[::-1]].as_matrix()
 
         self.service_interactions = self.evaluator.get_interactions_at(
