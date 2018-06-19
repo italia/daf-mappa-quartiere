@@ -606,23 +606,23 @@ class KPICalculator:
             'Have we evaluated service values before making averages for KPIs?'
         # get mean service levels by quartiere,
         # weighting according to the number of citizens
-        eps = np.finfo(float).eps
+        tol = 1e-12
 
-        for service, raw_values in self.service_values.items():
+        for service, values_at_locations in self.service_values.items():
             # iterate over columns as Enums are not orderable...
             for col in DemandFrame.OUTPUT_AGES:
                 if col in service.demand_ages:
                     self.weighted_values[service][col] = pd.Series.multiply(
-                        raw_values[col], self.demand.ages_frame[col])
+                        values_at_locations[col], self.demand.ages_frame[col])
                 else:
-                    self.weighted_values[service][col] = np.nan * \
-                                                         raw_values[col]
+                    self.weighted_values[service][col] = \
+                        np.nan * values_at_locations[col]
             # get minmax range for sanity checks after
             check_range = (
-                raw_values.groupby(
-                    common_cfg.id_quartiere_col_name).min() - eps,
-                raw_values.groupby(
-                    common_cfg.id_quartiere_col_name).max() + eps
+                values_at_locations.groupby(
+                    common_cfg.id_quartiere_col_name).min() - tol,
+                values_at_locations.groupby(
+                    common_cfg.id_quartiere_col_name).max() + tol
                           )
             # sum weighted fractions by neighbourhood
             weighted_sums = self.weighted_values[service].groupby(
@@ -644,8 +644,19 @@ class KPICalculator:
                     check_range[1][col]) | self.quartiere_kpi[service][
                     col].isnull())
                 assert all(b_good),\
-                    'Unexpected error in mean computation %s' % \
-                    self.quartiere_kpi[service][col][~b_good]
+                    ''' -- Unexpected error in mean computation:
+                            Service: %s,
+                            AgeGroup: %s
+                            
+                        Bad values:
+                        %s
+                        
+                        Range:
+                        %s
+                    ''' % (service, col,
+                           self.quartiere_kpi[service][col][~b_good],
+                           check_range
+                           )
 
         return self.quartiere_kpi
 
