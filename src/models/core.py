@@ -225,43 +225,12 @@ class MappedPositionsFrame(pd.DataFrame):
         return out
 
 
-class ServiceValues(dict):
-    """A class to store, make available for aggregation
-     and easily export estimated service values"""
-
-    def __init__(self, mapped_positions):
-        assert isinstance(mapped_positions, MappedPositionsFrame), \
-            'Expected MappedPositionsFrame'
-        self.mappedPositions = mapped_positions
-
-        # initialise for all service types
-        super().__init__({service: pd.DataFrame(
-            np.zeros([mapped_positions.shape[0], len(AgeGroup.all())]),
-            index=mapped_positions.index, columns=AgeGroup.all())
-            for service in ServiceType})
-
-    def plot_output(self, service_type, age_group):
-        """Make output for plotting for a given serviceType and age_group"""
-        # extract values
-        values_series = self[service_type][age_group]
-        # TODO: this is quite inefficient though still fast, optimise it
-        joined = pd.concat([values_series, self.mappedPositions], axis=1)
-
-        # format output as (x,y,z) surface
-        z = values_series.values
-        x = joined[common_cfg.coord_col_names[0]].values
-        y = joined[common_cfg.coord_col_names[1]].values
-        return x, y, z
-
-    @property
-    def positions(self):
-        return list(self.mappedPositions.Positions.values)
-
-
 # Demand modelling
 class DemandFrame(pd.DataFrame):
     """A class to store demand units in row and
     make them available for aggregation"""
+
+    OUTPUT_AGES = AgeGroup.all()
 
     def __init__(self, df_input, b_duplicates_check=True):
         assert isinstance(df_input, pd.DataFrame), 'Input DataFrame expected'
@@ -283,7 +252,7 @@ class DemandFrame(pd.DataFrame):
         ages_by_section = data_by_group.groupby(groups_col).sum().T
         self['PeopleTot'] = ages_by_section.sum(axis=1)
         # report all ages
-        for col in AgeGroup.all():
+        for col in self.OUTPUT_AGES:
             self[col] = ages_by_section.get(
                 col, np.zeros_like(self.iloc[:, 0]))
 
@@ -332,12 +301,47 @@ class DemandFrame(pd.DataFrame):
         return frame
 
 
+class ServiceValues(dict):
+    """A class to store, make available for aggregation
+     and easily export estimated service values"""
+
+    def __init__(self, mapped_positions):
+        assert isinstance(mapped_positions, MappedPositionsFrame), \
+            'Expected MappedPositionsFrame'
+        self.mappedPositions = mapped_positions
+
+        # initialise for all service types
+        super().__init__(
+            {service: pd.DataFrame(0.0, index=mapped_positions.index,
+                                   columns=DemandFrame.OUTPUT_AGES)
+             for service in ServiceType})
+
+    def plot_output(self, service_type, age_group):
+        """Make output for plotting for a given serviceType and age_group"""
+        # extract values
+        values_series = self[service_type][age_group]
+        # TODO: this is quite inefficient though still fast, optimise it
+        joined = pd.concat([values_series, self.mappedPositions], axis=1)
+
+        # format output as (x,y,z) surface
+        z = values_series.values
+        x = joined[common_cfg.coord_col_names[0]].values
+        y = joined[common_cfg.coord_col_names[1]].values
+        return x, y, z
+
+    @property
+    def positions(self):
+        return list(self.mappedPositions.Positions.values)
+
+
 class ServiceEvaluator:
     """A class to evaluate a given list of service units"""
 
-    def __init__(self, unit_list, output_services=[t for t in ServiceType]):
+    def __init__(self, unit_list, output_services=None):
         assert isinstance(unit_list, list), \
             'List expected, got %s' % type(unit_list)
+        if not output_services:
+            output_services = [t for t in ServiceType]
         assert all([isinstance(u, ServiceUnit) for u in unit_list]),\
             'ServiceUnits expected in list'
         self.units = tuple(unit_list)  # lock ordering
@@ -442,9 +446,9 @@ class ServiceEvaluator:
             # initialise group loads for every unit given by current age_group
             group_loads = np.zeros(
                 [self.service_positions[service_type].shape[0],
-                 len(AgeGroup.all())])
+                 len(DemandFrame.OUTPUT_AGES)])
 
-            unassigned_pop = np.zeros(len(AgeGroup.all()))
+            unassigned_pop = np.zeros(len(DemandFrame.OUTPUT_AGES))
 
             for i_age, age_group in enumerate(ages):
                 this_interactions = interactions[service_type][age_group]
@@ -556,13 +560,8 @@ class KPICalculator:
         self.istat_kpi = pd.DataFrame()
         self.istat_vitality = pd.DataFrame()
 
-        # derive Ages frame
-        age_multi_index = [
-            demand_frame[common_cfg.id_quartiere_col_name],
-            demand_frame[common_cfg.positions_col].apply(tuple)]
-        self.ages_frame = \
-            demand_frame[AgeGroup.all()].set_index(age_multi_index)
-        self.ages_totals = self.ages_frame.groupby(level=0).sum()
+        # compute ages totals
+        self.ages_totals = self.demand.ages_frame.groupby(level=0).sum()
 
     def evaluate_services_at_demand(
             self,
@@ -609,19 +608,22 @@ class KPICalculator:
         # weighting according to the number of citizens
         eps = np.finfo(float).eps
 
-        for service, data in self.service_values.items():
+        for service, raw_values in self.service_values.items():
             # iterate over columns as Enums are not orderable...
-            for col in self.ages_frame.columns:
+            for col in DemandFrame.OUTPUT_AGES:
                 if col in service.demand_ages:
                     self.weighted_values[service][col] = pd.Series.multiply(
-                        data[col], self.ages_frame[col])
+                        raw_values[col], self.demand.ages_frame[col])
                 else:
-                    self.weighted_values[service][col] = np.nan * data[col]
-
+                    self.weighted_values[service][col] = np.nan * \
+                                                         raw_values[col]
+            # get minmax range for sanity checks after
             check_range = (
-                data.groupby(common_cfg.id_quartiere_col_name).min() - eps,
-                data.groupby(common_cfg.id_quartiere_col_name).max() + eps)
-
+                raw_values.groupby(
+                    common_cfg.id_quartiere_col_name).min() - eps,
+                raw_values.groupby(
+                    common_cfg.id_quartiere_col_name).max() + eps
+                          )
             # sum weighted fractions by neighbourhood
             weighted_sums = self.weighted_values[service].groupby(
                 common_cfg.id_quartiere_col_name).sum()
@@ -632,7 +634,7 @@ class KPICalculator:
                 service.demand_ages)] = np.nan
             self.quartiere_kpi[service] = (
                 weighted_sums / self.ages_totals).reindex(
-                columns=AgeGroup.all(), copy=False)
+                columns=DemandFrame.OUTPUT_AGES, copy=False)
 
             # check that the weighted mean lies
             # between min and max in the neighbourhood
@@ -641,7 +643,9 @@ class KPICalculator:
                     check_range[0][col],
                     check_range[1][col]) | self.quartiere_kpi[service][
                     col].isnull())
-                assert all(b_good), 'Unexpected error in mean computation'
+                assert all(b_good),\
+                    'Unexpected error in mean computation %s' % \
+                    self.quartiere_kpi[service][col][~b_good]
 
         return self.quartiere_kpi
 
@@ -650,7 +654,7 @@ class KPICalculator:
             self.demand.groupby(common_cfg.id_quartiere_col_name).sum()
 
         drop_columns = [
-            c for c in AgeGroup.all() + common_cfg.excluded_columns
+            c for c in DemandFrame.OUTPUT_AGES + common_cfg.excluded_columns
             if c in all_quartiere.columns]
         quartiere_data = all_quartiere.drop(drop_columns, axis=1)
 
