@@ -7,15 +7,15 @@ import numpy as np
 import pandas as pd
 from sklearn import gaussian_process
 from matplotlib import pyplot as plt
+import functools
+
+from scipy.optimize import fsolve
+from scipy.spatial.distance import cdist
 
 from references import common_cfg, istat_kpi, city_settings
 # enum classes for the model
 from src.models.city_items import AgeGroup, ServiceType
 
-from scipy.optimize import fsolve
-from scipy.spatial.distance import cdist
-
-import functools
 
 # TODO: find way to put this into some global settings
 rootDir = os.path.dirname(os.path.dirname(__file__))
@@ -502,7 +502,7 @@ class ServiceEvaluator:
             clip_level):
 
         assert isinstance(demand_data, DemandFrame), \
-                          'Ages frame should be a DemandFrame'
+            'Ages frame should be a DemandFrame'
 
         # initialise output with dedicated class
         values_store = ServiceValues(demand_data.mapped_positions)
@@ -649,10 +649,10 @@ class KPICalculator:
                     ''' -- Unexpected error in mean computation:
                             Service: %s,
                             AgeGroup: %s
-                            
+
                         Bad values:
                         %s
-                        
+
                         Range:
                         %s
                     ''' % (service, col,
