@@ -121,12 +121,11 @@ class UnitFactory:
             print("We're sorry, this service has not been implemented yet!")
             return []
 
-    @staticmethod
-    def make_loaders_for_city(model_city):
+    @classmethod
+    def make_loaders_for_city(cls, model_city):
         loaders_dict = {}
         for sType in model_city.keys():
-            loaders_dict[sType.label] = \
-                UnitFactory.get_factory(sType)(model_city)
+            loaders_dict[sType.label] = cls.get_factory(sType)(model_city)
         return loaders_dict
 
 

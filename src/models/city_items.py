@@ -24,21 +24,21 @@ class AgeGroup(Enum):
     def comprehends(self, value_in):
         return self.start <= value_in < self.end
 
-    @staticmethod
-    def all():
-        return [g for g in AgeGroup]
+    @classmethod
+    def all(cls):
+        return [g for g in cls]
 
-    @staticmethod
-    def all_but(excluded):
-        return [g for g in AgeGroup if g not in excluded]
+    @classmethod
+    def all_but(cls, excluded):
+        return [g for g in cls if g not in excluded]
 
-    @staticmethod
-    def classify_array(array_in):
-        return [AgeGroup.find_age_group(y) for y in array_in]
+    @classmethod
+    def classify_array(cls, array_in):
+        return [cls.find_age_group(y) for y in array_in]
 
-    @staticmethod
-    def find_age_group(x):
-        for g in AgeGroup.all():
+    @classmethod
+    def find_age_group(cls, x):
+        for g in cls.all():
             if g.comprehends(x):
                 return g
         raise 'Classes are not adjacent, failed to classify %s' % x
@@ -119,9 +119,9 @@ class ServiceType(Enum):
             axis,
             unit_values)
 
-    @staticmethod
-    def all():
-        return [g for g in ServiceType]
+    @classmethod
+    def all(cls):
+        return [g for g in cls]
 
 
 # test utility

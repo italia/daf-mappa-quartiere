@@ -187,41 +187,38 @@ class MappedPositionsFrame(pd.DataFrame):
             [common_cfg.id_quartiere_col_name, common_cfg.tuple_index_name],
             inplace=True)
 
-    @staticmethod
-    def from_geopy_points(geopy_points, id_quartiere=None):
+    @classmethod
+    def from_geopy_points(cls, geopy_points, id_quartiere=None):
         assert all([isinstance(
             t, geopy.Point) for t in geopy_points]), 'Geopy Points expected'
 
-        out = MappedPositionsFrame(
-            long=[x.longitude for x in geopy_points],
-            lat=[x.latitude for x in geopy_points],
-            geopy_pos=geopy_points,
-            id_quartiere=id_quartiere)
+        out = cls(long=[x.longitude for x in geopy_points],
+                  lat=[x.latitude for x in geopy_points],
+                  geopy_pos=geopy_points,
+                  id_quartiere=id_quartiere)
         return out
 
-    @staticmethod
-    def from_coordinates_arrays(long, lat, id_quartiere=None):
+    @classmethod
+    def from_coordinates_arrays(cls, long, lat, id_quartiere=None):
         assert len(long) == len(lat), 'Inconsistent lengths'
 
-        # geopy_points = list(map(lambda y, x: geopy.Point(y, x), lat, long))
         geopy_points = [geopy.Point(yx) for yx in zip(lat, long)]
 
-        out = MappedPositionsFrame(
+        out = cls(
             long=long, lat=lat, geopy_pos=geopy_points,
             id_quartiere=id_quartiere)
         return out
 
-    @staticmethod
-    def from_tuples(tuple_list, id_quartiere=None):
+    @classmethod
+    def from_tuples(cls, tuple_list, id_quartiere=None):
         assert all([isinstance(
             t, tuple) for t in tuple_list]), 'tuple positions expected'
 
         geopy_points = [geopy.Point(t[1], t[0]) for t in tuple_list]
 
-        out = MappedPositionsFrame(
-            long=[x.longitude for x in geopy_points],
-            lat=[x.latitude for x in geopy_points],
-            geopy_pos=geopy_points, id_quartiere=id_quartiere)
+        out = cls(long=[x.longitude for x in geopy_points],
+                  lat=[x.latitude for x in geopy_points],
+                  geopy_pos=geopy_points, id_quartiere=id_quartiere)
         return out
 
 
@@ -231,10 +228,13 @@ class DemandFrame(pd.DataFrame):
     make them available for aggregation"""
 
     OUTPUT_AGES = AgeGroup.all()
+    _metadata = ['ages_frame', 'mapped_positions']
 
     def __init__(self, df_input, b_duplicates_check=True):
         assert isinstance(df_input, pd.DataFrame), 'Input DataFrame expected'
+
         # initialise and assign base DataFrame properties
+        # FIXME: this is not nice at all. Refactor to properly inherit from df
         super().__init__()
         self.__dict__.update(df_input.copy().__dict__)
 
@@ -256,28 +256,32 @@ class DemandFrame(pd.DataFrame):
             self[col] = ages_by_section.get(
                 col, np.zeros_like(self.iloc[:, 0]))
 
-        # assign centroid as position
-        geopy_values = self['geometry'].apply(
-            lambda pos: geopy.Point(pos.centroid.y, pos.centroid.x))
-        self[common_cfg.positions_col] = geopy_values
+        # extract long and lat and build geopy locations
+        self[common_cfg.coord_col_names[0]] = self['geometry'].apply(
+            lambda pos: pos.centroid.x)
+
+        self[common_cfg.coord_col_names[1]] = self['geometry'].apply(
+            lambda pos: pos.centroid.y)
+
+        self[common_cfg.positions_col] = [geopy.Point(yx) for yx in zip(
+            self[common_cfg.coord_col_names[::-1]].as_matrix())]
 
         if b_duplicates_check:
             # check no location is repeated - takes a while
             assert not any(self[common_cfg.positions_col].duplicated()),\
                 'Repeated position found'
 
-    @property
-    def mapped_positions(self):
-        return MappedPositionsFrame.from_geopy_points(
-            geopy_points=self[common_cfg.positions_col].tolist(),
-            id_quartiere=self[common_cfg.id_quartiere_col_name].tolist())
-
-    @property
-    def ages_frame(self):
-        # prepare multi index
+        # cache ages frame and mapped positions for quicker access
         age_multi_index = [self[common_cfg.id_quartiere_col_name],
                            self[common_cfg.positions_col].apply(tuple)]
-        return self[AgeGroup.all()].set_index(age_multi_index)
+        self.ages_frame = self[AgeGroup.all()].set_index(age_multi_index)
+
+        self.mapped_positions = MappedPositionsFrame(
+            long=self[common_cfg.coord_col_names[0]],
+            lat=self[common_cfg.coord_col_names[1]],
+            geopy_pos=self[common_cfg.positions_col].tolist(),
+            id_quartiere=self[common_cfg.id_quartiere_col_name].tolist()
+            )
 
     def get_age_sample(self, age_group=None, n_sample=1000):
 
@@ -292,13 +296,11 @@ class DemandFrame(pd.DataFrame):
         sample = coord.sample(int(n_sample)).as_matrix()
         return sample[:, 0], sample[:, 1]
 
-    @staticmethod
-    def create_from_istat_cpa(city_name):
+    @classmethod
+    def create_from_istat_cpa(cls, city_name):
         """Constructor caller for DemandFrame"""
         city_config = city_settings.get_city_config(city_name)
-        frame = DemandFrame(
-            city_config.istat_cpa_data, b_duplicates_check=False)
-        return frame
+        return cls(city_config.istat_cpa_data, b_duplicates_check=False)
 
 
 class ServiceValues(dict):
