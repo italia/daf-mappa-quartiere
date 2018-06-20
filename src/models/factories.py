@@ -14,12 +14,6 @@ from references import city_settings, common_cfg
 from src.models.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceUnit
 
-# TODO: find way to put this into some global settings
-rootDir = os.path.dirname(os.path.dirname(__file__))
-if rootDir not in sys.path:
-    sys.path.append(rootDir)
-
-
 # UnitFactory father class
 class UnitFactory:
     servicetype = None  # this gets overridden in subclasses

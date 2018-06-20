@@ -15,10 +15,6 @@ from references import common_cfg, city_settings
 from src.models.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
 
-# TODO: find way to put this into some global settings
-rootDir = os.path.dirname(os.path.dirname(__file__))
-if rootDir not in sys.path:
-    sys.path.append(rootDir)
 
 plt.rcParams['figure.figsize'] = (20, 14)
 

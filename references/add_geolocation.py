@@ -2,16 +2,9 @@ import numpy as np
 import pandas as pd
 import googlemaps
 import pickle
-import os
-import sys
+
 
 from references import common_cfg
-
-# TODO: find way to put this into some global settings
-rootDir = os.path.dirname(os.path.dirname(__file__))
-if rootDir not in sys.path:
-    sys.path.append(rootDir)
-
 
 def append_geolocation_and_save(
         api_key, orig_data, query_addresses, target_file):

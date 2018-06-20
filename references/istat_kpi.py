@@ -1,6 +1,4 @@
 import pandas as pd
-import geopandas as gpd
-
 
 def new_index(old_df, lista_col_num, lista_col_den, nome_indice):
     """The function creates a new variable that is obtained by a simple ratio. It returns a df updated

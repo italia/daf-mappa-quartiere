@@ -44,7 +44,8 @@ class AgeGroup(Enum):
         raise 'Classes are not adjacent, failed to classify %s' % x
 
     @property
-    def range(self): return self.end - self.start
+    def range(self):
+        return self.end - self.start
 
 
 class ServiceArea(Enum):

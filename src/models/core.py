@@ -1,5 +1,3 @@
-import os
-import sys
 from time import time
 import geopy
 import geopy.distance
@@ -15,12 +13,6 @@ from scipy.spatial.distance import cdist
 from references import common_cfg, istat_kpi, city_settings
 # enum classes for the model
 from src.models.city_items import AgeGroup, ServiceType
-
-
-# TODO: find way to put this into some global settings
-rootDir = os.path.dirname(os.path.dirname(__file__))
-if rootDir not in sys.path:
-    sys.path.append(rootDir)
 
 gaussKern = gaussian_process.kernels.RBF
 
@@ -220,6 +212,7 @@ class MappedPositionsFrame(pd.DataFrame):
                   lat=[x.latitude for x in geopy_points],
                   geopy_pos=geopy_points, id_quartiere=id_quartiere)
         return out
+
 
 
 # Demand modelling

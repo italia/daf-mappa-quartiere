@@ -1,12 +1,9 @@
 import os
-import sys
 import geopandas as gpd
 import shapely
+
 from src.models.city_items import ServiceType
 from references import common_cfg
-rootDir = os.path.dirname(__file__)
-if rootDir not in sys.path:
-    sys.path.append(rootDir)
 
 
 class ModelCity(dict):
