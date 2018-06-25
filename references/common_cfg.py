@@ -6,6 +6,8 @@ from geopy import distance as geodist
 from geopy import Point as geoPoint
 import numpy as np
 
+from scipy.sparse.csgraph import connected_components
+
 project_root = os.path.dirname(
     os.path.dirname(__file__))  # expected to be in root/references
 
@@ -91,6 +93,22 @@ tpl_route_type = {
 cached_metadata = pd.read_csv(os.path.join(
     cpa_path, 'tracciato_2011_sezioni.csv'), sep=';', encoding='cp1252')
 
+def detect_similar_locations(positions_list, tol=0.003):
+    """This function flags the groups of locations that are within a
+    given tolerance
+        tolerance default: 30m
+    """
+    n_positions = len(positions_list)
+    test_dist = 10 * np.ones([n_positions] * 2)
+    for i in range(n_positions):
+        for j in np.arange(i + 1, n_positions):
+            test_dist[i, j] = geodist.great_circle(
+                positions_list[i], positions_list[j]).km
+    graph_matrix = (test_dist < tol).astype(float)
+    # find groups of positions that are close together
+    _, labels = connected_components(graph_matrix, directed=False)
+
+    return labels
 
 def get_istat_metadata():
     return cached_metadata

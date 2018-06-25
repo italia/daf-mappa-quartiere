@@ -179,20 +179,6 @@ class MappedPositionsFrame(pd.DataFrame):
             [common_cfg.id_quartiere_col_name, common_cfg.tuple_index_name],
             inplace=True)
 
-    def flag_similar_locations(self, tol=0.003):
-        """This function flags the groups of locations that are within a
-        given tolerance
-            tolerance default: 30m
-        """
-        n_positions = self.shape[0]
-        test_dist = 10*np.ones([n_positions]*2)
-        positions = self[common_cfg.positions_col].reset_index(drop=True)
-        for i in range(n_positions):
-            for j in np.arange(i+1, n_positions):
-                test_dist[i,j] = geopy.distance.great_circle(
-                    positions[i], positions[j]).km
-        return (test_dist < tol).any(axis=1)
-
     @classmethod
     def from_geopy_points(cls, geopy_points, id_quartiere=None):
         assert all([isinstance(
