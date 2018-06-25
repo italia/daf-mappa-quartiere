@@ -53,7 +53,7 @@ quartiere_desc_col_name = 'quartiere'
 # per quanto riguarda censimento abitazioni, da quello che ho visto
 # escluderei i campi A44, da PF a PF9, E27 per ora
 excluded_columns = ['A44', 'E27'] + ['PF%i' % (i + 1) for i in range(9)] + \
-                   ['SEZ', 'SHAPE_LEN', ]
+                   ['SEZ', 'SHAPE_LEN'] + coord_col_names
 
 # Json/GeoJson path parameters
 output_path = os.path.join(project_root, 'data/output')
