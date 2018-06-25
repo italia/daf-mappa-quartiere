@@ -45,7 +45,7 @@ def compute_vitality_cpa2011(quartiere_data):
     # 2. Employement density
     try:
         val = quartiere_data['P60'] / quartiere_data['SHAPE_AREA']
-        val = val / val.mean()  # normalize
+        val = val * 1e4  # convert to employed/ha
         out[new_columns_names[1]] = val
     except BaseException:
         print('Had to skip employment density')
