@@ -258,7 +258,7 @@ class JSONWriter:
             self.city,
             services=list(self.layers_data.keys()),
             istat_layers={'Vitalita': list(self.vitality_data.columns)}
-        )
+                                    )
         return json_list
 
     def make_serviceareas_output(self, precision=4):
