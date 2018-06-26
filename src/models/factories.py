@@ -138,12 +138,6 @@ class SchoolFactory(UnitFactory):
             'Please provide a reference radius for the mean school size'
         (propert_data, locations) = super().extract_locations()
 
-        # ignore high school as the proximity metrics are not so relevant
-        b_drop_row = propert_data[self.type_col] == \
-                     'SCUOLA SECONDARIA II GRADO'
-        propert_data = propert_data[~b_drop_row].reset_index()
-        locations = [l for i,l in enumerate(locations) if not b_drop_row[i]]
-
         type_age_dict = {
             'SCUOLA PRIMARIA': {AgeGroup.ChildPrimary: 1},
             'SCUOLA SECONDARIA I GRADO': {AgeGroup.ChildMid: 1},
