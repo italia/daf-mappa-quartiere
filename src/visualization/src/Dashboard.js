@@ -30,32 +30,24 @@ class Dashboard extends Component {
     render() {	
 	if (this.props.neighborhood === "none") {
 	    return (
-		    <div
-		        className='dashboard-overlay'
-		        id='dashboard-start'
-		        style={{
-			    width: '250px',
-			    height: '50px',
-			    top: '300px',
-			    left: '70px'}}>
-		        <div
-		            style={{
-		                textAlign: 'middle'
-			    }}>
-		            Clicca su un quartiere
-		        </div>
-		    </div>
+		<div
+                    className='dashboard-overlay'
+		    id='dashboard-start'>
+		    Clicca su un quartiere
+		</div>
 	    );
 	}
+	var piechartsY = this.props.dashboard.piechart.length * 100;
+	
 	//to do add IDquartiere in Milano_dashboard.json
 	var properties = this.props.neighborhood;
 	return (
-	    <div className='dashboard-overlay' id='dashboard' style={this.props.style}>
+	    <div className='dashboard-overlay' id='dashboard'>
 	        <div>
-		    <h3 style={{textAlign: "left"}}>
+		    <h3 style={{textAlign: 'left'}}>
 		        {properties[this.props.nameField]}
 		    </h3>
-		    <ul style={{textAlign: "left", padding: 0}}>
+		    <ul style={{textAlign: 'left', padding: 0}}>
 	                {
 		            this.props.dashboard.list
 				.map(l => {
@@ -70,22 +62,7 @@ class Dashboard extends Component {
 		    </ul>
 		</div>
 		
-		<svg width="350" height="350" style={{display: "block"}}>
-		    {
-		        this.props.dashboard.piechart
-			    .map((p, i) => {
-				var values = p.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]);
-				return (
-					<PieChartWithLegend
-				            key={i}
-				            title={p.label}
-				            labels={p.labels}
-				            values={values}
-				            colors={p.colors}
-				            dataSource={this.props.dashboard.dataSource}
-					 />
-				)})
-		    }
+		<svg width='445' height='950'>
 	            {
 		        this.props.dashboard.barchart2
 			    .map((d, i) => {
@@ -102,6 +79,7 @@ class Dashboard extends Component {
 				return (
 					<BarChart2WithLegend
 				            key={i + "bar"}
+				            y={20 + i*200}
 				            title={d.label}
 				            data1={data1}
 				            data2={data2}
@@ -110,6 +88,23 @@ class Dashboard extends Component {
 					/>
 				)})
 		    }
+	            {
+                        this.props.dashboard.piechart
+                            .map((p, i) => {
+                                var values = p.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]);
+                                return (
+                                        <PieChartWithLegend
+                                            key={i}
+                                            y={350 + i*200 + 15}
+                                            title={p.label}
+                                            labels={p.labels}
+                                            values={values}
+                                            colors={p.colors}
+                                            dataSource={this.props.dashboard.dataSource}
+                                         />
+                                )})
+                    }
+
 		</svg>
 	    </div>
 	);

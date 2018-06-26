@@ -13,32 +13,30 @@ class PieChartWithLegend extends Component {
 	var seq = Array.from(Array(this.props.values.length).keys());
 	
 	var data = seq.map((tag, i) => {
-	    
 	    var label = self.props.labels[i];
 	    var value = self.props.values[i];
-	 
 	    return {tag: i, label: label, value: value}
 	});
 	
 	return (
 	    <g>
-	        <text x="0" y="15" style={{fontWeight: "bold"}}>
+	        <text x="0" y={this.props.y} style={{fontWeight: "bold"}}>
 		    {this.props.title}
 	        </text>
 	        <LegendList
 	            label={this.props.labels} 
 	            color={this.props.colors} 
                     x={5}
-                    y={40} 
+                    y={this.props.y + 25} 
                 />
 	        <PieChart
-	            x={220}
-	            y={65}
+	            x={280}
+	            y={this.props.y + 95}
 	            innerRadius={0}
 	            data={data}
 	            color={this.props.colors}
 	        />
-		<text x="100" y="112" style={{fontSize: 7}}>
+		<text x="30" y={this.props.y + 165} className="dataSource">
 		    Sorgente dati: {this.props.dataSource}
 	    </text>
 	

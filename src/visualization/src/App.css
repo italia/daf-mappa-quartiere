@@ -26,10 +26,6 @@ rect.handle {
     fill: #FE9922;
     opacity: 0.25;
 }
-
-div.dashboard {
-    font-size: 20px;
-}
     
 a {
     text-decoration: none;
@@ -135,6 +131,18 @@ a:hover {
     transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0);
 }
 
+#menuLi{
+    padding-left: 20px;
+    padding-bottom: 4px;
+    font-size: 19px;
+}
+
+#menuLiBold{
+    color: black;
+    font-weight: bold;
+    font-size: 22px;
+}
+
 ul {
     text-align: left;
     padding: 0;
@@ -160,7 +168,7 @@ button {
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 16px;
+    font-size: 18px;
     border-radius: 4px;
 }
 
@@ -178,12 +186,25 @@ button {
     background: rgba(255, 255, 255, 0.8);
     font-family: Arial, sans-serif;
     border-radius: 8px;
+    height: 950px;
+    width: 370px;
+    top: 80px;
+    left: 10px;
+    font-size: 18px;
 }
 
 .legend-overlay {
     position: absolute;
     background: none;
     font-family: Arial, sans-serif;
+    height: 70px;
+    width: 300px;
+    left: 500px;
+    bottom: 0px;
+}
+
+.dataSource {
+    font-size: 11px;
 }
 
 .dashboard-overlay {
@@ -193,13 +214,32 @@ button {
     border-radius: 8px;
 }
 
+#mapContainer {
+    height: 90vh;
+    width: 100vw;
+}
+
 #dashboard-start {
     padding-left: 20px;
     padding-top: 40px;
-    padding-right: 20px;  
+    padding-right: 20px;
+    width: 200px;
+    height: 50px;
+    top: 300px;
+    right: 70px;
+    text-align: middle;
 }
 
 #dashboard {
     padding-left: 20px;
     padding-top: 0px;
+    height: 450px;
+    width: 450px;
+    top: 90px;
+    right: 30px;
+    font-size: 18px;
+}
+
+#dashboardSvg {
+    display: block;
 }
