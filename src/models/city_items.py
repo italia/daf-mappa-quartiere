@@ -66,7 +66,7 @@ class ServiceType(Enum):
     School = (1,  # enum id
               ServiceArea.EducationCulture,
               SummaryNorm.l2,
-              [AgeGroup.ChildPrimary, AgeGroup.ChildMid, AgeGroup.ChildHigh],
+              [AgeGroup.ChildPrimary, AgeGroup.ChildMid],
               'Scuole',
               'MIUR')
     #
