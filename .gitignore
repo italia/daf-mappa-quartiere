@@ -32,3 +32,13 @@ src/visualization/README.txt
 *.pickle
 
 src/visualization/package-lock\.json
+
+data/raw/tpl/torino/piemonte_it\.zip
+
+data/raw/tpl/milano/Export_OpenDataTPL_Current\.zip
+
+data/interim/
+
+data/raw/cultura/
+
+data/raw/health/

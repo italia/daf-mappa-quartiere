@@ -9,7 +9,7 @@
         "indicators" : [
             {
                 "category" : "",
-                "dataSource" : "",
+                "data_source" : "",
                 "default" : false,
                 "id" : "",
                 "label" : ""
@@ -23,58 +23,23 @@
     },
     {
         "city" : "Milano",
-        "id" : "Milano_Salute",
-        "indicators" : [
-            [
-                {
-                    "category" : "Salute",
-                    "dataSource" : "Min. Salute",
-                    "id" : "Pharmacy",
-                    "label" : "Farmacie"
-                }
-            ]
-        ],
-        "sourceId" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
         "id" : "Milano_EducazioneCultura",
         "indicators" : [
-            [
-                {
-                    "category" : "EducazioneCultura",
-                    "dataSource" : "MIBACT",
-                    "id" : "Library",
-                    "label" : "Biblioteche"
-                },
-                {
-                    "category" : "EducazioneCultura",
-                    "dataSource" : "MIUR",
-                    "id" : "School",
-                    "label" : "Scuole"
-                }
-            ]
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            }
         ],
-        "sourceId" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_Trasporti",
-        "indicators" : [
-            [
-                {
-                    "category" : "Trasporti",
-                    "dataSource" : "GTFS Comuni",
-                    "id" : "TransportStop",
-                    "label" : "Fermate TPL"
-                }
-            ]
-        ],
-        "sourceId" : "Milano_quartieri",
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
         "type" : "layer",
         "url" : ""
     },
@@ -82,16 +47,47 @@
         "city" : "Milano",
         "id" : "Milano_Ambiente",
         "indicators" : [
-            [
-                {
-                    "category" : "Ambiente",
-                    "dataSource" : "Open Data Comuni",
-                    "id" : "UrbanGreen",
-                    "label" : "Aree Verdi"
-                }
-            ]
+            {
+                "category" : "Ambiente",
+                "data_source" : "Open Data Comuni",
+                "id" : "UrbanGreen",
+                "label" : "Aree Verdi"
+            }
         ],
-        "sourceId" : "Milano_quartieri",
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_Trasporti",
+        "indicators" : [
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
         "type" : "layer",
         "url" : ""
     },
@@ -99,23 +95,21 @@
         "city" : "Milano",
         "id" : "Milano_Vitalita",
         "indicators" : [
-            [
-                {
-                    "category" : "Vitalita",
-                    "dataSource" : "ISTAT",
-                    "id" : "tipo_di_alloggi",
-                    "label" : "tipo_di_alloggi"
-                },
-                {
-                    "category" : "Vitalita",
-                    "dataSource" : "ISTAT",
-                    "id" : "densita_occupati",
-                    "label" : "densita_occupati"
-                }
-            ],
-            null
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "tipo_di_alloggi",
+                "label" : "tipo_di_alloggi"
+            },
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "densita_occupati",
+                "label" : "densita_occupati"
+            }
         ],
-        "sourceId" : "Milano_quartieri",
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
         "type" : "layer",
         "url" : ""
     },
@@ -129,7 +123,7 @@
         "indicators" : [
             {
                 "category" : "",
-                "dataSource" : "",
+                "data_source" : "",
                 "default" : false,
                 "id" : "",
                 "label" : ""
@@ -145,39 +139,21 @@
         "city" : "Torino",
         "id" : "Torino_EducazioneCultura",
         "indicators" : [
-            [
-                {
-                    "category" : "EducazioneCultura",
-                    "dataSource" : "MIBACT",
-                    "id" : "Library",
-                    "label" : "Biblioteche"
-                },
-                {
-                    "category" : "EducazioneCultura",
-                    "dataSource" : "MIUR",
-                    "id" : "School",
-                    "label" : "Scuole"
-                }
-            ]
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            }
         ],
-        "sourceId" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Torino",
-        "id" : "Torino_Salute",
-        "indicators" : [
-            [
-                {
-                    "category" : "Salute",
-                    "dataSource" : "Min. Salute",
-                    "id" : "Pharmacy",
-                    "label" : "Farmacie"
-                }
-            ]
-        ],
-        "sourceId" : "Torino_quartieri",
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
         "type" : "layer",
         "url" : ""
     },
@@ -185,16 +161,15 @@
         "city" : "Torino",
         "id" : "Torino_Trasporti",
         "indicators" : [
-            [
-                {
-                    "category" : "Trasporti",
-                    "dataSource" : "GTFS Comuni",
-                    "id" : "TransportStop",
-                    "label" : "Fermate TPL"
-                }
-            ]
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
         ],
-        "sourceId" : "Torino_quartieri",
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
         "type" : "layer",
         "url" : ""
     },
@@ -202,16 +177,31 @@
         "city" : "Torino",
         "id" : "Torino_Ambiente",
         "indicators" : [
-            [
-                {
-                    "category" : "Ambiente",
-                    "dataSource" : "Open Data Comuni",
-                    "id" : "UrbanGreen",
-                    "label" : "Aree Verdi"
-                }
-            ]
+            {
+                "category" : "Ambiente",
+                "data_source" : "Open Data Comuni",
+                "id" : "UrbanGreen",
+                "label" : "Aree Verdi"
+            }
         ],
-        "sourceId" : "Torino_quartieri",
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
         "type" : "layer",
         "url" : ""
     },
@@ -219,17 +209,21 @@
         "city" : "Torino",
         "id" : "Torino_Vitalita",
         "indicators" : [
-            [
-                {
-                    "category" : "Vitalita",
-                    "dataSource" : "ISTAT",
-                    "id" : "tipo_di_alloggi",
-                    "label" : "tipo_di_alloggi"
-                }
-            ],
-            null
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "tipo_di_alloggi",
+                "label" : "tipo_di_alloggi"
+            },
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "densita_occupati",
+                "label" : "densita_occupati"
+            }
         ],
-        "sourceId" : "Torino_quartieri",
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
         "type" : "layer",
         "url" : ""
     }

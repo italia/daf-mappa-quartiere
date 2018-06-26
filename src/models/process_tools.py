@@ -1,283 +1,326 @@
-
+import os
+import sys
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import geopy, geopy.distance
+import geopy
+import geopy.distance
 import shapely
-from sklearn import gaussian_process
-
-from matplotlib import pyplot as plt 
-import seaborn as sns
+from matplotlib import pyplot as plt
 from scipy.interpolate import griddata
 import json
 
-## TODO: find way to put this into some global settings
-import os
-import sys
-rootDir = os.path.dirname(os.path.dirname(__file__))
-if rootDir not in sys.path:
-    sys.path.append(rootDir)
-
-plt.rcParams['figure.figsize']= (20,14)
-
 from references import common_cfg, city_settings
-from src.models.city_items import AgeGroup, ServiceArea, ServiceType, SummaryNorm # enum classes for the model
+# enum classes for the model
+from src.models.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
-        
-        
-## Grid maker
-class GridMaker():
-    '''
+
+
+plt.rcParams['figure.figsize'] = (20, 14)
+
+
+# Grid maker
+class GridMaker:
+    """
     A class to create a grid and map it to various given land subdivisions
-    '''
-    def __init__(self, cityGeoFilesDict, gridStep=0.1): #gridStep in km
-        
-        self._quartiereKey = 'quartieri' #hardcoded
-        
+    """
+
+    def __init__(self, city_geo_files_dict, grid_step=0.1):  # grid_step in km
+
+        self._quartiere_key = 'quartieri'  # hardcoded
+
         # load division geofiles with geopandas
         self.subdivisions = {}
-        for name, fileName in cityGeoFilesDict.items():
-            self.subdivisions[name] = gpd.read_file(fileName)
-        
+        for name, file_name in city_geo_files_dict.items():
+            self.subdivisions[name] = gpd.read_file(file_name)
+
         # compute city boundary
-        self.cityBoundary = shapely.ops.cascaded_union(self.subdivisions[self._quartiereKey]['geometry'])
-        
+        self.city_boundary = shapely.ops.cascaded_union(
+            self.subdivisions[self._quartiere_key]['geometry'])
+
         # precompute coordinate ranges
-        self.longRange = (self.cityBoundary.bounds[0], self.cityBoundary.bounds[2])
-        self.latRange = (self.cityBoundary.bounds[1], self.cityBoundary.bounds[3])
-        self.longNGrid = int(self.longitudeRangeKm // gridStep)+1
-        self.latNGrid = int(self.latitudeRangeKm // gridStep)+1
-        
-        (self._xPlot, self._yPlot) = np.meshgrid(np.linspace(*self.longRange, self.longNGrid),
-                                     np.linspace(*self.latRange, self.latNGrid), indexing='ij')
-        
+        self.long_range = (self.city_boundary.bounds[0],
+                           self.city_boundary.bounds[2])
+        self.lat_range = (self.city_boundary.bounds[1],
+                          self.city_boundary.bounds[3])
+        self.long_n_grid = int(self.longitude_range_km // grid_step) + 1
+        self.lat_n_grid = int(self.latitude_range_km // grid_step) + 1
+
+        (self._x_plot, self._y_plot) = np.meshgrid(
+            np.linspace(*self.long_range, self.long_n_grid),
+            np.linspace(*self.lat_range, self.lat_n_grid), indexing='ij')
+
         # construct point objects with same shape
-        self._bInPerimeter = np.empty_like(self._xPlot, dtype=bool)
-        self._IDquartiere = np.empty_like(self._xPlot, dtype=object)
-        
-        for (i,j),_ in np.ndenumerate(self._bInPerimeter):
-            shplyPoint = shapely.geometry.Point((self._xPlot[i,j], self._yPlot[i,j]))
+        self._b_in_perimeter = np.empty_like(self._x_plot, dtype=bool)
+        self._id_quartiere = np.empty_like(self._x_plot, dtype=object)
+
+        for (i, j), _ in np.ndenumerate(self._b_in_perimeter):
+            shapely_point = shapely.geometry.Point(
+                (self._x_plot[i, j], self._y_plot[i, j]))
             # mark points outside boundaries
-            self._bInPerimeter[i,j] = self.cityBoundary.contains(shplyPoint)
-            if self._bInPerimeter[i,j]:
-                bFound = False
-                for iRow in range(self.subdivisions[self._quartiereKey].shape[0]):
-                    thisQuartierePolygon = self.subdivisions[self._quartiereKey]['geometry'][iRow]
-                    if thisQuartierePolygon.contains(shplyPoint):
+            self._b_in_perimeter[i, j] = \
+                self.city_boundary.contains(shapely_point)
+
+            if self._b_in_perimeter[i, j]:
+                b_found = False
+                for i_row in range(self.subdivisions[
+                        self._quartiere_key].shape[0]):
+                    this_quartiere_polygon = self.subdivisions[
+                        self._quartiere_key]['geometry'][i_row]
+                    if this_quartiere_polygon.contains(shapely_point):
                         # assign found ID
-                        self._IDquartiere[i,j] = self.subdivisions[
-                            self._quartiereKey][common_cfg.IdQuartiereColName][iRow]
-                        bFound = True
-                        break # skip remanining zones
-                assert bFound, 'Point within city boundary was not assigned to any zone'
-            
-            else: # assign default value for points outside city perimeter
-                self._IDquartiere[i,j] = np.nan
-                
+                        self._id_quartiere[i, j] = self.subdivisions[
+                            self._quartiere_key][
+                            common_cfg.id_quartiere_col_name][i_row]
+                        b_found = True
+                        break  # skip remaining zones
+                assert b_found, \
+                    'Point within city boundary was not assigned to any zone'
+
+            else:  # assign default value for points outside city perimeter
+                self._id_quartiere[i, j] = np.nan
+
         # call common format constructor
-        self.grid = MappedPositionsFrame(long=self._xPlot[self._bInPerimeter].flatten(),
-                                                   lat=self._yPlot[self._bInPerimeter].flatten(),
-                                                   idQuartiere=self._IDquartiere[self._bInPerimeter].flatten())
-        
-        self.fullGrid = MappedPositionsFrame(long=self._xPlot.flatten(), lat=self._yPlot.flatten(),
-                                                   idQuartiere=self._IDquartiere.flatten())
-      
-      
-    @property
-    def longitudeRangeKm(self):
-        return geopy.distance.great_circle(
-            (self.latRange[0], self.longRange[0]), (self.latRange[0], self.longRange[1])).km
-    @property
-    def latitudeRangeKm(self):
-        return geopy.distance.great_circle(
-            (self.latRange[0], self.longRange[0]), (self.latRange[1], self.longRange[0])).km
+        self.grid = MappedPositionsFrame.from_coordinates_arrays(
+            long=self._x_plot[self._b_in_perimeter].flatten(),
+            lat=self._y_plot[self._b_in_perimeter].flatten(),
+            id_quartiere=self._id_quartiere[self._b_in_perimeter].flatten())
 
-    
-## Plot tools
+        self.full_grid = MappedPositionsFrame.from_coordinates_arrays(
+            long=self._x_plot.flatten(),
+            lat=self._y_plot.flatten(),
+            id_quartiere=self._id_quartiere.flatten())
+
+    @property
+    def longitude_range_km(self):
+        return geopy.distance.great_circle(
+            (self.lat_range[0], self.long_range[0]),
+            (self.lat_range[0], self.long_range[1])).km
+
+    @property
+    def latitude_range_km(self):
+        return geopy.distance.great_circle(
+            (self.lat_range[0], self.long_range[0]),
+            (self.lat_range[1], self.long_range[0])).km
+
+
+# Plot tools
 class ValuesPlotter:
-    '''
+    """
     A class that plots various types of output from ServiceValues
-    '''
+    """
 
-    def __init__(self, serviceValues, bOnGrid=False):
-        assert isinstance(serviceValues, ServiceValues), 'ServiceValues class expected'
-        self.values = serviceValues
-        self.bOnGrid = bOnGrid
+    def __init__(self, service_values, b_on_grid=False):
+        assert isinstance(
+            service_values, ServiceValues), 'ServiceValues class expected'
+        self.values = service_values
+        self.b_on_grid = b_on_grid
 
     def plot_locations(self):
-        '''
+        """
         Plots the locations of the provided ServiceValues'
-        '''
-        coordNames = common_cfg.coordColNames
+        """
+        coord_names = common_cfg.coord_col_names
         plt.figure()
-        plt.scatter(self.values.mappedPositions[coordNames[0]],
-                    self.values.mappedPositions[coordNames[1]])
-        plt.xlabel(coordNames[0])
-        plt.ylabel(coordNames[1])
+        plt.scatter(self.values.mappedPositions[coord_names[0]],
+                    self.values.mappedPositions[coord_names[1]])
+        plt.xlabel(coord_names[0])
+        plt.ylabel(coord_names[1])
         plt.axis('equal')
         plt.show()
         return None
 
-    def plot_service_levels(self, servType, gridDensity=40, nLevels=50):
-        '''
-        Plots a contour graph of the results for each ageGroup.
-        '''
-        assert isinstance(servType, ServiceType), 'ServiceType expected in input'
+    def plot_service_levels(self, serv_type, grid_density=40, n_levels=50):
+        """
+        Plots a contour graph of the results for each age_group.
+        """
+        assert isinstance(
+            serv_type, ServiceType), 'ServiceType expected in input'
 
-        for ageGroup in self.values[servType].keys():
+        for age_group in self.values[serv_type].keys():
 
-            xPlot, yPlot, z = self.values.plot_output(servType, ageGroup)
+            x_plot, y_plot, z = self.values.plot_output(serv_type, age_group)
 
-            if (~all(np.isnan(z))) & (np.count_nonzero(z)>0):
-                if self.bOnGrid:
-                    gridShape = (len(set(xPlot)), len(set(yPlot.flatten())))
-                    assert len(xPlot) == gridShape[0] * gridShape[
+            if (~all(np.isnan(z))) & (np.count_nonzero(z) > 0):
+                if self.b_on_grid:
+                    grid_shape = (len(set(x_plot)), len(set(y_plot.flatten())))
+                    assert len(x_plot) == grid_shape[0] * grid_shape[
                         1], 'X values do not seem on a grid'
-                    assert len(yPlot) == gridShape[0] * gridShape[
+                    assert len(y_plot) == grid_shape[0] * grid_shape[
                         1], 'Y values do not seem on a grid'
-                    xi = np.array(xPlot).reshape(gridShape)
-                    yi = np.array(yPlot).reshape(gridShape)
-                    zi = z.reshape(gridShape)
+                    xi = np.array(x_plot).reshape(grid_shape)
+                    yi = np.array(y_plot).reshape(grid_shape)
+                    zi = z.reshape(grid_shape)
                 else:
                     # grid the data using natural neighbour interpolation
-                    xi = np.linspace(min(xPlot), max(xPlot), gridDensity)
-                    yi = np.linspace(min(yPlot), max(yPlot), gridDensity)
-                    zi = griddata((xPlot, yPlot), z, (xi[None, :], yi[:, None]), 'nearest')
-
+                    xi = np.linspace(min(x_plot), max(x_plot), grid_density)
+                    yi = np.linspace(min(y_plot), max(y_plot), grid_density)
+                    zi = griddata((x_plot, y_plot), z,
+                                  (xi[None, :], yi[:, None]), 'nearest')
                 plt.figure()
-                plt.title(ageGroup)
-                CS = plt.contourf(xi, yi, zi, nLevels)
-                cbar = plt.colorbar(CS)
+                plt.title(age_group)
+                contour_axes = plt.contourf(xi, yi, zi, n_levels)
+                cbar = plt.colorbar(contour_axes)
                 cbar.ax.set_ylabel('Service level')
                 plt.show()
 
         return None
 
+
 class JSONWriter:
-    def __init__(self, kpiCalc):
-        assert isinstance(kpiCalc, KPICalculator), 'KPI calculator is needed'
-        self.layersData = kpiCalc.quartiereKPI
-        self.istatData = kpiCalc.istatKPI
-        self.vitalityData = kpiCalc.istatVitality
-        self.city = city_settings.get_city_config(kpiCalc.city)
-        self.areasTree = {}
-        for s in self.layersData:
-            area = s.serviceArea
-            self.areasTree[area] = [s] + self.areasTree.get(area, [])
+    """A class to handle all the IO actions
+    from model pipeline to JSON for visualization"""
+
+    write_options_dict = {'sort_keys': True,
+                          'indent': 4,
+                          'separators': (',', ' : ')}
+
+    def __init__(self, kpi_calculator):
+        assert isinstance(kpi_calculator, KPICalculator), \
+            'KPI calculator is needed'
+        self.layers_data = kpi_calculator.quartiere_kpi
+        self.istat_data = kpi_calculator.istat_kpi
+        self.vitality_data = kpi_calculator.istat_vitality
+        self.city = city_settings.get_city_config(kpi_calculator.city)
+        self.areas_tree = {}
+        for s in self.layers_data:
+            area = s.service_area
+            self.areas_tree[area] = [s] + self.areas_tree.get(area, [])
 
     def make_menu(self):
 
-        def make_output_menu(city, services, istatLayers=None):
-            '''Creates a list of dictionaries that is ready to be saved as a json'''
-            outList = []
-            assert isinstance(city, city_settings.ModelCity), 'City template expected'
+        def make_output_menu(city, services, istat_layers=None):
+            """Creates a list of dictionaries
+            that is ready to be saved as a json"""
+            out_list = []
+            assert isinstance(
+                city, city_settings.ModelCity), 'City template expected'
 
             # source element
-            sourceId = city.name + '_quartieri'
-            sourceItem = common_cfg.menuGroupTemplate.copy()
-            sourceItem['city'] = city.name
-            sourceItem['url'] = city.source
-            sourceItem['id'] = sourceId
+            source_id = city.name + '_quartieri'
+            source_item = common_cfg.menu_group_template.copy()
+            source_item['city'] = city.name
+            source_item['url'] = city.source
+            source_item['id'] = source_id
             # add center and zoom info for the source layer only
-            sourceItem['zoom'] = city.zoomCenter[0]
-            sourceItem['center'] = city.zoomCenter[1]
+            source_item['zoom'] = city.zoom_center[0]
+            source_item['center'] = city.zoom_center[1]
 
             # declare the joinField
-            sourceItem['joinField'] = common_cfg.IdQuartiereColName
+            source_item['joinField'] = common_cfg.id_quartiere_col_name
 
-            #  Does a source have a dataSource?
-            # 'dataSource': '',
-            outList.append(sourceItem)
+            #  Does a source have a data_source?
+            # 'data_source': '',
+            out_list.append(source_item)
 
             # service layer items
-            areas = set(s.serviceArea for s in services)
+            areas = set(s.service_area for s in services)
             for area in areas:
-                thisServices = [s for s in services if s.serviceArea == area]
-                layerItem = common_cfg.menuGroupTemplate.copy()
-                layerItem['type'] = 'layer'
-                layerItem['city'] = city.name
-                layerItem['id'] = city.name + '_' + area.value
-                layerItem['url'] = ''  # default empty url
-                layerItem['sourceId'] = sourceId  # link to defined source
+                this_services = [s for s in services if s.service_area == area]
+                layer_item = common_cfg.menu_group_template.copy()
+                layer_item['type'] = 'layer'
+                layer_item['city'] = city.name
+                layer_item['id'] = city.name + '_' + area.value
+                layer_item['url'] = ''  # default empty url
+                layer_item['source_id'] = source_id  # link to defined source
                 #
-                layerItem['indicators'] = (
-                                              [{'category': service.serviceArea.value,
-                                                'label': service.label,
-                                                'id': service.name,
-                                                'dataSource': service.dataSource,
-                                                } for service in thisServices]),
-                outList.append(layerItem)
+                layer_item['indicators'] = (
+                    [{'category': service.service_area.value,
+                      'label': service.label,
+                      'id': service.name,
+                      'data_source': service.data_source,
+                      } for service in this_services])
+
+                out_list.append(layer_item)
 
             # istat layers items
-            if istatLayers:
-                for istatArea, indicators in istatLayers.items():
-                    istatItem = common_cfg.menuGroupTemplate.copy()
-                    istatItem['type'] = 'layer'
-                    istatItem['city'] = city.name
-                    istatItem['id'] = city.name + '_' + istatArea
-                    istatItem['url'] = ''  # default empty url
-                    istatItem['sourceId'] = sourceId  # link to defined source
+            if istat_layers:
+                for istat_area, indicators in istat_layers.items():
+                    istat_item = common_cfg.menu_group_template.copy()
+                    istat_item['type'] = 'layer'
+                    istat_item['city'] = city.name
+                    istat_item['id'] = city.name + '_' + istat_area
+                    istat_item['url'] = ''  # default empty url
+                    # link to defined source
+                    istat_item['source_id'] = source_id
                     #
-                    istatItem['indicators'] = ([{'category': istatArea,
-                                                    'label': indicator,
-                                                    'id': indicator,
-                                                    'dataSource': 'ISTAT',
-                                                    } for indicator in indicators]), \
-                                              outList.append(istatItem)
+                    istat_item['indicators'] = (
+                        [{'category': istat_area,
+                          'label': indicator,
+                          'id': indicator,
+                          'data_source': 'ISTAT'
+                          } for indicator in indicators])
+                    out_list.append(istat_item)
 
-            return outList
+            return out_list
 
-        jsonList = make_output_menu(self.city,
-            services=list(self.layersData.keys()),
-            istatLayers={'Vitalita': list(self.vitalityData.columns)}
-            )
-        return jsonList
+        json_list = make_output_menu(
+            self.city,
+            services=list(self.layers_data.keys()),
+            istat_layers={'Vitalita': list(self.vitality_data.columns)}
+        )
+        return json_list
 
     def make_serviceareas_output(self, precision=4):
+
         out = dict()
+        # tool to format frame data that does not depend on age
 
-        def prepare_frame_data(frameIn): # tool to format frame data that does not depend on age
-            frameIn = frameIn.round(precision)
-            origType = frameIn.index.dtype.type
-            dataDict = frameIn.reset_index().to_dict(orient='records')
+        def prepare_frame_data(frame_in):
+            frame_in = frame_in.round(precision)
+            orig_type = frame_in.index.dtype.type
+            data_dict = frame_in.reset_index().to_dict(orient='records')
             # restore type as pandas has a bug and casts to float if int
-            for quartiereData in dataDict:
-                oldValue = quartiereData[common_cfg.IdQuartiereColName]
-                if origType in (np.int32, np.int64, int):
-                    quartiereData[common_cfg.IdQuartiereColName] = int(oldValue)
+            for quartiere_data in data_dict:
+                old_value = quartiere_data[common_cfg.id_quartiere_col_name]
+                if orig_type in (np.int32, np.int64, int):
+                    quartiere_data[
+                        common_cfg.id_quartiere_col_name] = int(old_value)
 
-            return dataDict
+            return data_dict
 
         # make istat layer
-        out[common_cfg.istatLayerName] = prepare_frame_data(self.istatData)
+        out[common_cfg.istat_layer_name] = prepare_frame_data(self.istat_data)
 
         # make vitality layer
-        out[common_cfg.vitalityLayerName] = prepare_frame_data(self.vitalityData)
+        out[common_cfg.vitality_layer_name] = prepare_frame_data(
+            self.vitality_data)
 
         # make layers
-        for area, layers in self.areasTree.items():
-            layerList = []
+        for area, layers in self.areas_tree.items():
+            layer_list = []
             for service in layers:
-                data = self.layersData[service].round(precision)
-                layerList.append(pd.Series(
+                data = self.layers_data[service].round(precision)
+                layer_list.append(pd.Series(
                     data[AgeGroup.all()].as_matrix().tolist(),
                     index=data.index, name=service.name))
-            areaData = pd.concat(layerList, axis=1).reset_index()
-            out[area.value] = areaData.to_dict(orient='records')
+            area_data = pd.concat(layer_list, axis=1).reset_index()
+            out[area.value] = area_data.to_dict(orient='records')
 
         return out
 
+    def _update_menu_in_default_path(self):
+        # Load current menu from json and
+        # replace the calculator city info with new data
+        with open(os.path.join(
+                common_cfg.viz_output_path, 'menu.json'), 'r') as orig_file:
+            current_menu = json.load(orig_file)
+
+        other_items = [v for v in current_menu if v['city'] != self.city.name]
+        updated_menu = other_items + self.make_menu()
+
+        with open(os.path.join(
+                common_cfg.viz_output_path, 'menu.json'), 'w') as menu_file:
+            json.dump(updated_menu, menu_file, **self.write_options_dict)
+
     def write_all_files_to_default_path(self):
-        # build and write menu
-        with open(os.path.join(common_cfg.vizOutputPath, 'menu.json'), 'w') as menuFile:
-            json.dump(self.make_menu(), menuFile, sort_keys=True,
-                      indent=4, separators=(',', ' : '))
+        # update menu
+        self._update_menu_in_default_path()
 
         # build and write all areas
-        areasOutput = self.make_serviceareas_output()
-        for name, data in areasOutput.items():
+        areas_output = self.make_serviceareas_output()
+        for name, data in areas_output.items():
             filename = '%s_%s.json' % (self.city.name, name)
-            with open(os.path.join(common_cfg.outputPath,
-                                   filename), 'w') as areaFile:
-                json.dump(data, areaFile, sort_keys=True,
-                          indent=4, separators=(',', ' : '))
+            with open(os.path.join(common_cfg.output_path,
+                                   filename), 'w') as area_file:
+                json.dump(data, area_file, **self.write_options_dict)

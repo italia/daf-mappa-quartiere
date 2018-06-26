@@ -1,102 +1,133 @@
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
-import json
 import os
 from geopy import distance as geodist
 from geopy import Point as geoPoint
 import numpy as np
 
-projRoot = os.path.dirname(os.path.dirname(__file__)) # expected to be in root/references
+from scipy.sparse.csgraph import connected_components
 
-processedPath = os.path.join(projRoot,'data/processed/')
+project_root = os.path.dirname(
+    os.path.dirname(__file__))  # expected to be in root/references
+
+processed_path = os.path.join(project_root, 'data/processed/')
 
 # cities included in the project
-cityList = ['Milano', 'Torino', 'Roma']
+city_list = ['Milano', 'Torino', 'Roma']
 
 # Location conventions
-coordColNames = ['Long', 'Lat']
-tupleIndexName = 'PositionTuples'
-positionsCol = 'Positions'
+coord_col_names = ['Long', 'Lat']
+tuple_index_name = 'PositionTuples'
+positions_col = 'Positions'
 
 # Kernel evaluation speedup
-kernelValueCutoff = 1e-4  # interaction values below this level will be set to 0
-kernelStartZeroGuess = 1  # initial input for kernel in solving
-# Clip level for demand correction - maximum multiple that can be applied in correcting service
-# level
-demandCorrectionClip = 1.01
-assert demandCorrectionClip > 1, 'The clipping factor should be greater than 1'
+# interaction values below this level will be set to 0
+kernel_value_cutoff = 1e-4
+kernel_start_zero_guess = 1  # initial input for kernel in solving
+# Clip level for demand correction:
+# maximum multiple that can be applied in correcting service level
+demand_correction_clip = 1.01
+assert demand_correction_clip > 1, \
+    'The clipping factor should be greater than 1'
 
 # Compute thresholds
-kmStep = geodist.great_circle(kilometers=1)
-center = (38.116667, 13.366667) # Get the long, lat tile around Palermo
-# Note that a value in the south is conservative, as it gives a higher threshold for longitude
-# deltas in degress to match a given level in kilometers
-approxTileDegToKm = 1/np.array(
-    [kmStep.destination(geoPoint(center), 90).longitude - center[1],
-     kmStep.destination(geoPoint(center), 0).latitude - center[0]])
+km_step = geodist.great_circle(kilometers=1)
+
+# Note that a value in the south to build the rectangle is conservative,
+# as it gives a higher threshold for longitude deltas in degress to match a
+# given level in kilometers
+
+center = (38.116667, 13.366667)  # Get the long, lat tile around Palermo
+approx_tile_deg_to_km = 1 / np.array(
+    [km_step.destination(geoPoint(center), 90).longitude - center[1],
+     km_step.destination(geoPoint(center), 0).latitude - center[0]])
 
 # Istat parameters
-cpaPath = os.path.join(projRoot,'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
-sezioneColName = 'SEZ2011'
-IdQuartiereColName = 'IDquartiere'
-quartiereDescColName = 'quartiere'
+cpa_path = os.path.join(
+    project_root, 'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
+sezione_col_name = 'SEZ2011'
+id_quartiere_col_name = 'IDquartiere'
+quartiere_desc_col_name = 'quartiere'
 
-#per quanto riguarda censimento abitazioni
-# da quello che ho visto escluderei i campi A44, da PF a PF9, E27 per ora
-excludedColumns = ['A44', 'E27']+['PF%i'%(i+1) for i in range(9)] +\
-    ['SEZ', 'SHAPE_LEN', ]
+# per quanto riguarda censimento abitazioni, da quello che ho visto
+# escluderei i campi A44, da PF a PF9, E27 per ora
+excluded_columns = ['A44', 'E27'] + ['PF%i' % (i + 1) for i in range(9)] + \
+                   ['SEZ', 'SHAPE_LEN'] + coord_col_names
 
 # Json/GeoJson path parameters
-outputPath = os.path.join(projRoot,'data/output')
-unitsOutputPath = os.path.join(projRoot,'data/output/units')
-vizOutputPath = os.path.join(projRoot,'data/output')
-istatLayerName = 'Istat'
-vitalityLayerName = 'Vitality'
-menuGroupTemplate = { 
-                'id' : '',
-                'city' : '', # es: 'Torino'
-                'type' : "source", #or 'layer'
-                'url' : '',
-                'sourceId' : '', # id of the source geojson
-                'indicators':[  #list of different indicators
-                    {'category' : '',
-                    'label' : '',
-                    'id' : '',
-                    'default' : False,
-                    'dataSource': '',
+output_path = os.path.join(project_root, 'data/output')
+units_output_path = os.path.join(project_root, 'data/output/units')
+viz_output_path = os.path.join(project_root, 'data/output')
+istat_layer_name = 'Istat'
+vitality_layer_name = 'Vitality'
+menu_group_template = {
+    'id': '',
+    'city': '',  # es:'Torino'
+    'type': "source",  # or 'layer'
+    'url': '',
+    'sourceId': '',  # id of the source geojson
+                'indicators': [   # list of different indicators
+                    {'category': '',
+                     'label': '',
+                     'id': '',
+                     'default': False,
+                     'data_source': '',
                      }]
-                 }
+}
 
-#*** TPL parameters *****
-tplPath = os.path.join(projRoot,'data/raw/tpl/')
-tplRouteType = {"0":"Tram, Streetcar, Light rail",
-                "1":"Subway, Metro",
-                "2":"Rail",
-                "3":"Bus",
-                "4":"Ferry",
-                "5":"Cable car",
-                "6":"Gondola, Suspended cable car",
-                "7":"Funicular"}
+# TPL parameters
+tpl_path = os.path.join(project_root, 'data/raw/tpl/')
+tpl_route_type = {
+    "0": "Tram, Streetcar, Light rail",
+    "1": "Subway, Metro",
+    "2": "Rail",
+    "3": "Bus",
+    "4": "Ferry",
+    "5": "Cable car",
+    "6": "Gondola, Suspended cable car",
+    "7": "Funicular"
+}
 
-## Loading tools
-def get_istat_filelist():
-    return [f for f in os.listdir(cpaPath) if f.startswith('R')]
+# Loading tools
+cached_metadata = pd.read_csv(os.path.join(
+    cpa_path, 'tracciato_2011_sezioni.csv'), sep=';', encoding='cp1252')
 
+def detect_similar_locations(positions_list, tol=0.003):
+    """This function flags the groups of locations that are within a
+    given tolerance
+        tolerance default: 30m
+    """
+    n_positions = len(positions_list)
+    test_dist = 10 * np.ones([n_positions] * 2)
+    for i in range(n_positions):
+        for j in np.arange(i + 1, n_positions):
+            test_dist[i, j] = geodist.great_circle(
+                positions_list[i], positions_list[j]).km
+    graph_matrix = (test_dist < tol).astype(float)
+    # find groups of positions that are close together
+    _, labels = connected_components(graph_matrix, directed=False)
 
-cached_metadata = pd.read_csv(os.path.join(cpaPath, 'tracciato_2011_sezioni.csv'), sep=';',encoding='cp1252')
+    return labels
 
 def get_istat_metadata():
     return cached_metadata
 
 
-def fill_sample_ages_in_cpa_columns(frameIn): 
-    '''Extract a representative age for hardcoded age-band columns in standard istat data''' 
-    assert isinstance(frameIn, pd.DataFrame), 'Series expected in input' 
-    istatAgeDict = {'P%i'%(i+14): 3+5*i for i in range(16)} 
-    istatAges = frameIn.loc[:, list(istatAgeDict.keys())].copy() 
-     
-    return istatAges.rename(istatAgeDict, axis='columns') 
+def get_istat_filelist():
+    return [f for f in os.listdir(cpa_path) if f.startswith('R')]
+
+
+def fill_sample_ages_in_cpa_columns(frame_in):
+    """
+    Extract a representative age for hardcoded
+    age-band columns in standard istat data
+    """
+    assert isinstance(frame_in, pd.DataFrame), 'Series expected in input'
+    istat_age_dict = {'P%i' % (i + 14): 3 + 5 * i for i in range(16)}
+    istat_ages = frame_in.loc[:, list(istat_age_dict.keys())].copy()
+
+    return istat_ages.rename(istat_age_dict, axis='columns')
 
 
 def df_to_gdf(input_df):
@@ -105,9 +136,10 @@ def df_to_gdf(input_df):
     to a GeoDataFrame. WSG84
     """
     df = input_df.copy()
-    geometry = [Point(xy) for xy in zip(df.longitude, df.latitude)]
+    geometry = [Point(xy) for xy in zip(
+        df[coord_col_names[0]], df[coord_col_names[1]])]
     geo = gpd.GeoDataFrame(df, crs=4326, geometry=geometry)
-    geo.crs = {'init' :'epsg:4326'}
+    geo.crs = {'init': 'epsg:4326'}
     return geo
 
 
@@ -115,10 +147,10 @@ def csv_to_geojson(input_fp, output_fp):
     """
     Read a CSV file, transform it into a GeoJSON and save it.
     """
-    csv_data = pd.read_csv(input_fp, 
-                       compression='bz2', 
-                       sep=';', 
-                       encoding='utf-8')
+    csv_data = pd.read_csv(input_fp,
+                           compression='bz2',
+                           sep=';',
+                           encoding='utf-8')
     geojson_data = (csv_data.pipe(df_to_gdf)
                             .drop(['extra'], axis=1)
                             .to_json())
