@@ -144,11 +144,13 @@ class Map extends Component {
 	    }
 */	    
 	    map.on('mousemove', 'Quartieri', function(e) {
+		console.log("moving mouse")
 		var hoverElement = e.features[0].properties[props.joinField];
 		self.setState({ hoverElement: hoverElement }); 
 		map.setFilter('Quartieri-hover', ['==', props.joinField, hoverElement]);
             });
 	    map.on('mouseout', 'Quartieri', function() {
+		console.log("mouseout")
 		self.setState({ hoverElement: "none" }); 
 		map.setFilter('Quartieri-hover', ['==', props.joinField, ""]);
 	    });
@@ -194,24 +196,14 @@ class Map extends Component {
 	return (  
 	    <div>
                 <div id='mapContainer'
-	            ref={el => this.mapContainer = el}
-	            style={{
-		        height: '90vh',
-			width: '100vw'
-		    }}/>
+	            ref={el => this.mapContainer = el}/>
 		
 		<div className='map-overlay'
-	            id='chart'
-	            style={{
-		        height: '85vh',
-			width: '25vw',
-			top: '80px',
-			right: '10px'
-		    }}>
+	            id='chart'>
                     <BarChart
 	                style={{
-		            width: 700,
-			    height: 950
+		            width: 350,
+			    height: 1200
 			}}
                         hoverElement={this.state.hoverElement}        
                         onHover={this.onHoverBarChart}
@@ -230,13 +222,7 @@ class Map extends Component {
                 </div>
 	                    
 		<div className='legend-overlay'
-	            id='legend'
-	            style={{
-		        height: '8vh',
-			width: '50vw',
-			right: '500px',
-			bottom: '0px'
-		    }}>
+	            id='legend'>
                     <Legend
                         stops={this.props.layer.colors.stops}
                         style={{
@@ -250,13 +236,6 @@ class Map extends Component {
 	            neighborhood={this.state.neighborhood}
 	            nameField={this.props.nameField}
                     dashboard={this.props.dashboard}
-
-	            style={{
-		        height: '47vh',
-			width: '30vw',
-			top: '90px',
-			left: '30px'
-		    }}
 		/>
 	    </div>	   
 	);

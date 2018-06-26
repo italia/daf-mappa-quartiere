@@ -70,7 +70,7 @@ class Legend extends Component {
 	            width={this.props.style.width * 2}
 	            height={this.props.style.height * 2}
 	        />
-  };
+    };
 }
 
 export default Legend;

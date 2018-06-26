@@ -149,10 +149,10 @@ class App extends Component {
             });
     };
 
-    
-    /*writeDashboardFile(jsonLayer) {
+    /*
+    writeDashboardFile(jsonLayer) {
 	var m = jsonLayer.map(v => {
-	    console.log(v)
+	    
             v["DAF1"] = v.P60 - v.P61 - v.P62;
             v["DAF2"] = v.P1 - v.ST14;
             v["DAF3"] = v.P14 + v.P15 - v.P30 - v.P31;
@@ -173,12 +173,24 @@ class App extends Component {
             v["DAF18"] = v.P44 + v.P45;
             v["DAF19"] = v.P138/(v.P138+v.P139);
             v["DAF20"] = v.P139/(v.P138+v.P139);
+            v["DAF21"] = 100 * v.ST9/v.ST1;
+            v["DAF22"] = 100 * v.ST10/v.ST1;
+	    v["DAF23"] = 100 * v.ST11/v.ST1;
+            v["DAF24"] = 100 * v.ST12/v.ST1; 
+            v["DAF25"] = 100 * v.ST13/v.ST1;
+            v["DAF26"] = 100 * v.ST14/v.ST1;
             return v;
         });
         console.log(JSON.stringify(m.map(v => {return {
             P1: v.P1,
             P61: v.P61,
             P62: v.P62,
+            P47: v.P47,
+            P48: v.P48,
+            P49: v.P49,
+            P50: v.P50,
+            P51: v.P51,
+            P52: v.P52,
             DAF1: v.DAF1,
             DAF2: v.DAF2,
             DAF3: v.DAF3,
@@ -198,15 +210,22 @@ class App extends Component {
             DAF17: v.DAF17,
             DAF18: v.DAF18,
             DAF19: v.DAF19,
-            DAF20: v.DAF20
+            DAF20: v.DAF20,
+	    DAF21: v.DAF21,
+	    DAF22: v.DAF22,
+	    DAF23: v.DAF23,
+	    DAF24: v.DAF24,
+	    DAF25: v.DAF25,
+	    DAF26: v.DAF26	    
         }})))
-	}*/
-
+	}
+*/
     fetchLayer(layer) {
 	return fetch(layer.layerUrl)
 	    .then(response => response.json())
 	    .then(jsonLayer => {
-		//this.writeDashboardFile(jsonLayer)
+		
+//		this.writeDashboardFile(jsonLayer)
 		
 		var joinField = this.state.source.joinField;
                 var layerField = layer.id;
@@ -362,8 +381,6 @@ function sample(values, C) {
         .map((d) => d * (max - min) / C  + min);
 };
 
-
-//note length of a and b should be the same                                                                                                                                
 function sumArray(a) {
     var sum = 0;
     var l = 0;

@@ -39,7 +39,6 @@ class Piechart extends Component {
 
     render() {
         const { data, color, innerRadius, x, y} = this.props;
-   
         return (
             <g className="Piechart" transform={`translate(${x}, ${y})`}>
                 {this.pieChart(data).map((d, i) => ( 
