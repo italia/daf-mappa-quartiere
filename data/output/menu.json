@@ -23,19 +23,35 @@
     },
     {
         "city" : "Milano",
-        "id" : "Milano_EducazioneCultura",
+        "id" : "Milano_Trasporti",
         "indicators" : [
             {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            },
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_EducazioneCultura",
+        "indicators" : [
             {
                 "category" : "EducazioneCultura",
                 "data_source" : "MIBACT",
                 "id" : "Library",
                 "label" : "Biblioteche"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
             }
         ],
         "sourceId" : "",
@@ -68,22 +84,6 @@
                 "data_source" : "Min. Salute",
                 "id" : "Pharmacy",
                 "label" : "Farmacie"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_Trasporti",
-        "indicators" : [
-            {
-                "category" : "Trasporti",
-                "data_source" : "GTFS Comuni",
-                "id" : "TransportStop",
-                "label" : "Fermate TPL"
             }
         ],
         "sourceId" : "",
@@ -141,15 +141,15 @@
         "indicators" : [
             {
                 "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            },
-            {
-                "category" : "EducazioneCultura",
                 "data_source" : "MIBACT",
                 "id" : "Library",
                 "label" : "Biblioteche"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
             }
         ],
         "sourceId" : "",
