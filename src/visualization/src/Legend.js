@@ -11,6 +11,7 @@ class Legend extends Component {
 	//clean
 	select("#mapLegend").remove();
 	select("#mapAxis").remove();
+        select("#mapGradient").remove();
 
 	const legendContainer = this.legendContainer;
 	
@@ -27,7 +28,7 @@ class Legend extends Component {
 	    .attr("x2", "100%")
 	    .attr("y2", "100%")
 	    .attr("spreadMethod", "pad");
-
+	
 	bar.selectAll(".stop")
 	    .data(this.props.stops)
 	    .enter()
@@ -41,13 +42,13 @@ class Legend extends Component {
 	select(legendContainer)
 	    .append("rect")
 	    .attr("id", "mapLegend")
-	    .attr("width", this.props.style.width)
-	    .attr("height", this.props.style.height)
+	    .attr("width", this.props.style.width / 2)
+	    .attr("height", this.props.style.height / 2)
 	    .style("fill", "url(#mapGradient)")
 	    .attr("transform", "translate(20,0)");
 
 	var y = scaleLinear()
-	    .range([this.props.style.width, 0])
+	    .range([this.props.style.width / 2, 0])
 	    .domain([maxValue, minValue]);
 
 	var yAxis = axisBottom()
@@ -67,8 +68,8 @@ class Legend extends Component {
 	this.createLegend();
         return  <svg className="Legend"
                     ref={el => this.legendContainer = el}
-	            width={this.props.style.width * 2}
-	            height={this.props.style.height * 2}
+	            width={this.props.style.width}
+	            height={this.props.style.height}
 	        />
     };
 }

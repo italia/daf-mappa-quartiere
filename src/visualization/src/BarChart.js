@@ -21,7 +21,7 @@ class BarChart extends Component {
     constructor(props) {
 	super(props);
 
-	this.barWidth = Math.min(18, Math.max(this.props.style.height / (this.props.data.values.length * 1.5), 7));
+	this.barWidth = Math.min(18, Math.max(this.props.style.height / (this.props.data.values.length * 1.1), 7));
 	this.x = 250;
 	this.y = 50;
 	
@@ -89,7 +89,7 @@ class BarChart extends Component {
 	    .attr("x", d =>  this.x - this.yScale(d[1]) - size * 0.6)
 	    .attr("y",  (d, i) => this.y + (i + 0.5) * this.barWidth - 1.2 / 2 * size)
 	    .attr("width", d => (sigFigs(d[1], 2).toString().length + 1) * size * 0.7)
-	    .attr("height", 1.2 * size)
+	    .attr("height", size)
 	    .style("fill", colorCallback)
 	    .style("fill-opacity", "1")
 	    .style("visibility", visibilityCallback);
@@ -153,7 +153,7 @@ class BarChart extends Component {
             .append("text")
 	    .attr("class", "dataSource")
             .attr("x", 3)
-            .attr("y", 870)
+            .attr("y", 780)
 	    .text("Sorgente dati: " + this.props.data.dataSource);
     };
 

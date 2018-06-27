@@ -191,6 +191,10 @@ button {
     top: 80px;
     left: 10px;
     font-size: 18px;
+    overflow: auto;
+    padding-left: 20px;
+    padding-right: 15px;
+    text-align: justify;
 }
 
 .legend-overlay {

@@ -144,13 +144,11 @@ class Map extends Component {
 	    }
 */	    
 	    map.on('mousemove', 'Quartieri', function(e) {
-		console.log("moving mouse")
 		var hoverElement = e.features[0].properties[props.joinField];
 		self.setState({ hoverElement: hoverElement }); 
 		map.setFilter('Quartieri-hover', ['==', props.joinField, hoverElement]);
             });
 	    map.on('mouseout', 'Quartieri', function() {
-		console.log("mouseout")
 		self.setState({ hoverElement: "none" }); 
 		map.setFilter('Quartieri-hover', ['==', props.joinField, ""]);
 	    });
@@ -203,7 +201,7 @@ class Map extends Component {
                     <BarChart
 	                style={{
 		            width: 350,
-			    height: 1200
+			    height: 850
 			}}
                         hoverElement={this.state.hoverElement}        
                         onHover={this.onHoverBarChart}
@@ -218,7 +216,8 @@ class Map extends Component {
                             values: this.props.source.features.map(d => [d.properties[self.props.joinField], d.properties[self.props.layer.id]]), 
                             colors: this.props.layer.colors 
                         }}             
-                   />           
+                    />
+                    <div dangerouslySetInnerHTML={{__html: this.props.layer.description}}></div>		
                 </div>
 	                    
 		<div className='legend-overlay'
@@ -226,8 +225,8 @@ class Map extends Component {
                     <Legend
                         stops={this.props.layer.colors.stops}
                         style={{
-		            width: 500,
-		            height: 30
+		            width: 700,
+		            height: 60
 			}}
                     />                                  
                 </div>

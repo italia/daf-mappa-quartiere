@@ -8,15 +8,6 @@ import Menu from './Menu';
 import MenuObject from './MenuObject';
 
 var localhost = "http://localhost:4000/";
-var colors = ['#FFFFDD',
-              '#AAF191',
-              '#80D385',
-              '#61B385',
-              '#3E9583',
-              '#217681',
-              '#285285',
-              '#1F2D86',
-              '#000086'];
 
 function getMenuUrl() {
     return localhost + "menu.json";
@@ -26,8 +17,7 @@ function getDashboardUrl(c) {
     return localhost + c + "/Dashboard" + c + ".json";
 };
 
-class App extends Component {
-    colors = {};
+class App extends Component { 
     
     constructor(props) {
 	super(props);
@@ -231,7 +221,7 @@ class App extends Component {
                 var layerField = layer.id;
 		var features = this.mergeFeatures(this.state.features, jsonLayer, joinField, layerField);
 		var values = features.map((d) => d.properties[layer.id]);
-                this.setColors(values);
+                layer.colorSet = this.getColorSet(layer, values);
 /*
 		if (layer.raw !== undefined){
 		    fetch(layer.raw.url)
@@ -255,15 +245,19 @@ class App extends Component {
             });
     };
     
-    setColors(values) {
-	values = sample(values, colors.length);
-        this.colors.stops = values.map((d, i) => [values[i], colors[i]]);
-        this.colors.scale = scaleLinear().domain(values).range(colors);
-        this.colors.highlight = "black";
+    getColorSet(layer, values) {
+	values = sample(values, layer.colors.length);
+	return {
+	    stops: values.map((d, i) => [values[i], layer.colors[i]]),
+	    scale: scaleLinear().domain(values).range(layer.colors),
+	    highlight: (layer.highlight === undefined) ? "black" : layer.highlight
+	};
     };
     
     mergeFeatures(features, jsonLayer, joinField, layerField) {
+	
 	var quartieri = jsonLayer.map(d => d[joinField]);
+	
 	features.forEach(d => {
             var index = quartieri.indexOf(d.properties[joinField]);
 	    var value = jsonLayer[index][layerField];
@@ -361,7 +355,8 @@ class App extends Component {
 		                dataSource: this.state.layer.dataSource,
 		                headers: [this.state.source.joinField, this.state.layer.id],
 			        values: this.state.features.map(d => [d.properties[self.state.source.joinField], d.properties[self.state.layer.id]]),
-			        colors: this.colors
+			        colors: this.state.layer.colorSet,
+				description: this.state.layer.description
 		            }}
 	                    joinField={this.state.source.joinField}
 	                    nameField={this.state.source.nameField}
