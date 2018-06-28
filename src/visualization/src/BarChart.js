@@ -110,7 +110,7 @@ class BarChart extends Component {
             .data(this.props.data.values)
             .attr("text-anchor", "left")
             .attr("x", d => this.x - this.yScale(d[1]))
-            .attr("y", (d, i) => this.y + 0.4 * size + (i + 0.5) * this.barWidth)
+            .attr("y", (d, i) => this.y + 0.3 * size + (i + 0.5) * this.barWidth)
             .text(d => sigFigs(d[1], 2))
             .style("visibility", visibilityCallback)
             .style("font-size", size + "px")

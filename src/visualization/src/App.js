@@ -129,6 +129,7 @@ class App extends Component {
     };
     
     fetchSource(source) {
+	console.log(source.url)
 	return fetch(source.url)
 	    .then(response => response.json())
 	    .then(json => {
@@ -214,7 +215,6 @@ class App extends Component {
 	return fetch(layer.layerUrl)
 	    .then(response => response.json())
 	    .then(jsonLayer => {
-		
 //		this.writeDashboardFile(jsonLayer)
 		
 		var joinField = this.state.source.joinField;
