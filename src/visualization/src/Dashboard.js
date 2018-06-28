@@ -92,6 +92,7 @@ class Dashboard extends Component {
                         this.props.dashboard.piechart
                             .map((p, i) => {
                                 var values = p.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]);
+				
                                 return (
                                         <PieChartWithLegend
                                             key={i}

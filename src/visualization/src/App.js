@@ -121,6 +121,7 @@ class App extends Component {
 		    .then(response => response.json())
 		    .then(json => {
 			dashboard.data = json;
+			
 			this.setState({
 			    dashboard: dashboard
 			})
@@ -129,7 +130,6 @@ class App extends Component {
     };
     
     fetchSource(source) {
-	console.log(source.url)
 	return fetch(source.url)
 	    .then(response => response.json())
 	    .then(json => {
@@ -209,13 +209,13 @@ class App extends Component {
 	    DAF25: v.DAF25,
 	    DAF26: v.DAF26	    
         }})))
-	}
-*/
+	}*/
+
     fetchLayer(layer) {
 	return fetch(layer.layerUrl)
 	    .then(response => response.json())
 	    .then(jsonLayer => {
-//		this.writeDashboardFile(jsonLayer)
+	//	this.writeDashboardFile(jsonLayer)
 		
 		var joinField = this.state.source.joinField;
                 var layerField = layer.id;
