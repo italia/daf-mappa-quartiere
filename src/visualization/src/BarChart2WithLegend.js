@@ -9,38 +9,40 @@ class BarChart2WithLegend extends Component {
 
     render() {
 	var self = this;
-	var data = this.props.labels.map((l, i) => {
+	var data = self.props.labels.map((l, i) => {
 	    return {
 		label: l,
 		left: self.props.data1.values[i],
 		right: self.props.data2.values[i]
 	    };
 	});
-	
+	var y = self.props.y;
+	var barWidth = 11;
+
 	return (
             <g>
-		<text x="0" y="140" style={{fontWeight: "bold"}}>
-		    {this.props.title}
+		<text x="0" y={y} style={{fontWeight: "bold"}}>
+		    {self.props.title}
 	        </text>
 		<LegendList
 	            label={[self.props.data1.label, self.props.data2.label]}
 	            color={[self.props.data1.color, self.props.data2.color]}
 	            x={5}
-	            y={155}
+	            y={y + 20}
 		/>
 		<BarChart2
 	            style={{
 		        width: 300,
 		        height: 370
 	            }}
-	            barWidth={11}
+	            barWidth={barWidth}
 	            x={50}
-	            y={200}
+	            y={y + 65}
 	            data={data}
 	            color={{left: self.props.data1.color, right: self.props.data2.color}}
 	        />
-		<text x="30" y="290" style={{fontSize: 7}}>
-		    Sorgente dati: {this.props.dataSource}
+		<text x="30" y={y + 90 + data.length * barWidth} className="dataSource">
+		    Sorgente dati: {self.props.dataSource}
 	        </text>
             </g>
 	);

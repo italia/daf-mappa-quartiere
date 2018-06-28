@@ -19,14 +19,14 @@ class MenuItem extends Component {
 	      .subcategories
 	      .map((s,i) =>
 		   <a onClick={() => self.handleClick(s)}>
-	           <li key={i.toString()} style={{paddingLeft: "20px", paddingBottom: "4px", fontSize: "16px"}}>
+	               <li id='menuLi' key={i.toString()}>
 		           {s.label}
 		       </li>
 		   </a>
 		  );
 	return (
 	    <div>
-	        <li style={{color: "black", fontWeight: "bold", fontSize: "18px"}}>
+	        <li id='menuLiBold'>
 		    {self.props.item.category}
 	        </li>
 	        <ul>{list}</ul>

@@ -194,24 +194,14 @@ class Map extends Component {
 	return (  
 	    <div>
                 <div id='mapContainer'
-	            ref={el => this.mapContainer = el}
-	            style={{
-		        height: '90vh',
-			width: '100vw'
-		    }}/>
+	            ref={el => this.mapContainer = el}/>
 		
 		<div className='map-overlay'
-	            id='chart'
-	            style={{
-		        height: '85vh',
-			width: '25vw',
-			top: '80px',
-			right: '10px'
-		    }}>
+	            id='chart'>
                     <BarChart
 	                style={{
-		            width: 700,
-			    height: 950
+		            width: 350,
+			    height: 850
 			}}
                         hoverElement={this.state.hoverElement}        
                         onHover={this.onHoverBarChart}
@@ -226,22 +216,17 @@ class Map extends Component {
                             values: this.props.source.features.map(d => [d.properties[self.props.joinField], d.properties[self.props.layer.id]]), 
                             colors: this.props.layer.colors 
                         }}             
-                   />           
+                    />
+                    <div dangerouslySetInnerHTML={{__html: this.props.layer.description}}></div>		
                 </div>
 	                    
 		<div className='legend-overlay'
-	            id='legend'
-	            style={{
-		        height: '8vh',
-			width: '50vw',
-			right: '500px',
-			bottom: '0px'
-		    }}>
+	            id='legend'>
                     <Legend
                         stops={this.props.layer.colors.stops}
                         style={{
-		            width: 500,
-		            height: 30
+		            width: 700,
+		            height: 60
 			}}
                     />                                  
                 </div>
@@ -250,13 +235,6 @@ class Map extends Component {
 	            neighborhood={this.state.neighborhood}
 	            nameField={this.props.nameField}
                     dashboard={this.props.dashboard}
-
-	            style={{
-		        height: '47vh',
-			width: '30vw',
-			top: '90px',
-			left: '30px'
-		    }}
 		/>
 	    </div>	   
 	);

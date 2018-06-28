@@ -8,15 +8,6 @@ import Menu from './Menu';
 import MenuObject from './MenuObject';
 
 var host = "https://api.daf.teamdigitale.it/mappa/";
-var colors = ['#FFFFDD',
-              '#AAF191',
-              '#80D385',
-              '#61B385',
-              '#3E9583',
-              '#217681',
-              '#285285',
-              '#1F2D86',
-              '#000086'];
 
 function getMenuUrl() {
     return host + "menu.json";
@@ -26,8 +17,7 @@ function getDashboardUrl(c) {
     return host + c + "/Dashboard" + c + ".json";
 };
 
-class App extends Component {
-    colors = {};
+class App extends Component { 
     
     constructor(props) {
 	super(props);
@@ -131,6 +121,7 @@ class App extends Component {
 		    .then(response => response.json())
 		    .then(json => {
 			dashboard.data = json;
+			
 			this.setState({
 			    dashboard: dashboard
 			})
@@ -149,10 +140,10 @@ class App extends Component {
             });
     };
 
-    
-    /*writeDashboardFile(jsonLayer) {
+    /*
+    writeDashboardFile(jsonLayer) {
 	var m = jsonLayer.map(v => {
-	    console.log(v)
+	    
             v["DAF1"] = v.P60 - v.P61 - v.P62;
             v["DAF2"] = v.P1 - v.ST14;
             v["DAF3"] = v.P14 + v.P15 - v.P30 - v.P31;
@@ -173,12 +164,24 @@ class App extends Component {
             v["DAF18"] = v.P44 + v.P45;
             v["DAF19"] = v.P138/(v.P138+v.P139);
             v["DAF20"] = v.P139/(v.P138+v.P139);
+            v["DAF21"] = 100 * v.ST9/v.ST1;
+            v["DAF22"] = 100 * v.ST10/v.ST1;
+	    v["DAF23"] = 100 * v.ST11/v.ST1;
+            v["DAF24"] = 100 * v.ST12/v.ST1; 
+            v["DAF25"] = 100 * v.ST13/v.ST1;
+            v["DAF26"] = 100 * v.ST14/v.ST1;
             return v;
         });
         console.log(JSON.stringify(m.map(v => {return {
             P1: v.P1,
             P61: v.P61,
             P62: v.P62,
+            P47: v.P47,
+            P48: v.P48,
+            P49: v.P49,
+            P50: v.P50,
+            P51: v.P51,
+            P52: v.P52,
             DAF1: v.DAF1,
             DAF2: v.DAF2,
             DAF3: v.DAF3,
@@ -198,7 +201,13 @@ class App extends Component {
             DAF17: v.DAF17,
             DAF18: v.DAF18,
             DAF19: v.DAF19,
-            DAF20: v.DAF20
+            DAF20: v.DAF20,
+	    DAF21: v.DAF21,
+	    DAF22: v.DAF22,
+	    DAF23: v.DAF23,
+	    DAF24: v.DAF24,
+	    DAF25: v.DAF25,
+	    DAF26: v.DAF26	    
         }})))
 	}*/
 
@@ -206,13 +215,13 @@ class App extends Component {
 	return fetch(layer.layerUrl)
 	    .then(response => response.json())
 	    .then(jsonLayer => {
-		//this.writeDashboardFile(jsonLayer)
+	//	this.writeDashboardFile(jsonLayer)
 		
 		var joinField = this.state.source.joinField;
                 var layerField = layer.id;
 		var features = this.mergeFeatures(this.state.features, jsonLayer, joinField, layerField);
 		var values = features.map((d) => d.properties[layer.id]);
-                this.setColors(values);
+                layer.colorSet = this.getColorSet(layer, values);
 /*
 		if (layer.raw !== undefined){
 		    fetch(layer.raw.url)
@@ -236,15 +245,19 @@ class App extends Component {
             });
     };
     
-    setColors(values) {
-	values = sample(values, colors.length);
-        this.colors.stops = values.map((d, i) => [values[i], colors[i]]);
-        this.colors.scale = scaleLinear().domain(values).range(colors);
-        this.colors.highlight = "black";
+    getColorSet(layer, values) {
+	values = sample(values, layer.colors.length);
+	return {
+	    stops: values.map((d, i) => [values[i], layer.colors[i]]),
+	    scale: scaleLinear().domain(values).range(layer.colors),
+	    highlight: (layer.highlight === undefined) ? "black" : layer.highlight
+	};
     };
     
     mergeFeatures(features, jsonLayer, joinField, layerField) {
+	
 	var quartieri = jsonLayer.map(d => d[joinField]);
+	
 	features.forEach(d => {
             var index = quartieri.indexOf(d.properties[joinField]);
 	    var value = jsonLayer[index][layerField];
@@ -342,7 +355,8 @@ class App extends Component {
 		                dataSource: this.state.layer.dataSource,
 		                headers: [this.state.source.joinField, this.state.layer.id],
 			        values: this.state.features.map(d => [d.properties[self.state.source.joinField], d.properties[self.state.layer.id]]),
-			        colors: this.colors
+			        colors: this.state.layer.colorSet,
+				description: this.state.layer.description
 		            }}
 	                    joinField={this.state.source.joinField}
 	                    nameField={this.state.source.nameField}
@@ -362,8 +376,6 @@ function sample(values, C) {
         .map((d) => d * (max - min) / C  + min);
 };
 
-
-//note length of a and b should be the same                                                                                                                                
 function sumArray(a) {
     var sum = 0;
     var l = 0;

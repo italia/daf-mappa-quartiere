@@ -51,7 +51,9 @@ class MenuObject extends Component {
 			default: c.default,
 			labels: c.labels,
 			colors: c.colors,
-			raw: c.raw
+			highlight: c.highlight,
+			raw: c.raw,
+			description: c.description
 		    };
 		} else {
 		    console.log("unknown type in menu");

@@ -21,7 +21,7 @@ class BarChart extends Component {
     constructor(props) {
 	super(props);
 
-	this.barWidth = Math.min(18, Math.max(this.props.style.height / (this.props.data.values.length * 1.5), 7));
+	this.barWidth = Math.min(18, Math.max(this.props.style.height / (this.props.data.values.length * 1.1), 7));
 	this.x = 250;
 	this.y = 50;
 	
@@ -71,7 +71,7 @@ class BarChart extends Component {
     createTooltip(visibilityCallback, colorCallback, classCallback) {
 	const chartContainer = this.chartContainer;
 
-	var size = 8;	
+	var size = 11;	
 	select(chartContainer)
 	    .selectAll("rect.tooltip" + classCallback())
 	    .data(this.props.data.values)
@@ -87,9 +87,9 @@ class BarChart extends Component {
 	    .selectAll("rect.tooltip" + classCallback())
 	    .data(this.props.data.values)   
 	    .attr("x", d =>  this.x - this.yScale(d[1]) - size * 0.6)
-	    .attr("y",  (d, i) => this.y + (i + 0.5) * this.barWidth - 1.5 / 2 * size)
+	    .attr("y",  (d, i) => this.y + (i + 0.5) * this.barWidth - 1.2 / 2 * size)
 	    .attr("width", d => (sigFigs(d[1], 2).toString().length + 1) * size * 0.7)
-	    .attr("height", 1.5 * size)
+	    .attr("height", size)
 	    .style("fill", colorCallback)
 	    .style("fill-opacity", "1")
 	    .style("visibility", visibilityCallback);
@@ -110,7 +110,7 @@ class BarChart extends Component {
             .data(this.props.data.values)
             .attr("text-anchor", "left")
             .attr("x", d => this.x - this.yScale(d[1]))
-            .attr("y", (d, i) => this.y + 0.4 * size + (i + 0.5) * this.barWidth)
+            .attr("y", (d, i) => this.y + 0.3 * size + (i + 0.5) * this.barWidth)
             .text(d => sigFigs(d[1], 2))
             .style("visibility", visibilityCallback)
             .style("font-size", size + "px")
@@ -141,20 +141,19 @@ class BarChart extends Component {
 
     setLabel() {	
 	select(".bartitle").remove();
-	select(this.chartContainer).selectAll(".barcredits").remove();
+	select(this.chartContainer).selectAll(".dataSource").remove();
 	const chartContainer = this.chartContainer;  
         select(chartContainer)
             .append("text")
             .attr("class", "bartitle")
             .attr("x", 80)
-            .attr("y", 20)
+            .attr("y", 30)
             .text(this.props.data.label);
 	select(chartContainer)
             .append("text")
-	    .attr("class", "barcredits")
-            .attr("x", 20)
-            .attr("y", 700)
-	    .attr("font-size", 8)
+	    .attr("class", "dataSource")
+            .attr("x", 3)
+            .attr("y", 780)
 	    .text("Sorgente dati: " + this.props.data.dataSource);
     };
 
@@ -166,15 +165,13 @@ class BarChart extends Component {
 
 	select(chartContainer)
 	    .append("text")
-	    .attr("id", "description")
-	    .attr("x", 20)
-	    .attr("y", 50)
+	    .attr("id", "description");
 
 	select(chartContainer)
 	    .append("text")
 	    .attr("id", "property")
 	    .attr("x", 20)
-	    .attr("y", 60 + this.barWidth * 2)
+	    .attr("y", 60 + this.barWidth * 2);
 
 	select(chartContainer)
 	    .selectAll("rect.bar")
