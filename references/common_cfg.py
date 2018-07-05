@@ -14,7 +14,7 @@ project_root = os.path.dirname(
 processed_path = os.path.join(project_root, 'data/processed/')
 
 # cities included in the project
-city_list = ['Milano', 'Torino', 'Roma']
+city_list = ['Milano', 'Torino', 'Roma', 'Bari', 'Firenze']
 
 # Location conventions
 coord_col_names = ['Long', 'Lat']
