@@ -1,0 +1,22 @@
+[
+    {
+        "IDquartiere" : 1,
+        "tipo_di_alloggi" : 3.0397
+    },
+    {
+        "IDquartiere" : 2,
+        "tipo_di_alloggi" : 2.8464
+    },
+    {
+        "IDquartiere" : 3,
+        "tipo_di_alloggi" : 2.4761
+    },
+    {
+        "IDquartiere" : 4,
+        "tipo_di_alloggi" : 2.5334
+    },
+    {
+        "IDquartiere" : 5,
+        "tipo_di_alloggi" : 2.7246
+    }
+]

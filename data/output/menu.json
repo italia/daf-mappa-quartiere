@@ -334,5 +334,113 @@
         "source_id" : "Bari_quartieri",
         "type" : "layer",
         "url" : ""
+    },
+    {
+        "center" : [
+            11.24626,
+            43.77925
+        ],
+        "city" : "Firenze",
+        "id" : "Firenze_quartieri",
+        "indicators" : [
+            {
+                "category" : "",
+                "data_source" : "",
+                "default" : false,
+                "id" : "",
+                "label" : ""
+            }
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "",
+        "type" : "source",
+        "url" : "",
+        "zoom" : 10
+    },
+    {
+        "city" : "Firenze",
+        "id" : "Firenze_Ambiente",
+        "indicators" : [
+            {
+                "category" : "Ambiente",
+                "data_source" : "Open Data Comuni",
+                "id" : "UrbanGreen",
+                "label" : "Aree Verdi"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Firenze_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Firenze",
+        "id" : "Firenze_EducazioneCultura",
+        "indicators" : [
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Firenze_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Firenze",
+        "id" : "Firenze_Trasporti",
+        "indicators" : [
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Firenze_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Firenze",
+        "id" : "Firenze_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Firenze_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Firenze",
+        "id" : "Firenze_Vitalita",
+        "indicators" : [
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "tipo_di_alloggi",
+                "label" : "tipo_di_alloggi"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Firenze_quartieri",
+        "type" : "layer",
+        "url" : ""
     }
 ]
