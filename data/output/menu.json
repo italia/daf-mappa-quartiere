@@ -1,120 +1,6 @@
 [
     {
         "center" : [
-            9.191383,
-            45.464211
-        ],
-        "city" : "Milano",
-        "id" : "Milano_quartieri",
-        "indicators" : [
-            {
-                "category" : "",
-                "data_source" : "",
-                "default" : false,
-                "id" : "",
-                "label" : ""
-            }
-        ],
-        "joinField" : "IDquartiere",
-        "sourceId" : "",
-        "type" : "source",
-        "url" : "",
-        "zoom" : 11
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_Trasporti",
-        "indicators" : [
-            {
-                "category" : "Trasporti",
-                "data_source" : "GTFS Comuni",
-                "id" : "TransportStop",
-                "label" : "Fermate TPL"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_EducazioneCultura",
-        "indicators" : [
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIBACT",
-                "id" : "Library",
-                "label" : "Biblioteche"
-            },
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_Ambiente",
-        "indicators" : [
-            {
-                "category" : "Ambiente",
-                "data_source" : "Open Data Comuni",
-                "id" : "UrbanGreen",
-                "label" : "Aree Verdi"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_Salute",
-        "indicators" : [
-            {
-                "category" : "Salute",
-                "data_source" : "Min. Salute",
-                "id" : "Pharmacy",
-                "label" : "Farmacie"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_Vitalita",
-        "indicators" : [
-            {
-                "category" : "Vitalita",
-                "data_source" : "ISTAT",
-                "id" : "tipo_di_alloggi",
-                "label" : "tipo_di_alloggi"
-            },
-            {
-                "category" : "Vitalita",
-                "data_source" : "ISTAT",
-                "id" : "densita_occupati",
-                "label" : "densita_occupati"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "center" : [
             7.191383,
             46
         ],
@@ -224,6 +110,228 @@
         ],
         "sourceId" : "",
         "source_id" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "center" : [
+            9.191383,
+            45.464211
+        ],
+        "city" : "Milano",
+        "id" : "Milano_quartieri",
+        "indicators" : [
+            {
+                "category" : "",
+                "data_source" : "",
+                "default" : false,
+                "id" : "",
+                "label" : ""
+            }
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "",
+        "type" : "source",
+        "url" : "",
+        "zoom" : 11
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_EducazioneCultura",
+        "indicators" : [
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_Ambiente",
+        "indicators" : [
+            {
+                "category" : "Ambiente",
+                "data_source" : "Open Data Comuni",
+                "id" : "UrbanGreen",
+                "label" : "Aree Verdi"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_Trasporti",
+        "indicators" : [
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_Vitalita",
+        "indicators" : [
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "tipo_di_alloggi",
+                "label" : "tipo_di_alloggi"
+            },
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "densita_occupati",
+                "label" : "densita_occupati"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "center" : [
+            16.871871,
+            41.117143
+        ],
+        "city" : "Bari",
+        "id" : "Bari_quartieri",
+        "indicators" : [
+            {
+                "category" : "",
+                "data_source" : "",
+                "default" : false,
+                "id" : "",
+                "label" : ""
+            }
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "",
+        "type" : "source",
+        "url" : "",
+        "zoom" : 10
+    },
+    {
+        "city" : "Bari",
+        "id" : "Bari_Ambiente",
+        "indicators" : [
+            {
+                "category" : "Ambiente",
+                "data_source" : "Open Data Comuni",
+                "id" : "UrbanGreen",
+                "label" : "Aree Verdi"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Bari_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Bari",
+        "id" : "Bari_Trasporti",
+        "indicators" : [
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Bari_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Bari",
+        "id" : "Bari_EducazioneCultura",
+        "indicators" : [
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Bari_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Bari",
+        "id" : "Bari_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Bari_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Bari",
+        "id" : "Bari_Vitalita",
+        "indicators" : [
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "tipo_di_alloggi",
+                "label" : "tipo_di_alloggi"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Bari_quartieri",
         "type" : "layer",
         "url" : ""
     }

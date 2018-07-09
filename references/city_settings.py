@@ -71,18 +71,18 @@ default_cities = [
         (10, [16.871871, 41.117143]),  # zoom level and center for d3
         {ServiceType.School: 'Bari_scuole.csv',
          ServiceType.Library: 'Bari_biblioteche.csv',
-         ServiceType.TransportStop: 'Bari_TPL.csv',
+         #ServiceType.TransportStop: 'Bari_TPL.csv',
          ServiceType.Pharmacy: 'Bari_farmacie.csv',
          }),
-    ModelCity(
-        'Firenze',
-        '',
-        (10, [11.2462600, 43.7792500]),  # zoom level and center for d3
-        {ServiceType.School: 'Firenze_scuole.csv',
-         ServiceType.Library: 'Firenze_biblioteche.csv',
-         ServiceType.TransportStop: 'Firenze_TPL.csv',
-         ServiceType.Pharmacy: 'Firenze_farmacie.csv',
-         })
+    # ModelCity(
+    #     'Firenze',
+    #     '',
+    #     (10, [11.2462600, 43.7792500]),  # zoom level and center for d3
+    #     {ServiceType.School: 'Firenze_scuole.csv',
+    #      ServiceType.Library: 'Firenze_biblioteche.csv',
+    #      ServiceType.TransportStop: 'Firenze_TPL.csv',
+    #      ServiceType.Pharmacy: 'Firenze_farmacie.csv',
+    #      })
     ]
 
 city_names_list = [city.name for city in default_cities]
