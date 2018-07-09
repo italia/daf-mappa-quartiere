@@ -262,6 +262,8 @@ class TransportStopFactory(UnitFactory):
         assert mean_radius, 'Please provide a reference radius for stops'
         (propert_data, locations) = super().extract_locations()
         # make unique stop code
+        propert_data['stop_id'] = propert_data['stop_id'].astype(str)
+        propert_data['route_id'] = propert_data['route_id'].astype(str)
         propert_data['stopCode'] = \
             propert_data['stop_id'] + '_' + propert_data['route_id']
         # append route types

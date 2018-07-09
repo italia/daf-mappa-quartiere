@@ -359,44 +359,6 @@
     },
     {
         "city" : "Firenze",
-        "id" : "Firenze_Ambiente",
-        "indicators" : [
-            {
-                "category" : "Ambiente",
-                "data_source" : "Open Data Comuni",
-                "id" : "UrbanGreen",
-                "label" : "Aree Verdi"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Firenze_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Firenze",
-        "id" : "Firenze_EducazioneCultura",
-        "indicators" : [
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIBACT",
-                "id" : "Library",
-                "label" : "Biblioteche"
-            },
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Firenze_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Firenze",
         "id" : "Firenze_Trasporti",
         "indicators" : [
             {
@@ -420,6 +382,44 @@
                 "data_source" : "Min. Salute",
                 "id" : "Pharmacy",
                 "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Firenze_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Firenze",
+        "id" : "Firenze_EducazioneCultura",
+        "indicators" : [
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Firenze_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Firenze",
+        "id" : "Firenze_Ambiente",
+        "indicators" : [
+            {
+                "category" : "Ambiente",
+                "data_source" : "Open Data Comuni",
+                "id" : "UrbanGreen",
+                "label" : "Aree Verdi"
             }
         ],
         "sourceId" : "",
