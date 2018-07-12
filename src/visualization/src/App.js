@@ -7,7 +7,11 @@ import Button from './Button';
 import Menu from './Menu';
 import MenuObject from './MenuObject';
 
+<<<<<<< HEAD
 var localhost = "http://localhost:4000/";
+=======
+var host = "https://api.daf.teamdigitale.it/mappa/";
+>>>>>>> 74bbde00e7289a30903e75adabf513914268a455
 
 function getMenuUrl() {
     return host + "menu.json";
