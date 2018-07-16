@@ -1,7 +1,7 @@
 import os
 import geopandas as gpd
 import shapely
-
+import numpy as np
 from src.models.city_items import ServiceType
 from references import common_cfg
 
@@ -36,7 +36,7 @@ class ModelCity(dict):
 
         # cast sezione ID as int
         loaded[common_cfg.sezione_col_name] = \
-            loaded[common_cfg.sezione_col_name].astype(int)
+            loaded[common_cfg.sezione_col_name].astype(np.int64)
 
         return loaded.set_index(common_cfg.sezione_col_name)
 

@@ -494,7 +494,7 @@ class ServiceEvaluator:
             # Apply [1/m, m] clipping to raw ratios
             out[service_type] = 1 / np.clip(
                 adjusted_loads, 1 / clip_level, clip_level)
-            
+
         return out
 
     def get_aggregate_values_from_interactions(
