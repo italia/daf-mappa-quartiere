@@ -2,8 +2,8 @@
     {
         "IDquartiere" : 1,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.5631,
             0.5536,
             0.84,
@@ -15,24 +15,24 @@
             0.8596
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.7618,
             1.1848,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 2,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.5562,
             0.5607,
             1.0138,
@@ -44,24 +44,24 @@
             1.0077
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.8815,
             0.8142,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 3,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0838,
             0.0847,
             0.1326,
@@ -73,24 +73,24 @@
             0.1466
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.209,
             0.6791,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 4,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.2185,
             0.219,
             0.333,
@@ -102,24 +102,24 @@
             0.3492
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.9811,
             0.7852,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 5,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0557,
             0.0582,
             0.3092,
@@ -131,24 +131,24 @@
             0.3852
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.048,
             0.323,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 6,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.4109,
             0.4379,
             0.5953,
@@ -160,24 +160,24 @@
             0.5397
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.6941,
             0.7627,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 7,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.5046,
             0.4973,
             0.5454,
@@ -189,24 +189,24 @@
             0.4333
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             2.1577,
             0.889,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 8,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0715,
             0.0741,
             0.3734,
@@ -218,24 +218,24 @@
             0.3855
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.6942,
             0.7865,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 9,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0015,
             0.0023,
             0.0029,
@@ -247,24 +247,24 @@
             0.0027
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.6153,
             0.6295,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 10,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0053,
             0.0048,
             0.0063,
@@ -276,24 +276,24 @@
             0.0108
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.7274,
             0.3642,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 11,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0,
             0.0,
             0.0,
@@ -305,24 +305,24 @@
             0.0
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.3873,
             0.3382,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 12,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0,
             0.0,
             0.0,
@@ -334,24 +334,24 @@
             0.0
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.9594,
             0.2996,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 13,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0,
             0.0,
             0.0,
@@ -363,24 +363,24 @@
             0.0
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             1.084,
             0.2565,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 14,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0,
             0.0,
             0.0028,
@@ -392,24 +392,24 @@
             0.0015
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.8796,
             0.2911,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 15,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0,
             0.0,
             0.0,
@@ -421,24 +421,24 @@
             0.0
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.7955,
             0.4636,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 16,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0,
             0.0,
             0.0,
@@ -450,24 +450,24 @@
             0.0
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.7556,
             0.0,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     },
     {
         "IDquartiere" : 17,
         "Library" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.0,
             0.0,
             0.0,
@@ -479,17 +479,17 @@
             0.0
         ],
         "School" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             0.4276,
             0.5264,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN,
-            NaN
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN",
+            "NaN"
         ]
     }
 ]

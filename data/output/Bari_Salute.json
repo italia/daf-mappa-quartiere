@@ -2,7 +2,7 @@
     {
         "IDquartiere" : 1,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             1.2845,
             1.2715,
             1.2701,
@@ -18,7 +18,7 @@
     {
         "IDquartiere" : 2,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             1.2357,
             1.2324,
             1.2403,
@@ -34,7 +34,7 @@
     {
         "IDquartiere" : 3,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.7724,
             0.7664,
             0.7632,
@@ -50,7 +50,7 @@
     {
         "IDquartiere" : 4,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             1.1896,
             1.1782,
             1.1752,
@@ -66,7 +66,7 @@
     {
         "IDquartiere" : 5,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.4425,
             0.4403,
             0.4435,
@@ -82,7 +82,7 @@
     {
         "IDquartiere" : 6,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5523,
             0.5502,
             0.5357,
@@ -98,7 +98,7 @@
     {
         "IDquartiere" : 7,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5055,
             0.5098,
             0.4959,
@@ -114,7 +114,7 @@
     {
         "IDquartiere" : 8,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5776,
             0.5863,
             0.6001,
@@ -130,7 +130,7 @@
     {
         "IDquartiere" : 9,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.1106,
             0.1023,
             0.1323,
@@ -146,7 +146,7 @@
     {
         "IDquartiere" : 10,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.3554,
             0.3536,
             0.3671,
@@ -162,7 +162,7 @@
     {
         "IDquartiere" : 11,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.3089,
             0.3487,
             0.3856,
@@ -178,7 +178,7 @@
     {
         "IDquartiere" : 12,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.0002,
             0.0001,
             0.0001,
@@ -194,7 +194,7 @@
     {
         "IDquartiere" : 13,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.1552,
             0.1326,
             0.1206,
@@ -210,7 +210,7 @@
     {
         "IDquartiere" : 14,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.2163,
             0.2161,
             0.2339,
@@ -226,7 +226,7 @@
     {
         "IDquartiere" : 15,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.4354,
             0.4433,
             0.4399,
@@ -242,7 +242,7 @@
     {
         "IDquartiere" : 16,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.0,
             0.0,
             0.0,
@@ -258,7 +258,7 @@
     {
         "IDquartiere" : 17,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.0,
             0.0,
             0.0,

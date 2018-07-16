@@ -2,8 +2,8 @@
     {
         "IDquartiere" : 1,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             8.8679,
             8.886,
             8.772,
@@ -18,8 +18,8 @@
     {
         "IDquartiere" : 2,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             4.3334,
             4.3112,
             4.3661,
@@ -34,8 +34,8 @@
     {
         "IDquartiere" : 3,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             6.2567,
             6.2801,
             6.3201,
@@ -50,8 +50,8 @@
     {
         "IDquartiere" : 4,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.0379,
             3.0525,
             3.0753,
@@ -66,8 +66,8 @@
     {
         "IDquartiere" : 5,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.743,
             3.6477,
             3.6076,
@@ -82,8 +82,8 @@
     {
         "IDquartiere" : 6,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.7714,
             3.7164,
             3.753,
@@ -98,8 +98,8 @@
     {
         "IDquartiere" : 7,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             4.9926,
             5.0314,
             4.9172,
@@ -114,8 +114,8 @@
     {
         "IDquartiere" : 8,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             5.0411,
             4.8833,
             5.0764,
@@ -130,8 +130,8 @@
     {
         "IDquartiere" : 9,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             7.2233,
             7.3165,
             7.3482,
@@ -146,8 +146,8 @@
     {
         "IDquartiere" : 10,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.9406,
             3.9887,
             3.9193,
@@ -162,8 +162,8 @@
     {
         "IDquartiere" : 11,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.3479,
             3.3524,
             3.3764,
@@ -178,8 +178,8 @@
     {
         "IDquartiere" : 12,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             4.7368,
             4.8537,
             4.738,
@@ -194,8 +194,8 @@
     {
         "IDquartiere" : 13,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             2.3978,
             2.4091,
             2.4337,
@@ -210,8 +210,8 @@
     {
         "IDquartiere" : 14,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             2.5858,
             2.6222,
             2.6231,
@@ -226,8 +226,8 @@
     {
         "IDquartiere" : 15,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             2.6521,
             2.6332,
             2.6391,
@@ -242,8 +242,8 @@
     {
         "IDquartiere" : 16,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.2973,
             3.2994,
             3.3516,
@@ -258,8 +258,8 @@
     {
         "IDquartiere" : 17,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.6984,
             3.6686,
             3.7085,
@@ -274,8 +274,8 @@
     {
         "IDquartiere" : 18,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.2337,
             3.1971,
             3.2253,
@@ -290,8 +290,8 @@
     {
         "IDquartiere" : 19,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             4.1401,
             4.3226,
             4.0463,
@@ -306,8 +306,8 @@
     {
         "IDquartiere" : 20,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.3227,
             3.2621,
             3.2566,
@@ -322,8 +322,8 @@
     {
         "IDquartiere" : 21,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.7685,
             3.8248,
             3.7663,
@@ -338,8 +338,8 @@
     {
         "IDquartiere" : 22,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             3.8634,
             3.7659,
             3.8304,
@@ -354,8 +354,8 @@
     {
         "IDquartiere" : 23,
         "TransportStop" : [
-            NaN,
-            NaN,
+            "NaN",
+            "NaN",
             4.4357,
             4.4649,
             4.4778,

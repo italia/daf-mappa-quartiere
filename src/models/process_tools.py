@@ -1,5 +1,4 @@
 import os
-import sys
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -9,6 +8,7 @@ import shapely
 from matplotlib import pyplot as plt
 from scipy.interpolate import griddata
 import json
+import re
 
 from references import common_cfg, city_settings
 # enum classes for the model
@@ -175,6 +175,8 @@ class JSONWriter:
                           'indent': 4,
                           'separators': (',', ' : ')}
 
+    nan_string = '"NaN"'
+
     def __init__(self, kpi_calculator):
         assert isinstance(kpi_calculator, KPICalculator), \
             'KPI calculator is needed'
@@ -299,6 +301,16 @@ class JSONWriter:
 
         return out
 
+    @classmethod
+    def _dump_json(cls, input, fileIO):
+        # this method allows to replace default nan export
+        string_json = json.dumps(input, **cls.write_options_dict)
+        # replace default 'Nan' with cls property string
+        regex = re.compile(r'\bNaN\b', flags=re.IGNORECASE)
+        string_json = re.sub(regex, cls.nan_string, string_json)
+        # write to file
+        fileIO.write(string_json)
+
     def _update_menu_in_default_path(self):
         # Load current menu from json and
         # replace the calculator city info with new data
@@ -311,7 +323,7 @@ class JSONWriter:
 
         with open(os.path.join(
                 common_cfg.viz_output_path, 'menu.json'), 'w') as menu_file:
-            json.dump(updated_menu, menu_file, **self.write_options_dict)
+            self._dump_json(updated_menu, menu_file)
 
     def write_all_files_to_default_path(self):
         # update menu
@@ -323,4 +335,4 @@ class JSONWriter:
             filename = '%s_%s.json' % (self.city.name, name)
             with open(os.path.join(common_cfg.output_path,
                                    filename), 'w') as area_file:
-                json.dump(data, area_file, **self.write_options_dict)
+                self._dump_json(data, area_file)

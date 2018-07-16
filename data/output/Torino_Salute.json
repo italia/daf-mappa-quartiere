@@ -2,7 +2,7 @@
     {
         "IDquartiere" : 1,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             1.227,
             1.2278,
             1.2277,
@@ -18,7 +18,7 @@
     {
         "IDquartiere" : 2,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.8565,
             0.8287,
             0.8197,
@@ -34,7 +34,7 @@
     {
         "IDquartiere" : 3,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.7778,
             0.7709,
             0.7705,
@@ -50,7 +50,7 @@
     {
         "IDquartiere" : 4,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5759,
             0.582,
             0.5763,
@@ -66,7 +66,7 @@
     {
         "IDquartiere" : 5,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5866,
             0.592,
             0.5923,
@@ -82,7 +82,7 @@
     {
         "IDquartiere" : 6,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.6121,
             0.6227,
             0.6279,
@@ -98,7 +98,7 @@
     {
         "IDquartiere" : 7,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.6915,
             0.6784,
             0.6796,
@@ -114,7 +114,7 @@
     {
         "IDquartiere" : 8,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.9384,
             0.9431,
             0.9293,
@@ -130,7 +130,7 @@
     {
         "IDquartiere" : 9,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.7043,
             0.7153,
             0.6899,
@@ -146,7 +146,7 @@
     {
         "IDquartiere" : 10,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.8828,
             0.8764,
             0.876,
@@ -162,7 +162,7 @@
     {
         "IDquartiere" : 11,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5777,
             0.5818,
             0.5788,
@@ -178,7 +178,7 @@
     {
         "IDquartiere" : 12,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5486,
             0.5461,
             0.536,
@@ -194,7 +194,7 @@
     {
         "IDquartiere" : 13,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.6066,
             0.6157,
             0.625,
@@ -210,7 +210,7 @@
     {
         "IDquartiere" : 14,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.6405,
             0.6384,
             0.6436,
@@ -226,7 +226,7 @@
     {
         "IDquartiere" : 15,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5335,
             0.5164,
             0.5074,
@@ -242,7 +242,7 @@
     {
         "IDquartiere" : 16,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5071,
             0.5074,
             0.4989,
@@ -258,7 +258,7 @@
     {
         "IDquartiere" : 17,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.6379,
             0.6459,
             0.6426,
@@ -274,7 +274,7 @@
     {
         "IDquartiere" : 18,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5344,
             0.5326,
             0.5341,
@@ -290,7 +290,7 @@
     {
         "IDquartiere" : 19,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.6095,
             0.6063,
             0.6305,
@@ -306,7 +306,7 @@
     {
         "IDquartiere" : 20,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.455,
             0.4651,
             0.4795,
@@ -322,7 +322,7 @@
     {
         "IDquartiere" : 21,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5191,
             0.4662,
             0.4624,
@@ -338,7 +338,7 @@
     {
         "IDquartiere" : 22,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.5138,
             0.4703,
             0.4187,
@@ -354,7 +354,7 @@
     {
         "IDquartiere" : 23,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.6401,
             0.6424,
             0.6357,

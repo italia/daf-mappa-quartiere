@@ -2,7 +2,7 @@
     {
         "IDquartiere" : 1,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.8133,
             0.8058,
             0.8028,
@@ -18,7 +18,7 @@
     {
         "IDquartiere" : 2,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.4227,
             0.42,
             0.42,
@@ -34,7 +34,7 @@
     {
         "IDquartiere" : 3,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.4462,
             0.4477,
             0.451,
@@ -50,7 +50,7 @@
     {
         "IDquartiere" : 4,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.3661,
             0.3651,
             0.3711,
@@ -66,7 +66,7 @@
     {
         "IDquartiere" : 5,
         "Pharmacy" : [
-            NaN,
+            "NaN",
             0.4099,
             0.4123,
             0.4167,
