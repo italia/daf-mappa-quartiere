@@ -482,12 +482,19 @@ class ServiceEvaluator:
         out = {}
 
         for service_type, attendance_values in self.attendance_tree.items():
-            # get ratios
-            raw_ratios = attendance_values / attendance_values.mean()
-            np.nan_to_num(raw_ratios, copy=False)  # this replaces Nan with 0
+            # get raw loads with respect to reference level
+            print('WARNING: using on-the-fly mean as reference for attendance')
+            raw_loads = attendance_values[:, 0] / attendance_values.mean()
+
+            # correct for relative capacities of the various units
+            adjusted_loads = raw_loads / attendance_values[:, 1]
+
+            # this replaces Nan with 0
+            np.nan_to_num(adjusted_loads, copy=False)
             # Apply [1/m, m] clipping to raw ratios
             out[service_type] = 1 / np.clip(
-                raw_ratios, 1 / clip_level, clip_level)
+                adjusted_loads, 1 / clip_level, clip_level)
+            
         return out
 
     def get_aggregate_values_from_interactions(
