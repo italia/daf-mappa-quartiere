@@ -1,70 +1,87 @@
 [
     {
         "IDquartiere" : 1,
+        "densita_occupati" : 56.0784,
         "tipo_di_alloggi" : 3.1574
     },
     {
         "IDquartiere" : 2,
+        "densita_occupati" : 73.3266,
         "tipo_di_alloggi" : 3.6954
     },
     {
         "IDquartiere" : 3,
+        "densita_occupati" : 87.403,
         "tipo_di_alloggi" : 3.7154
     },
     {
         "IDquartiere" : 4,
+        "densita_occupati" : 79.8718,
         "tipo_di_alloggi" : 3.4886
     },
     {
         "IDquartiere" : 5,
+        "densita_occupati" : 10.5895,
         "tipo_di_alloggi" : 3.2597
     },
     {
         "IDquartiere" : 6,
+        "densita_occupati" : 24.7124,
         "tipo_di_alloggi" : 3.2095
     },
     {
         "IDquartiere" : 7,
+        "densita_occupati" : 41.459,
         "tipo_di_alloggi" : 3.4208
     },
     {
         "IDquartiere" : 8,
+        "densita_occupati" : 11.3061,
         "tipo_di_alloggi" : 3.2448
     },
     {
         "IDquartiere" : 9,
+        "densita_occupati" : 1.712,
         "tipo_di_alloggi" : 2.1733
     },
     {
         "IDquartiere" : 10,
+        "densita_occupati" : 10.4221,
         "tipo_di_alloggi" : 2.4757
     },
     {
         "IDquartiere" : 11,
+        "densita_occupati" : 17.4402,
         "tipo_di_alloggi" : 3.4853
     },
     {
         "IDquartiere" : 12,
+        "densita_occupati" : 6.3516,
         "tipo_di_alloggi" : 1.9609
     },
     {
         "IDquartiere" : 13,
+        "densita_occupati" : 9.6787,
         "tipo_di_alloggi" : 2.12
     },
     {
         "IDquartiere" : 14,
+        "densita_occupati" : 9.4013,
         "tipo_di_alloggi" : 2.1243
     },
     {
         "IDquartiere" : 15,
+        "densita_occupati" : 3.4582,
         "tipo_di_alloggi" : 1.8957
     },
     {
         "IDquartiere" : 16,
+        "densita_occupati" : 4.4967,
         "tipo_di_alloggi" : 1.9528
     },
     {
         "IDquartiere" : 17,
+        "densita_occupati" : 4.6565,
         "tipo_di_alloggi" : 1.8509
     }
 ]

@@ -484,10 +484,10 @@ class ServiceEvaluator:
         for service_type, attendance_values in self.attendance_tree.items():
             # get raw loads with respect to reference level
             print('WARNING: using on-the-fly mean as reference for attendance')
-            raw_loads = attendance_values[:, 0] / attendance_values.mean()
+            raw_loads = attendance_values / attendance_values.mean()
 
             # correct for relative capacities of the various units
-            adjusted_loads = raw_loads / attendance_values[:, 1]
+            adjusted_loads = raw_loads  # FIXME: this is temporary
 
             # this replaces Nan with 0
             np.nan_to_num(adjusted_loads, copy=False)

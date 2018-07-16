@@ -1,22 +1,27 @@
 [
     {
         "IDquartiere" : 1,
+        "densita_occupati" : 29.9475,
         "tipo_di_alloggi" : 3.0397
     },
     {
         "IDquartiere" : 2,
+        "densita_occupati" : 17.4264,
         "tipo_di_alloggi" : 2.8464
     },
     {
         "IDquartiere" : 3,
+        "densita_occupati" : 8.0726,
         "tipo_di_alloggi" : 2.4761
     },
     {
         "IDquartiere" : 4,
+        "densita_occupati" : 18.3908,
         "tipo_di_alloggi" : 2.5334
     },
     {
         "IDquartiere" : 5,
+        "densita_occupati" : 18.42,
         "tipo_di_alloggi" : 2.7246
     }
 ]
