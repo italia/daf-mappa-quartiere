@@ -5,7 +5,6 @@ import pandas as pd
 import geopandas as gpd
 import geopy
 import geopy.distance
-import sys
 import shapely
 
 from references import city_settings, common_cfg
@@ -14,10 +13,11 @@ from references import city_settings, common_cfg
 from src.models.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceUnit
 
+
 # UnitFactory father class
 class UnitFactory:
     servicetype = None  # this gets overridden in subclasses
-    kernel_scale_col = 'KernelScale'
+
     def __init__(self, model_city, sep_input=';', decimal_input=','):
         assert isinstance(
             model_city, city_settings.ModelCity), 'ModelCity expected'
@@ -146,25 +146,22 @@ class SchoolFactory(UnitFactory):
         assert set(school_types) <= set(type_age_dict.keys()), \
             'Unrecognized types in input'
 
-        capacity = propert_data[self.capacity_col].copy()
-
-        # set the lengthscale (radius) to be proportional
-        # to the square root of number of children
-        relative_radius = capacity ** size_power_law
-
-        # lengthscale are computed by rescaling the input mean radius
-        propert_data['lengthscale'] = \
-            relative_radius / relative_radius.mean() * mean_radius
-
         unit_list = []
-
         for school_type in school_types:
 
-
             b_this_group = propert_data[self.type_col] == school_type
-            type_data = propert_data[b_this_group]
+            type_data = propert_data[b_this_group].copy()
             type_locations = [
                 l for i, l in enumerate(locations) if b_this_group[i]]
+
+            capacity = type_data[self.capacity_col]
+
+            # set the lengthscale (radius) to be proportional
+            # to the square root of number of children
+            relative_radius = capacity ** size_power_law
+            # lengthscale are computed by rescaling the input mean radius
+            type_data['lengthscale'] = \
+                relative_radius / relative_radius.mean() * mean_radius
 
             for i_unit in range(type_data.shape[0]):
                 row_data = type_data.iloc[i_unit, :]
