@@ -153,15 +153,17 @@ class SchoolFactory(UnitFactory):
             type_data = propert_data[b_this_group].copy()
             type_locations = [
                 l for i, l in enumerate(locations) if b_this_group[i]]
-
+            # analyse capacity
             capacity = type_data[self.capacity_col]
+            mean_capacity = capacity.mean()
+            print('Found mean capacity %.2f for %s' % \
+                  (mean_capacity, school_type))
 
             # set the lengthscale (radius) to be proportional
-            # to the square root of number of children
-            relative_radius = capacity ** size_power_law
-            # lengthscale are computed by rescaling the input mean radius
+            # to the chosen power law of the relative capacity
+
             type_data['lengthscale'] = \
-                relative_radius / relative_radius.mean() * mean_radius
+                mean_radius * (capacity / mean_capacity) ** size_power_law
 
             for i_unit in range(type_data.shape[0]):
                 row_data = type_data.iloc[i_unit, :]

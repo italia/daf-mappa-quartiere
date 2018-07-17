@@ -469,7 +469,7 @@ class ServiceEvaluator:
 
             # store unit loads in existing instances
             for iUnit, unit in enumerate(self.units_tree[service_type]):
-                unit.attendance = total_loads[iUnit]
+                unit.attendance = total_loads[iUnit].round(3)
 
         return None
 
