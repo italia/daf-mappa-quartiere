@@ -122,8 +122,8 @@ class ValuesPlotter:
         """
         coord_names = common_cfg.coord_col_names
         plt.figure()
-        plt.scatter(self.values.mappedPositions[coord_names[0]],
-                    self.values.mappedPositions[coord_names[1]])
+        plt.scatter(self.values.mapped_positions[coord_names[0]],
+                    self.values.mapped_positions[coord_names[1]])
         plt.xlabel(coord_names[0])
         plt.ylabel(coord_names[1])
         plt.axis('equal')
