@@ -31,10 +31,12 @@ class ServiceUnit:
         assert isinstance(
             service, ServiceType), 'Service must belong to the Eum'
         assert isinstance(name, str), 'Name must be a string'
-        assert (np.isscalar(capacity)) & \
-               (capacity > 0), 'Scale must be a positive scalar'
+        # validate capacity: either NaN or a positive number
+        assert (np.isscalar(capacity) &
+                (np.isnan(capacity) | (capacity > 0))),\
+            'Capacity must be a positive or NaN scalar, got %s' % capacity
         assert set(lengthscales.keys()) <= set(
-            AgeGroup.all()), 'Diffusion keys should be AgeGroups'
+            AgeGroup.all()), 'Lengthscales keys should be AgeGroups'
         if not attributes:
             attributes = {}
         assert isinstance(
@@ -104,7 +106,7 @@ class ServiceUnit:
                 return out.flatten()
 
             initial_guess = common_cfg.kernel_start_zero_guess * \
-                            self.lengthscales[age_group]
+                self.lengthscales[age_group]
 
             for k in range(3):  # try 3 alternatives
                 solution_value, _, flag, msg = \
