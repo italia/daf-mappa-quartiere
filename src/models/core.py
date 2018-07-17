@@ -496,7 +496,7 @@ class ServiceEvaluator:
             else:
                 # get loads with respect to mean observed level
                 mean_observed = unit_data['Attendance'].mean()
-                warn_text = '\n %s - using observed mean as reference' + \
+                warn_text = '\n %s - using observed mean as reference ' + \
                             'for attendance: %.2f'
                 warnings.warn(warn_text % (service_type.label, mean_observed))
                 loads = unit_data['Attendance'].values / mean_observed

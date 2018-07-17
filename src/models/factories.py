@@ -158,7 +158,7 @@ class SchoolFactory(UnitFactory):
             # analyse capacity
             capacity = type_data[self.capacity_col]
             mean_capacity = capacity.mean()
-            print('Found mean capacity %.2f for %s' %
+            print('Observed mean capacity %.2f for %s' %
                   (mean_capacity, school_type))
 
             # set the lengthscale (radius) to be proportional
