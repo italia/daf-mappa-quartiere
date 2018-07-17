@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn import gaussian_process
 from matplotlib import pyplot as plt
 import functools
+import warnings
 
 from scipy.optimize import fsolve
 from scipy.spatial.distance import cdist
@@ -116,7 +117,8 @@ class ServiceUnit:
                     threshold_value = solution_value  # assign found value
                     break
                 else:
-                    initial_guess = initial_guess * 1.1
+                    initial_guess = initial_guess * 1.
+
             if flag != 1:
                 print('WARNING: could not compute thresholds '
                       'for unit %s, age %s' % (self.name, age_group))
@@ -364,8 +366,9 @@ class ServiceEvaluator:
         out = {}
         for service_type, service_units in self.units_tree.items():
             if service_units:
-                out[service_type] = np.array(
-                    [u.attendance for u in service_units])
+                out[service_type] = pd.DataFrame(np.array([
+                    [u.attendance,  u.capacity] for u in service_units]),
+                        columns=['Attendance', 'Capacity'])
             else:
                 continue  # no units for this service type, do not create key
         return out
@@ -483,19 +486,26 @@ class ServiceEvaluator:
         assert clip_level > 1, 'The clipping factor should be greater than 1'
         out = {}
 
-        for service_type, attendance_values in self.attendance_tree.items():
-            # get raw loads with respect to reference level
-            print('WARNING: using on-the-fly mean as reference for attendance')
-            raw_loads = attendance_values / attendance_values.mean()
-
-            # correct for relative capacities of the various units
-            adjusted_loads = raw_loads  # FIXME: this is temporary
+        for service_type, unit_data in self.attendance_tree.items():
+            b_capacity_available = not any(np.isnan(unit_data['Capacity']))
+            if b_capacity_available:
+                print('\n Using available capacity for service %s' %
+                      service_type.label)
+                loads = (unit_data['Attendance'] / unit_data[
+                    'Capacity']).values
+            else:
+                # get loads with respect to mean observed level
+                mean_observed = unit_data['Attendance'].mean()
+                warn_text = '\n %s - using observed mean as reference' + \
+                            'for attendance: %.2f'
+                warnings.warn(warn_text % (service_type.label, mean_observed))
+                loads = unit_data['Attendance'].values / mean_observed
 
             # this replaces Nan with 0
-            np.nan_to_num(adjusted_loads, copy=False)
+            np.nan_to_num(loads, copy=False)
+
             # Apply [1/m, m] clipping to raw ratios
-            out[service_type] = 1 / np.clip(
-                adjusted_loads, 1 / clip_level, clip_level)
+            out[service_type] = 1 / np.clip(loads, 1 / clip_level, clip_level)
 
         return out
 

@@ -158,7 +158,7 @@ class SchoolFactory(UnitFactory):
             # analyse capacity
             capacity = type_data[self.capacity_col]
             mean_capacity = capacity.mean()
-            print('Found mean capacity %.2f for %s' % \
+            print('Found mean capacity %.2f for %s' %
                   (mean_capacity, school_type))
 
             # set the lengthscale (radius) to be proportional
@@ -177,8 +177,8 @@ class SchoolFactory(UnitFactory):
                     name=row_data[self.name_col],
                     unit_id=row_data[self.id_col],
                     position=type_locations[i_unit],
-                    lengthscales={type_age_dict[school_type]:
-                                      row_data['lengthscale']},
+                    lengthscales={
+                        type_age_dict[school_type]: row_data['lengthscale']},
                     capacity=row_data[self.capacity_col],
                     attributes=attr_dict)
 
@@ -280,9 +280,9 @@ class TransportStopFactory(UnitFactory):
 
         users = AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder])
 
-        lengthscales_dict= {0: mean_radius,
-                            1: 2 * mean_radius,
-                            3: mean_radius}
+        lengthscales_dict = {0: mean_radius,
+                             1: 2 * mean_radius,
+                             3: mean_radius}
         thresholds_dict = {t: None for t in lengthscales_dict.keys()}
 
         unit_list = []
