@@ -16,7 +16,14 @@ from src.models.core import ServiceUnit
 
 # UnitFactory father class
 class UnitFactory:
-    # these get overridden in subclasses
+
+    """Superclass for all the service unit factories.
+
+    Load from file and prepare the data for service-specific parsing.
+    The class constants get overridden in subclasses.
+
+    """
+
     servicetype = None
     id_col = ''
 
@@ -28,6 +35,7 @@ class UnitFactory:
             self.file_path, sep=sep_input, decimal=decimal_input)
 
     def extract_locations(self):
+        """Preprocess the location data"""
         default_pos_columns = common_cfg.coord_col_names
         if set(default_pos_columns).issubset(set(self._raw_data.columns)):
             print('Location data found')
@@ -40,8 +48,8 @@ class UnitFactory:
 
             if not all(b_within_boundary):
                 print('%s -- dropping %i units outside city.' %
-                      (self.servicetype, sum(~b_within_boundary)))
-
+                      (self.servicetype,
+                       sum(np.bitwise_not(b_within_boundary))))
                 self._raw_data = self._raw_data.iloc[
                     b_within_boundary, :].reset_index()
 
@@ -108,20 +116,23 @@ class UnitFactory:
 
     @staticmethod
     def get_factory(service_type):
+        """Get the right factory for a ServiceType"""
         type_factory = [factory for factory in UnitFactory.__subclasses__()
                         if factory.servicetype == service_type]
         assert len(type_factory) <= 1, 'Duplicates in loaders types'
         if type_factory:
             return type_factory[0]
-        else:
-            print("We're sorry, this service has not been implemented yet!")
-            return []
+
+        print("We're sorry, this service has not been implemented yet!")
+        return []
 
     @classmethod
     def make_loaders_for_city(cls, model_city):
+        """Get all the available factories for a city"""
         loaders_dict = {}
-        for sType in model_city.keys():
-            loaders_dict[sType.label] = cls.get_factory(sType)(model_city)
+        for service_type in model_city:
+            loaders_dict[service_type.label] = cls.get_factory(
+                service_type)(model_city)
         return loaders_dict
 
 
@@ -143,7 +154,7 @@ class SchoolFactory(UnitFactory):
         type_age_dict = {
             'SCUOLA PRIMARIA': AgeGroup.ChildPrimary,
             'SCUOLA SECONDARIA I GRADO': AgeGroup.ChildMid,
-                        }
+            }
         school_types = propert_data[self.type_col].unique()
         assert set(school_types) <= set(type_age_dict.keys()), \
             'Unrecognized types in input'
@@ -214,10 +225,10 @@ class LibraryFactory(UnitFactory):
                            AgeGroup.ChildMid,
                            AgeGroup.ChildHigh],
             'Istituto di insegnamento superiore': AgeGroup.all_but([
-                    AgeGroup.Newborn,
-                    AgeGroup.Kinder,
-                    AgeGroup.ChildPrimary,
-                    AgeGroup.ChildMid]),
+                AgeGroup.Newborn,
+                AgeGroup.Kinder,
+                AgeGroup.ChildPrimary,
+                AgeGroup.ChildMid]),
             'Nazionale': possible_users
         }
 
@@ -283,7 +294,7 @@ class TransportStopFactory(UnitFactory):
         lengthscales_dict = {0: mean_radius,
                              1: 2 * mean_radius,
                              3: mean_radius}
-        thresholds_dict = {t: None for t in lengthscales_dict.keys()}
+        thresholds_dict = {t: None for t in lengthscales_dict}
 
         unit_list = []
         for i_unit in range(propert_data.shape[0]):
