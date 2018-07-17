@@ -84,8 +84,8 @@ class ServiceUnit:
 
     def _compute_kernel_thresholds(self):
         """Triggers kernel thresholds computation for all ages groups"""
-        for age_group in self.kernel.keys():
-            kern = self.kernel[age_group]
+        for age_group in self.kernels.keys():
+            kern = self.kernels[age_group]
             threshold_value = np.Inf
             if not isinstance(kern, gaussKern):
                 # check it's a rescaled gaussian
