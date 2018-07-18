@@ -3,9 +3,9 @@ import { range } from 'd3-array';
 import { scaleLinear } from 'd3-scale';
 import './App.css';
 import Map from './Map';
-import Button from './Button';
 import Menu from './Menu';
 import MenuObject from './MenuObject';
+import Dropdown from './Dropdown';
 
 var localhost = "http://localhost:4000/";
 
@@ -71,11 +71,10 @@ class App extends Component {
     };
 
     componentDidUpdate() {
-	
 	if (this.state.dashboard === null){
-
+	    
             this.fetchDashboard();
-
+	    
 	} else if (this.state.source === "none") {
 
             var defaultLayer = this.state.menu.getDefaultLayer(this.state.city);
@@ -92,24 +91,17 @@ class App extends Component {
         } else if (this.state.layer ==="none") {
 
             var defaultLayer = this.state.menu.getDefaultLayer(this.state.city);
-
+	    
             this.fetchLayer(defaultLayer);
             //Promise.all(urls.map(url => fetch(url).then(response => response.json())))                               
             //    .then(jsons => {
-	    
         }
-
     };
-
     
-    componentDidMount() {
-	
+    componentDidMount() {	
 	if (this.state.menu === null) {
-	    
             this.fetchMenu();
-	    
 	}
-	
     };
 
     fetchDashboard() {
@@ -209,18 +201,19 @@ class App extends Component {
 	    DAF25: v.DAF25,
 	    DAF26: v.DAF26	    
         }})))
-	}*/
-
+	}
+*/
     fetchLayer(layer) {
 	return fetch(layer.layerUrl)
 	    .then(response => response.json())
 	    .then(jsonLayer => {
-	//	this.writeDashboardFile(jsonLayer)
-		
+//		this.writeDashboardFile(jsonLayer)
+	
 		var joinField = this.state.source.joinField;
                 var layerField = layer.id;
 		var features = this.mergeFeatures(this.state.features, jsonLayer, joinField, layerField);
 		var values = features.map((d) => d.properties[layer.id]);
+	
                 layer.colorSet = this.getColorSet(layer, values);
 /*
 		if (layer.raw !== undefined){
@@ -247,6 +240,7 @@ class App extends Component {
     
     getColorSet(layer, values) {
 	values = sample(values, layer.colors.length);
+	
 	return {
 	    stops: values.map((d, i) => [values[i], layer.colors[i]]),
 	    scale: scaleLinear().domain(values).range(layer.colors),
@@ -257,9 +251,9 @@ class App extends Component {
     mergeFeatures(features, jsonLayer, joinField, layerField) {
 	
 	var quartieri = jsonLayer.map(d => d[joinField]);
-	
 	features.forEach(d => {
             var index = quartieri.indexOf(d.properties[joinField]);
+	    if (index === -1) console.log("quartiere not found") 
 	    var value = jsonLayer[index][layerField];
 	    if (Array.isArray(value)) value = sumArray(value);
    
@@ -317,7 +311,7 @@ class App extends Component {
         
     render() {	
 	var self = this;
-
+	
 	if (this.state.layer === "none") {
 	    return null;
 	} else {
@@ -330,12 +324,7 @@ class App extends Component {
 	                        handleClick={this.changeLayer}/> 
 		            <h2>Mappa dei quartieri di {this.state.city}</h2>
                 
-		            <div>
-		                {this.state.menu.cities.map(city =>
-				      <Button
-				       handleClick={this.changeCity}
-				       label={city}/>)}
-		            </div>
+		            <Dropdown label={this.state.city} dropdownContent={this.state.menu.cities } handleClick={this.changeCity}/>
 		        </div>
 		    </div>
 		    <div>	            
@@ -372,8 +361,9 @@ class App extends Component {
 function sample(values, C) {
     var min = Math.min(...values),
         max = Math.max(...values);
+    
     return [...Array(C).keys()]
-        .map((d) => d * (max - min) / C  + min);
+        .map((d) => d * (max - min) / (C - 1)  + min);
 };
 
 function sumArray(a) {
