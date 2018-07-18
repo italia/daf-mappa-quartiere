@@ -1,12 +1,13 @@
 from time import time
-import geopy
-import geopy.distance
+import functools
+import warnings
 import numpy as np
 import pandas as pd
 from sklearn import gaussian_process
 from matplotlib import pyplot as plt
-import functools
 
+import geopy
+import geopy.distance
 from scipy.optimize import fsolve
 from scipy.spatial.distance import cdist
 
@@ -14,34 +15,44 @@ from references import common_cfg, istat_kpi, city_settings
 # enum classes for the model
 from src.models.city_items import AgeGroup, ServiceType
 
-gaussKern = gaussian_process.kernels.RBF
+GaussianKernel = gaussian_process.kernels.RBF
 
 
 @functools.lru_cache(maxsize=int(1e6))  # cache expensive distance calculation
-def compute_distance(x, y):
-    return geopy.distance.great_circle(x, y).km
+def compute_distance(point_a, point_b):
+    """Get distance in km between two Geopy Points"""
+    return geopy.distance.great_circle(point_a, point_b).km
 
 
 # ServiceUnit class
 class ServiceUnit:
-    def __init__(self, service, name, unit_id, position, scale,
-                 age_diffusion=None, kernel_thresholds=None,
-                 attributes=None):
+
+    """Store information and computing parameters for service units.
+
+    Position, lengthscales and capacity are used in solving the model.
+    Id is used for saving attendance data to geojson output.
+
+    """
+
+    def __init__(self, service, name, unit_id, position, capacity,
+                 lengthscales, kernel_thresholds=None, attributes=None):
         assert isinstance(
             position, geopy.Point), 'Position must be a geopy Point'
         assert isinstance(
             service, ServiceType), 'Service must belong to the Eum'
         assert isinstance(name, str), 'Name must be a string'
-        assert (np.isscalar(scale)) & \
-               (scale > 0), 'Scale must be a positive scalar'
-        assert set(age_diffusion.keys()) <= set(
-            AgeGroup.all()), 'Diffusion keys should be AgeGroups'
+        # validate capacity: either NaN or a positive number
+        assert (np.isscalar(capacity) &
+                (np.isnan(capacity) | (capacity > 0))),\
+            'Capacity must be a positive or NaN scalar, got %s' % capacity
+        assert set(lengthscales.keys()) <= set(
+            AgeGroup.all()), 'Lengthscales keys should be AgeGroups'
         if not attributes:
             attributes = {}
         assert isinstance(
             attributes, dict), 'Attributes have to be provided in a dict'
         if kernel_thresholds:
-            assert set(kernel_thresholds.keys()) >= set(age_diffusion.keys()),\
+            assert set(kernel_thresholds.keys()) >= set(lengthscales.keys()),\
                 'Kernel thresholds if provided must' \
                 ' be defined for every age diffusion key'
             b_thresholds_input = True
@@ -53,27 +64,27 @@ class ServiceUnit:
         self.service = service
 
         # A ServiceType can have many sites, so each unit has its own.
-        # Moreover, a site is not uniquely assigned to a service
-        self.site = position
+        # Moreover, a position is not uniquely assigned to a service
+        self.position = position
         self.coord_tuple = (position.latitude, position.longitude)
 
-        self.scale = scale  # store scale info
+        self.capacity = capacity  # store capacity info
         self.attributes = attributes  # dictionary
 
         # how the service availability area varies for different age groups
-        self.age_diffusion = age_diffusion
+        self.lengthscales = lengthscales
 
-        # define kernel taking scale into account
-        self.kernel = {g: gaussKern(length_scale=l * self.scale)
-                       for g, l in self.age_diffusion.items()}
+        # define kernels from lengthscales
+        self.kernels = {g: GaussianKernel(length_scale=l)
+                        for g, l in self.lengthscales.items()}
 
-        # precompute kernel threshold per AgeGroup
+        # precompute kernels threshold per AgeGroup
         # initialise to Inf
         self.ker_thresholds = {g: np.Inf for g in AgeGroup.all()}
         if b_thresholds_input:
-            assert all([isinstance(kern, gaussKern)
-                        for kern in self.kernel.values()]),\
-                'Unexpected kernel type in ServiceUnit'
+            assert all([isinstance(kern, GaussianKernel)
+                        for kern in self.kernels.values()]),\
+                'Unexpected kernels type in ServiceUnit'
             assert all([val > 0 for val in kernel_thresholds.values()]), \
                 'Thresholds must be positive'
             self.ker_thresholds.update(kernel_thresholds)
@@ -85,36 +96,38 @@ class ServiceUnit:
 
     def _compute_kernel_thresholds(self):
         """Triggers kernel thresholds computation for all ages groups"""
-        for age_group in self.kernel.keys():
-            kern = self.kernel[age_group]
+        for age_group in self.kernels.keys():
+            kern = self.kernels[age_group]
             threshold_value = np.Inf
-            if not isinstance(kern, gaussKern):
+            if not isinstance(kern, GaussianKernel):
                 # check it's a rescaled gaussian
                 if not (isinstance(kern, gaussian_process.kernels.Product) and
                         isinstance(kern.k1,
                                    gaussian_process.kernels.ConstantKernel) and
-                        isinstance(kern.k2, gaussKern)):
-                    print('WARNING: skipping kernel thresholds '
+                        isinstance(kern.k2, GaussianKernel)):
+                    print('WARNING: skipping kernels thresholds '
                           'for type %s' % type(kern))
                     # skip this age group
                     continue
 
-            def fun_to_solve(x):
-                out = self.kernel[age_group](
-                    x, np.array([[0], ])) - common_cfg.kernel_value_cutoff
+            def fun_to_solve(dist, chosen_age_group=age_group):
+                out = self.kernels[chosen_age_group](
+                    dist, np.array([[0], ])) - common_cfg.kernel_value_cutoff
                 return out.flatten()
 
-            initial_guess = common_cfg.kernel_start_zero_guess * self.scale
+            initial_guess = common_cfg.kernel_start_zero_guess * \
+                self.lengthscales[age_group]
 
-            for k in range(3):  # try 3 alternatives
-                solution_value, _, flag, msg = \
+            for _ in range(3):  # try 3 alternatives
+                solution_value, _, flag, _ = \
                     fsolve(fun_to_solve, np.array(initial_guess),
                            full_output=True)
                 if flag == 1:
                     threshold_value = solution_value  # assign found value
                     break
                 else:
-                    initial_guess = initial_guess * 1.1
+                    initial_guess = initial_guess * 1.
+
             if flag != 1:
                 print('WARNING: could not compute thresholds '
                       'for unit %s, age %s' % (self.name, age_group))
@@ -123,41 +136,50 @@ class ServiceUnit:
             self.ker_thresholds[age_group] = abs(threshold_value)
 
     def transform_kernels_with_factor(self, rescaling_factor):
-        """This function applies the transformation:
-          newKernel = k * oldKernel(x/k) """
+        """Apply the transformation: newKernel = k * oldKernel(x/k) """
         assert rescaling_factor > 0, 'Expected positive factor'
-        for age_group in self.kernel.keys():
+        for age_group in self.kernels.keys():
             # change lengthscale
-            self.kernel[age_group].length_scale =\
-                self.kernel[age_group].length_scale / rescaling_factor
-            self.kernel[age_group] = rescaling_factor * self.kernel[age_group]
+            self.kernels[age_group].length_scale = \
+                self.kernels[age_group].length_scale / rescaling_factor
+            self.kernels[age_group] = \
+                rescaling_factor * self.kernels[age_group]
 
         # trigger threshold recomputation
         self._compute_kernel_thresholds()
 
-    def evaluate(self, target_coords, age_group):
-        # evaluate kernel to get service level score.
-        # If age group is not relevant to the service, return 0 as default
-        if self.kernel.__contains__(age_group):
-            assert isinstance(target_coords, np.ndarray), 'ndarray expected'
-            assert target_coords.shape[1] == 2, 'lat and lon columns expected'
+    def evaluate(self, latlon_targets, age_group):
+        """Evaluate kernels to get service level score.
+
+        :nd.array latlon_targets: point where to evaluate unit service
+        :AgeGroup age_group: age group to be considered for kernel
+        :return: array of interaction scores.
+            If age group is not relevant to the service, return 0 as default
+        """
+
+        if self.kernels.__contains__(age_group):
+            assert isinstance(latlon_targets, np.ndarray), 'ndarray expected'
+            assert latlon_targets.shape[1] == 2, 'lat and lon columns expected'
             # get distances
-            distances = np.zeros(shape=(len(target_coords), 1))
+            distances = np.zeros(shape=(len(latlon_targets), 1))
             distances[:, 0] = np.apply_along_axis(
                 lambda x: compute_distance(tuple(x), self.coord_tuple),
-                axis=1, arr=target_coords)
+                axis=1, arr=latlon_targets)
 
-            score = self.kernel[age_group](distances, np.array([[0], ]))
+            score = self.kernels[age_group](distances, np.array([[0], ]))
 
         else:
-            score = np.zeros(shape=target_coords.shape[0])
+            score = np.zeros(shape=latlon_targets.shape[0])
 
         return np.squeeze(score)
 
 
 # Mapped positions frame class
 class MappedPositionsFrame(pd.DataFrame):
-    """A class to collect an array of positions alongside areas labels"""
+
+    """Collect an array of positions alongside areas labels.
+
+    """
 
     def __init__(self, long, lat, geopy_pos, id_quartiere):
         # check id quartiere input
@@ -214,11 +236,12 @@ class MappedPositionsFrame(pd.DataFrame):
         return out
 
 
-
 # Demand modelling
 class DemandFrame(pd.DataFrame):
-    """A class to store demand units in row and
-    make them available for aggregation"""
+
+    """Store demand units in row and make them available for aggregation.
+
+    """
 
     OUTPUT_AGES = AgeGroup.all()
     _metadata = ['ages_frame', 'mapped_positions']
@@ -297,13 +320,15 @@ class DemandFrame(pd.DataFrame):
 
 
 class ServiceValues(dict):
-    """A class to store, make available for aggregation
-     and easily export estimated service values"""
+
+    """Store and easily export estimated service values.
+
+    """
 
     def __init__(self, mapped_positions):
         assert isinstance(mapped_positions, MappedPositionsFrame), \
             'Expected MappedPositionsFrame'
-        self.mappedPositions = mapped_positions
+        self.mapped_positions = mapped_positions
 
         # initialise for all service types
         super().__init__(
@@ -316,21 +341,24 @@ class ServiceValues(dict):
         # extract values
         values_series = self[service_type][age_group]
         # TODO: this is quite inefficient though still fast, optimise it
-        joined = pd.concat([values_series, self.mappedPositions], axis=1)
+        joined = pd.concat([values_series, self.mapped_positions], axis=1)
 
         # format output as (x,y,z) surface
-        z = values_series.values
-        x = joined[common_cfg.coord_col_names[0]].values
-        y = joined[common_cfg.coord_col_names[1]].values
-        return x, y, z
+        z_plot = values_series.values
+        x_plot = joined[common_cfg.coord_col_names[0]].values
+        y_plot = joined[common_cfg.coord_col_names[1]].values
+        return x_plot, y_plot, z_plot
 
     @property
     def positions(self):
-        return list(self.mappedPositions.Positions.values)
+        return list(self.mapped_positions.Positions.values)
 
 
 class ServiceEvaluator:
-    """A class to evaluate a given list of service units"""
+
+    """Evaluate a given list of service units.
+
+    """
 
     def __init__(self, unit_list, output_services=None):
         assert isinstance(unit_list, list), \
@@ -353,7 +381,7 @@ class ServiceEvaluator:
             if service_units:
                 self.service_positions[service_type] = \
                     MappedPositionsFrame.from_geopy_points(
-                        [u.site for u in service_units])
+                        [u.position for u in service_units])
             else:
                 continue  # no units for this servicetype, do not create key
 
@@ -362,8 +390,9 @@ class ServiceEvaluator:
         out = {}
         for service_type, service_units in self.units_tree.items():
             if service_units:
-                out[service_type] = np.array(
-                    [u.attendance for u in service_units])
+                out[service_type] = pd.DataFrame(np.array([
+                    [u.attendance, u.capacity] for u in service_units]),
+                    columns=['Attendance', 'Capacity'])
             else:
                 continue  # no units for this service type, do not create key
         return out
@@ -374,7 +403,7 @@ class ServiceEvaluator:
             {service_type: attendance.mean() for service_type, attendance
              in self.attendance_tree.items()})
 
-    def get_interactions_at(self, targets_coord_array):
+    def get_interactions_at(self, lonlat_targets):
         """
         STEP 1
         Evaluates the initial service availabilities at demand location
@@ -396,7 +425,7 @@ class ServiceEvaluator:
             # compute a lower bound for pairwise distances
             # if this is larger than threshold, set the interaction to zero.
             distance_matrix = cdist(
-                service_coord_array, targets_coord_array) * min(
+                service_coord_array, lonlat_targets) * min(
                 common_cfg.approx_tile_deg_to_km)
 
             print(service_type,
@@ -410,24 +439,24 @@ class ServiceEvaluator:
                 # assign default value of zero to interactions
                 interactions[service_type][this_age_group] = \
                     np.zeros([service_coord_array.shape[0],
-                              targets_coord_array.shape[0]])
+                              lonlat_targets.shape[0]])
 
-                for iUnit, thisUnit in enumerate(
+                for i_unit, this_unit in enumerate(
                         self.units_tree[service_type]):
 
-                    if iUnit > 0 and iUnit % 500 == 0:
-                        print('... %i units done' % iUnit)
+                    if i_unit > 0 and i_unit % 500 == 0:
+                        print('... %i units done' % i_unit)
 
                     # each row can be used to drop positions that are too far:
                     # we flag the positions that are within the
                     # threshold and we compute values just for them
-                    b_active_unit = distance_matrix[iUnit, :] <\
-                        thisUnit.ker_thresholds[this_age_group]
+                    b_active_unit = distance_matrix[i_unit, :] <\
+                        this_unit.ker_thresholds[this_age_group]
                     if any(b_active_unit):
                         interactions[service_type][this_age_group][
-                            iUnit, b_active_unit] = thisUnit.evaluate(
-                            targets_coord_array[b_active_unit, :],
-                            this_age_group)
+                            i_unit, b_active_unit] = this_unit.evaluate(
+                                lonlat_targets[b_active_unit, :],
+                                this_age_group)
                 print('AgeGroup time %.4f' % (time() - start_group))
 
         return interactions
@@ -469,31 +498,38 @@ class ServiceEvaluator:
 
             # store unit loads in existing instances
             for iUnit, unit in enumerate(self.units_tree[service_type]):
-                unit.attendance = total_loads[iUnit]
+                unit.attendance = total_loads[iUnit].round(3)
 
         return None
 
     def _compute_attendance_factors(self, clip_level):
         """
-        This function gets the relative correction factors
-        from the computed attendance values
+        Get the relative correction factors from the computed attendance values
+
         """
         assert clip_level > 1, 'The clipping factor should be greater than 1'
         out = {}
 
-        for service_type, attendance_values in self.attendance_tree.items():
-            # get raw loads with respect to reference level
-            print('WARNING: using on-the-fly mean as reference for attendance')
-            raw_loads = attendance_values / attendance_values.mean()
-
-            # correct for relative capacities of the various units
-            adjusted_loads = raw_loads  # FIXME: this is temporary
+        for service_type, unit_data in self.attendance_tree.items():
+            b_capacity_available = not any(np.isnan(unit_data['Capacity']))
+            if b_capacity_available:
+                print('\n Using available capacity for service %s' %
+                      service_type.label)
+                loads = (unit_data['Attendance'] / unit_data[
+                    'Capacity']).values
+            else:
+                # get loads with respect to mean observed level
+                mean_observed = unit_data['Attendance'].mean()
+                warn_text = '\n %s - using observed mean as reference ' + \
+                            'for attendance: %.2f'
+                warnings.warn(warn_text % (service_type.label, mean_observed))
+                loads = unit_data['Attendance'].values / mean_observed
 
             # this replaces Nan with 0
-            np.nan_to_num(adjusted_loads, copy=False)
+            np.nan_to_num(loads, copy=False)
+
             # Apply [1/m, m] clipping to raw ratios
-            out[service_type] = 1 / np.clip(
-                adjusted_loads, 1 / clip_level, clip_level)
+            out[service_type] = 1 / np.clip(loads, 1 / clip_level, clip_level)
 
         return out
 
@@ -595,11 +631,11 @@ class KPICalculator:
     def evaluate_interactions_at_demand(self):
         # extract demand coordinates from demand data and evaluate
         # interaction values at them
-        targets_coord_array = self.demand.mapped_positions[
+        lonlat_targets = self.demand.mapped_positions[
             common_cfg.coord_col_names[::-1]].as_matrix()
 
         self.service_interactions = self.evaluator.get_interactions_at(
-            targets_coord_array)
+            lonlat_targets)
 
         return self.service_interactions
 
@@ -690,9 +726,9 @@ class KPICalculator:
         plt.scatter(self.demand.mapped_positions.Long,
                     self.demand.mapped_positions.Lat,
                     c='b', s=self.demand.P1, marker='.')
-        for a in plot_units:
-            plt.scatter(a.site.longitude, a.site.latitude,
-                        c='red', marker='.', s=a.attendance / 10)
+        for unit in plot_units:
+            plt.scatter(unit.position.longitude, unit.position.latitude,
+                        c='red', marker='.', s=unit.attendance / 10)
         if not plot_units:
             print('NO UNITS!')
         plt.xlabel('Long')

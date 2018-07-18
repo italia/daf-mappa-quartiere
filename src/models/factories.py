@@ -5,7 +5,6 @@ import pandas as pd
 import geopandas as gpd
 import geopy
 import geopy.distance
-import sys
 import shapely
 
 from references import city_settings, common_cfg
@@ -14,10 +13,20 @@ from references import city_settings, common_cfg
 from src.models.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceUnit
 
+
 # UnitFactory father class
 class UnitFactory:
-    servicetype = None  # this gets overridden in subclasses
-    kernel_scale_col = 'KernelScale'
+
+    """Superclass for all the service unit factories.
+
+    Load from file and prepare the data for service-specific parsing.
+    The class constants get overridden in subclasses.
+
+    """
+
+    servicetype = None
+    id_col = ''
+
     def __init__(self, model_city, sep_input=';', decimal_input=','):
         assert isinstance(
             model_city, city_settings.ModelCity), 'ModelCity expected'
@@ -26,6 +35,7 @@ class UnitFactory:
             self.file_path, sep=sep_input, decimal=decimal_input)
 
     def extract_locations(self):
+        """Preprocess the location data"""
         default_pos_columns = common_cfg.coord_col_names
         if set(default_pos_columns).issubset(set(self._raw_data.columns)):
             print('Location data found')
@@ -38,8 +48,8 @@ class UnitFactory:
 
             if not all(b_within_boundary):
                 print('%s -- dropping %i units outside city.' %
-                      (self.servicetype, sum(~b_within_boundary)))
-
+                      (self.servicetype,
+                       sum(np.bitwise_not(b_within_boundary))))
                 self._raw_data = self._raw_data.iloc[
                     b_within_boundary, :].reset_index()
 
@@ -106,20 +116,23 @@ class UnitFactory:
 
     @staticmethod
     def get_factory(service_type):
+        """Get the right factory for a ServiceType"""
         type_factory = [factory for factory in UnitFactory.__subclasses__()
                         if factory.servicetype == service_type]
         assert len(type_factory) <= 1, 'Duplicates in loaders types'
         if type_factory:
             return type_factory[0]
-        else:
-            print("We're sorry, this service has not been implemented yet!")
-            return []
+
+        print("We're sorry, this service has not been implemented yet!")
+        return []
 
     @classmethod
     def make_loaders_for_city(cls, model_city):
+        """Get all the available factories for a city"""
         loaders_dict = {}
-        for sType in model_city.keys():
-            loaders_dict[sType.label] = cls.get_factory(sType)(model_city)
+        for service_type in model_city:
+            loaders_dict[service_type.label] = cls.get_factory(
+                service_type)(model_city)
         return loaders_dict
 
 
@@ -129,42 +142,41 @@ class SchoolFactory(UnitFactory):
     servicetype = ServiceType.School
     name_col = 'DENOMINAZIONESCUOLA'
     type_col = 'ORDINESCUOLA'
-    scale_proxy_col = 'ALUNNI'
+    capacity_col = 'ALUNNI'
     id_col = 'CODSCUOLA'
 
-    def load(self, mean_radius=None, private_rescaling=1, size_power_law=0):
+    def load(self, mean_radius, private_rescaling=1, size_power_law=0):
 
         assert mean_radius, \
             'Please provide a reference radius for the mean school size'
         (propert_data, locations) = super().extract_locations()
 
         type_age_dict = {
-            'SCUOLA PRIMARIA': {AgeGroup.ChildPrimary: 1},
-            'SCUOLA SECONDARIA I GRADO': {AgeGroup.ChildMid: 1},
-                        }
-
+            'SCUOLA PRIMARIA': AgeGroup.ChildPrimary,
+            'SCUOLA SECONDARIA I GRADO': AgeGroup.ChildMid,
+            }
         school_types = propert_data[self.type_col].unique()
         assert set(school_types) <= set(type_age_dict.keys()), \
             'Unrecognized types in input'
 
-        attendance_proxy = propert_data[self.scale_proxy_col].copy()
-
-        # set the scale to be proportional
-        # to the square root of number of children
-        scale_data = attendance_proxy ** size_power_law
-
-        # mean value is mapped to input parameter
-        scale_data = scale_data / scale_data.mean() * mean_radius
-
-        # assign to new column
-        propert_data[self.kernel_scale_col] = scale_data
         unit_list = []
-
         for school_type in school_types:
+
             b_this_group = propert_data[self.type_col] == school_type
-            type_data = propert_data[b_this_group]
+            type_data = propert_data[b_this_group].copy()
             type_locations = [
                 l for i, l in enumerate(locations) if b_this_group[i]]
+            # analyse capacity
+            capacity = type_data[self.capacity_col]
+            mean_capacity = capacity.mean()
+            print('Observed mean capacity %.2f for %s' %
+                  (mean_capacity, school_type))
+
+            # set the lengthscale (radius) to be proportional
+            # to the chosen power law of the relative capacity
+
+            type_data['lengthscale'] = \
+                mean_radius * (capacity / mean_capacity) ** size_power_law
 
             for i_unit in range(type_data.shape[0]):
                 row_data = type_data.iloc[i_unit, :]
@@ -176,8 +188,9 @@ class SchoolFactory(UnitFactory):
                     name=row_data[self.name_col],
                     unit_id=row_data[self.id_col],
                     position=type_locations[i_unit],
-                    age_diffusion=type_age_dict[school_type],
-                    scale=row_data[self.kernel_scale_col],
+                    lengthscales={
+                        type_age_dict[school_type]: row_data['lengthscale']},
+                    capacity=row_data[self.capacity_col],
                     attributes=attr_dict)
 
                 if not attr_dict['Public'] and private_rescaling != 1:
@@ -204,20 +217,19 @@ class LibraryFactory(UnitFactory):
         # Modifica e specifica che per le fasce d'età
         possible_users = AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder])
         type_age_dict = {
-            'Specializzata': {group: 1 for group in []},
-            'Importante non specializzata': {
-                group: 1 for group in possible_users},
-            'Pubblica': {group: 1 for group in possible_users},
-            'NON SPECIFICATA': {group: 1 for group in possible_users},
-            'Scolastica': {group: 1 for group in [
-                AgeGroup.ChildPrimary, AgeGroup.ChildMid, AgeGroup.ChildHigh]},
-            'Istituto di insegnamento superiore': {
-                group: 1 for group in AgeGroup.all_but([
-                    AgeGroup.Newborn,
-                    AgeGroup.Kinder,
-                    AgeGroup.ChildPrimary,
-                    AgeGroup.ChildMid])},
-            'Nazionale': {group: 1 for group in possible_users}
+            'Specializzata': [],
+            'Importante non specializzata': possible_users,
+            'Pubblica': possible_users,
+            'NON SPECIFICATA': possible_users,
+            'Scolastica': [AgeGroup.ChildPrimary,
+                           AgeGroup.ChildMid,
+                           AgeGroup.ChildHigh],
+            'Istituto di insegnamento superiore': AgeGroup.all_but([
+                AgeGroup.Newborn,
+                AgeGroup.Kinder,
+                AgeGroup.ChildPrimary,
+                AgeGroup.ChildMid]),
+            'Nazionale': possible_users
         }
 
         library_types = propert_data[self.type_col].unique()
@@ -232,15 +244,18 @@ class LibraryFactory(UnitFactory):
             type_locations = [l for i, l in enumerate(locations) if
                               b_this_group[i]]
 
+            type_lenghtscales = {
+                group: mean_radius for group in type_age_dict[lib_type]}
+
             for i_unit in range(type_data.shape[0]):
                 row_data = type_data.iloc[i_unit, :]
                 attr_dict = {'level': lib_type}
                 this_unit = ServiceUnit(self.servicetype,
                                         name=row_data[self.name_col],
                                         unit_id=row_data[self.id_col],
-                                        scale=mean_radius,
+                                        capacity=np.nan,  # we have no data
                                         position=type_locations[i_unit],
-                                        age_diffusion=type_age_dict[lib_type],
+                                        lengthscales=type_lenghtscales,
                                         attributes=attr_dict)
                 unit_list.append(this_unit)
 
@@ -274,8 +289,12 @@ class TransportStopFactory(UnitFactory):
         propert_data['routeDesc'] = \
             propert_data[route_type_col].replace(gtfs_types_dict)
 
-        scale_dict = {0: mean_radius, 1: 2 * mean_radius, 3: mean_radius}
-        thresholds_dict = {t: None for t in scale_dict.keys()}
+        users = AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder])
+
+        lengthscales_dict = {0: mean_radius,
+                             1: 2 * mean_radius,
+                             3: mean_radius}
+        thresholds_dict = {t: None for t in lengthscales_dict}
 
         unit_list = []
         for i_unit in range(propert_data.shape[0]):
@@ -283,21 +302,23 @@ class TransportStopFactory(UnitFactory):
             unit_route_type = row_data[route_type_col]
             attr_dict = {'routeType': row_data[self.type_col]}
             # this is None by default
-            cached_thresholds = thresholds_dict[unit_route_type]
+
             this_unit = ServiceUnit(
                 self.servicetype,
                 name=row_data[self.name_col],
                 unit_id=row_data[self.id_col],
                 position=locations[i_unit],
-                scale=scale_dict[unit_route_type],
-                age_diffusion={ g: 1 for g in AgeGroup.all_but(
-                        [AgeGroup.Newborn, AgeGroup.Kinder])},
-                kernel_thresholds=cached_thresholds,
-                attributes=attr_dict)
+                capacity=np.nan,  # we have no capacity data yet
+                lengthscales={
+                    g: lengthscales_dict[unit_route_type] for g in users},
+                kernel_thresholds=thresholds_dict[unit_route_type],
+                attributes=attr_dict
+                )
+
             unit_list.append(this_unit)
             # if there are no provided thresholds for this unit type,
             #  cache the computed ones
-            if not cached_thresholds:
+            if not thresholds_dict[unit_route_type]:
                 thresholds_dict[unit_route_type] = this_unit.ker_thresholds
 
         return unit_list
@@ -320,7 +341,7 @@ class PharmacyFactory(UnitFactory):
             'Descrizione': 'DESCRIZIONEFARMACIA', 'PartitaIva': 'PARTITAIVA'}
 
         unit_list = []
-        # We assume all pharmacies share the same scale, so only one
+        # We assume all pharmacies share the same capacity, so only one
         # threshold is necessary
         cached_thresholds = None
         for i_unit in range(propert_data.shape[0]):
@@ -332,8 +353,8 @@ class PharmacyFactory(UnitFactory):
                 name=row_data[self.name_col].astype(str),
                 unit_id=row_data[self.id_col],
                 position=locations[i_unit],
-                scale=mean_radius,
-                age_diffusion={g: 1 for g in AgeGroup.all()},
+                capacity=np.nan,  # we have no capacity data yet
+                lengthscales={g: mean_radius for g in AgeGroup.all()},
                 kernel_thresholds=cached_thresholds,
                 attributes=attr_dict)
 

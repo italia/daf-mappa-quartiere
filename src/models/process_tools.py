@@ -1,28 +1,27 @@
 import os
+import json
+import re
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+from matplotlib import pyplot as plt
+
 import geopy
 import geopy.distance
 import shapely
-from matplotlib import pyplot as plt
 from scipy.interpolate import griddata
-import json
-import re
 
 from references import common_cfg, city_settings
-# enum classes for the model
 from src.models.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
-
 
 plt.rcParams['figure.figsize'] = (20, 14)
 
 
-# Grid maker
 class GridMaker:
-    """
-    A class to create a grid and map it to various given land subdivisions
+
+    """Create a grid and map it to various given land subdivisions.
+
     """
 
     def __init__(self, city_geo_files_dict, grid_step=0.1):  # grid_step in km
@@ -71,7 +70,7 @@ class GridMaker:
                         # assign found ID
                         self._id_quartiere[i, j] = self.subdivisions[
                             self._quartiere_key][
-                            common_cfg.id_quartiere_col_name][i_row]
+                                common_cfg.id_quartiere_col_name][i_row]
                         b_found = True
                         break  # skip remaining zones
                 assert b_found, \
@@ -106,8 +105,9 @@ class GridMaker:
 
 # Plot tools
 class ValuesPlotter:
-    """
-    A class that plots various types of output from ServiceValues
+
+    """Plot various output from ServiceValues.
+
     """
 
     def __init__(self, service_values, b_on_grid=False):
@@ -117,13 +117,11 @@ class ValuesPlotter:
         self.b_on_grid = b_on_grid
 
     def plot_locations(self):
-        """
-        Plots the locations of the provided ServiceValues'
-        """
+        """Plot the locations of the provided ServiceValues"""
         coord_names = common_cfg.coord_col_names
         plt.figure()
-        plt.scatter(self.values.mappedPositions[coord_names[0]],
-                    self.values.mappedPositions[coord_names[1]])
+        plt.scatter(self.values.mapped_positions[coord_names[0]],
+                    self.values.mapped_positions[coord_names[1]])
         plt.xlabel(coord_names[0])
         plt.ylabel(coord_names[1])
         plt.axis('equal')
@@ -131,17 +129,16 @@ class ValuesPlotter:
         return None
 
     def plot_service_levels(self, serv_type, grid_density=40, n_levels=50):
-        """
-        Plots a contour graph of the results for each age_group.
-        """
+        """Plot a contour graph of the results for each age group"""
         assert isinstance(
             serv_type, ServiceType), 'ServiceType expected in input'
 
         for age_group in self.values[serv_type].keys():
 
-            x_plot, y_plot, z = self.values.plot_output(serv_type, age_group)
+            x_plot, y_plot, z_plot = self.values.plot_output(
+                serv_type, age_group)
 
-            if (~all(np.isnan(z))) & (np.count_nonzero(z) > 0):
+            if (~all(np.isnan(z_plot))) & (np.count_nonzero(z_plot) > 0):
                 if self.b_on_grid:
                     grid_shape = (len(set(x_plot)), len(set(y_plot.flatten())))
                     assert len(x_plot) == grid_shape[0] * grid_shape[
@@ -150,12 +147,12 @@ class ValuesPlotter:
                         1], 'Y values do not seem on a grid'
                     xi = np.array(x_plot).reshape(grid_shape)
                     yi = np.array(y_plot).reshape(grid_shape)
-                    zi = z.reshape(grid_shape)
+                    zi = z_plot.reshape(grid_shape)
                 else:
                     # grid the data using natural neighbour interpolation
                     xi = np.linspace(min(x_plot), max(x_plot), grid_density)
                     yi = np.linspace(min(y_plot), max(y_plot), grid_density)
-                    zi = griddata((x_plot, y_plot), z,
+                    zi = griddata((x_plot, y_plot), z_plot,
                                   (xi[None, :], yi[:, None]), 'nearest')
                 plt.figure()
                 plt.title(age_group)
@@ -168,8 +165,10 @@ class ValuesPlotter:
 
 
 class JSONWriter:
-    """A class to handle all the IO actions
-    from model pipeline to JSON for visualization"""
+
+    """Handle IO output from model to JSON for visualization.
+
+    """
 
     write_options_dict = {'sort_keys': True,
                           'indent': 4,
@@ -185,9 +184,9 @@ class JSONWriter:
         self.vitality_data = kpi_calculator.istat_vitality
         self.city = city_settings.get_city_config(kpi_calculator.city)
         self.areas_tree = {}
-        for s in self.layers_data:
-            area = s.service_area
-            self.areas_tree[area] = [s] + self.areas_tree.get(area, [])
+        for serv_type in self.layers_data:
+            area = serv_type.service_area
+            self.areas_tree[area] = [serv_type] + self.areas_tree.get(area, [])
 
     def make_menu(self):
 
@@ -226,12 +225,12 @@ class JSONWriter:
                 layer_item['url'] = ''  # default empty url
                 layer_item['source_id'] = source_id  # link to defined source
                 #
-                layer_item['indicators'] = (
-                    [{'category': service.service_area.value,
-                      'label': service.label,
-                      'id': service.name,
-                      'data_source': service.data_source,
-                      } for service in this_services])
+                layer_item['indicators'] = ([{
+                    'category': service.service_area.value,
+                    'label': service.label,
+                    'id': service.name,
+                    'data_source': service.data_source,
+                    } for service in this_services])
 
                 out_list.append(layer_item)
 
@@ -246,12 +245,12 @@ class JSONWriter:
                     # link to defined source
                     istat_item['source_id'] = source_id
                     #
-                    istat_item['indicators'] = (
-                        [{'category': istat_area,
-                          'label': indicator,
-                          'id': indicator,
-                          'data_source': 'ISTAT'
-                          } for indicator in indicators])
+                    istat_item['indicators'] = ([{
+                        'category': istat_area,
+                        'label': indicator,
+                        'id': indicator,
+                        'data_source': 'ISTAT'
+                        } for indicator in indicators])
                     out_list.append(istat_item)
 
             return out_list
@@ -260,7 +259,7 @@ class JSONWriter:
             self.city,
             services=list(self.layers_data.keys()),
             istat_layers={'Vitalita': list(self.vitality_data.columns)}
-                                    )
+            )
         return json_list
 
     def make_serviceareas_output(self, precision=4):
@@ -302,27 +301,27 @@ class JSONWriter:
         return out
 
     @classmethod
-    def _dump_json(cls, input, fileIO):
-        # this method allows to replace default nan export
-        string_json = json.dumps(input, **cls.write_options_dict)
+    def _dump_json(cls, input_obj, file_io):
+        """Replace default nan export with class setting"""
+        string_json = json.dumps(input_obj, **cls.write_options_dict)
         # replace default 'Nan' with cls property string
         regex = re.compile(r'\bNaN\b', flags=re.IGNORECASE)
         string_json = re.sub(regex, cls.nan_string, string_json)
         # write to file
-        fileIO.write(string_json)
+        file_io.write(string_json)
 
     def _update_menu_in_default_path(self):
-        # Load current menu from json and
-        # replace the calculator city info with new data
+        """Load current menu from json and replace the calculator city info
+        with new data"""
         with open(os.path.join(
-                common_cfg.viz_output_path, 'menu.json'), 'r') as orig_file:
+            common_cfg.viz_output_path, 'menu.json'), 'r') as orig_file:
             current_menu = json.load(orig_file)
 
         other_items = [v for v in current_menu if v['city'] != self.city.name]
         updated_menu = other_items + self.make_menu()
 
         with open(os.path.join(
-                common_cfg.viz_output_path, 'menu.json'), 'w') as menu_file:
+            common_cfg.viz_output_path, 'menu.json'), 'w') as menu_file:
             self._dump_json(updated_menu, menu_file)
 
     def write_all_files_to_default_path(self):
