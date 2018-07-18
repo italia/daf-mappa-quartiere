@@ -12,13 +12,15 @@ pipeline {
     }
     stage('Test') {
       steps {        
-        sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
-        CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID) 
+        sh '''
+	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
+        CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID) ;
         sleep 5s ;
         curl -s -I localhost:3000 | grep 200;
-        sleep 3s
-        docker stop $(docker ps -a -q) #clean up machine resources CONTAINER
-        docker rm $(docker ps -a -q)'
+        sleep 3s;
+        docker stop $(docker ps -a -q); #clean up machine resources CONTAINER
+        docker rm $(docker ps -a -q)
+	'''
       }
     }    
     stage('Upload'){
