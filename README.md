@@ -1,7 +1,8 @@
 # Mappa Quartiere
 
 A data application consisting of visualizations and numerical analyses to monitor the liveability of Italian cities neighbourhoods.
-We aim to measure the availability of some publicly-organised services in the different areas of each cities, as well as to evaluate the difference in vitality between them. The output metrics are built on open data collected from various sources (ISTAT, Ministries of Education, Health and Culture, local municipalities).
+We aim to measure the availability of some publicly-organised services in the different city areas, as well as to evaluate vitality levels among them. 
+The output metrics are built on open data collected from various sources (ISTAT, Ministries of Education, Health and Culture, local municipalities).
 
 Currently under development.
 
@@ -18,7 +19,7 @@ The server repo can be found [here](https://github.com/esterpantaleo/daf-server)
 ## Use
 
 ### Visualization
-To see the visualization first follow instructions in [the server repo](https://github.com/esterpantaleo/daf-server/README.md) (this will start a server at `localhost:4000`), then cd into src/visualization/ and then run `npm i` and `npm start`. You should see a dashboard at `localhost:3000`.
+To see the visualization first follow instructions in [the server repo](https://github.com/esterpantaleo/daf-server/blob/master/README.md) (this will start a server at `localhost:4000`), then cd into src/visualization/ and then run `npm i` and `npm start`. You should see a dashboard at `localhost:3000`.
 
 ### Running underlying model
 Main notebook is [CityServicesModel](https://github.com/italia/daf-mappa-quartiere/blob/master/notebooks/CityServicesModel.ipynb): it can be used to reproduce all the computational steps for the city selected at the beginning.
