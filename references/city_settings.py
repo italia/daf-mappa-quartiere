@@ -74,15 +74,25 @@ default_cities = [
          #ServiceType.TransportStop: 'Bari_TPL.csv',
          ServiceType.Pharmacy: 'Bari_farmacie.csv',
          }),
-     ModelCity(
+    ModelCity(
          'Firenze',
          '',
          (10, [11.2462600, 43.7792500]),  # zoom level and center for d3
          {ServiceType.School: 'Firenze_scuole.csv',
           ServiceType.Library: 'Firenze_biblioteche.csv',
-          ServiceType.TransportStop: 'Firenze_TPL.csv',
+          #ServiceType.TransportStop: 'Firenze_TPL.csv',
           ServiceType.Pharmacy: 'Firenze_farmacie.csv',
+          }),
+    ModelCity(
+         'Roma',
+         '',
+         (10, [12.49, 41.91]),  # zoom level and center for d3
+         {ServiceType.School: 'Roma_scuole.csv',
+          ServiceType.Library: 'Roma_biblioteche.csv',
+          #ServiceType.TransportStop: 'Roma_TPL.csv',
+          ServiceType.Pharmacy: 'Roma_farmacie.csv',
           })
+
     ]
 
 city_names_list = [city.name for city in default_cities]
