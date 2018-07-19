@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn import gaussian_process
 from matplotlib import pyplot as plt
+import seaborn as sns
 
 import geopy
 import geopy.distance
@@ -738,5 +739,25 @@ class KPICalculator:
                 service_type.label, self.city, min_level, max_level))
         plt.legend(['Residenti', service_type.label])
         plt.show()
+
+        return None
+
+    def plot_attendance_distributions(self):
+        """
+        Plot estimated attendance distribution and, if available,
+        capacities one as well
+        """
+        for service_type, units in self.evaluator.units_tree.items():
+            values = [u.attendance for u in units]
+            sns.distplot(values, 80)
+            labels = ['Estimated attendance']
+            # try to plot capacities as well
+            capacities = [u.capacity for u in units]
+            if not any(np.isnan(capacities)):
+                sns.distplot(capacities, 80)
+                labels.append('Known capacity')
+            plt.title(service_type)
+            plt.legend(labels)
+            plt.show()
 
         return None
