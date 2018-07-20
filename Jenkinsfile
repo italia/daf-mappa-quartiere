@@ -19,7 +19,7 @@ pipeline {
         curl -s -I localhost:3000 | grep 200;
         docker stop $(docker ps -a -q); #clean up machine resources CONTAINER
         docker rm $(docker ps -a -q)
-	'''
+	''' 
       }
     }    
     stage('Upload'){
@@ -42,9 +42,8 @@ pipeline {
             sh 'kubectl apply -f mappa-quartiere.yaml'
           }
           if(env.BRANCH_NAME=='test'){
-          // sh 'kubectl get all '
           // sh '''
-          //COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
+          //COMMITID=$(echo ${GIT_COMMIT}|cut -c 1-6);
           //"sed 's/daf-mappa-quartiere*/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g' mappa-quartiere.yaml"
           //  '''
             sh 'kubectl create -f mappa-quartiere.yaml --namespace=testci --validate=false'
