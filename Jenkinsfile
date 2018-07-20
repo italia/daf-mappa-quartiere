@@ -15,9 +15,8 @@ pipeline {
         sh '''
 	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
         CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID) ;
-        sleep 5s ;
+        sleep 5s;
         curl -s -I localhost:3000 | grep 200;
-        sleep 3s;
         docker stop $(docker ps -a -q); #clean up machine resources CONTAINER
         docker rm $(docker ps -a -q)
 	'''
@@ -38,7 +37,8 @@ pipeline {
       steps {
         script {
           if(env.BRANCH_NAME == 'production'){
-            sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6); ls ;
+            sh 'ls; pwd'
+            sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
             "sed 's/daf-mappa-quartiere*/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g' mappa-quartiere.yaml"'''
             sh 'kubectl apply -f mappa-quartiere.yaml'
           }
