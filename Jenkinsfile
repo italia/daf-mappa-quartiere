@@ -20,6 +20,8 @@ pipeline {
         docker stop $(docker ps -a -q); #clean up machine resources CONTAINER
         docker rm $(docker ps -a -q)
 	'''
+  sh 'whoami'
+  sh 'pwd'
       }
     }    
     stage('Upload'){
