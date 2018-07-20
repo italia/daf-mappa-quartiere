@@ -20,8 +20,6 @@ pipeline {
         docker stop $(docker ps -a -q); #clean up machine resources CONTAINER
         docker rm $(docker ps -a -q)
 	'''
-  sh 'whoami'
-  sh 'pwd'
       }
     }    
     stage('Upload'){
@@ -36,7 +34,7 @@ pipeline {
       }
     }
     stage('Staging') {
-      steps {
+      steps { 
         script {
           if(env.BRANCH_NAME == 'production'){            
             sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
