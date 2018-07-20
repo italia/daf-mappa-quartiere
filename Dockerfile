@@ -2,11 +2,13 @@
 # are running the same version of Node.
 FROM node:8
 
+#Copy file from directory to container
 COPY . .
 
 #where the next command where executed
 WORKDIR /src/visualization
 
+#install package
 RUN npm i
 
 # Build for production.
