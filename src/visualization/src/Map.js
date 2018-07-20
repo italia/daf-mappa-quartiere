@@ -61,6 +61,7 @@ class Map extends Component {
     };
     
     createMap() {
+	
 	this.map = new mapboxgl.Map({
             container: this.mapContainer,
             style: 'mapbox://styles/mapbox/light-v9',
@@ -72,7 +73,8 @@ class Map extends Component {
 	    var map = this.map;
 	    var props = this.props;
 	    var self = this;
-	    
+
+	    map.setLayoutProperty('country-label-lg', 'text-field', '{name_it}');
 	    map.addSource('Quartieri', {
 		type: 'geojson',
 		data: props.source
