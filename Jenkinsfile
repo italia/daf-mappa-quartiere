@@ -36,13 +36,13 @@ pipeline {
     stage('Staging') {
       steps {
         script {
-          if(env.BRANCH_NAME == 'production'){
-            sh 'ls; pwd'
+          if(env.BRANCH_NAME == 'production'){            
             sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
             "sed 's/daf-mappa-quartiere*/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g' mappa-quartiere.yaml"'''
             sh 'kubectl apply -f mappa-quartiere.yaml'
           }
           if(env.BRANCH_NAME=='test'){
+            sh 'ls; pwd'
           // sh '''
           //COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
           //"sed 's/daf-mappa-quartiere*/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g' mappa-quartiere.yaml"
