@@ -42,14 +42,14 @@ pipeline {
         script {
           if(env.BRANCH_NAME == 'production'){            
             sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
-            sed "s#image: nexus\.teamdigitale\.test/daf-mappa-quartiere:*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID#" mappa-quartiere.yaml
+            sed s#image: nexus\.teamdigitale\.test/daf-mappa-quartiere:*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID# mappa-quartiere.yaml
             '''
             sh 'kubectl apply -f mappa-quartiere.yaml'
           }
           if(env.BRANCH_NAME=='test'){
            sh '''
           COMMITID=$(echo ${GIT_COMMIT}|cut -c 1-6);
-          sed "s#image: nexus\.teamdigitale\.test/daf-mappa-quartiere:*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID#" mappa-quartiere.yaml
+          sed s#image: nexus\.teamdigitale\.test/daf-mappa-quartiere:*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID# mappa-quartiere.yaml
             '''
             sh 'kubectl apply -f mappa-quartiere.yaml --namespace=testci --validate=false'
           }
