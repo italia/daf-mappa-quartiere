@@ -41,8 +41,8 @@ pipeline {
       steps { 
         script {
           if(env.BRANCH_NAME == 'production'){            
-            //sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
-            //sed s/image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:*/image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g mappa-quartiere.yaml'''
+            sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
+            sed "s#image: n.d.td.it/daf-mappa-quartiere:*#image: n.d.td.it/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID#" mappa-quartiere.yaml'''
             sh 'kubectl apply -f mappa-quartiere.yaml'
           }
           if(env.BRANCH_NAME=='test'){
