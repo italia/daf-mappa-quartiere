@@ -29,6 +29,10 @@ pipeline {
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID' 
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rm -i $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID'  //pulizia risorse macchina IMG
           }
+          if(env.BRANCH_NAME == 'test'){ 
+            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID' 
+            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rm -i $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID'  //pulizia risorse macchina IMG
+          }
         }
 
       }
@@ -42,10 +46,10 @@ pipeline {
             sh 'kubectl apply -f mappa-quartiere.yaml'
           }
           if(env.BRANCH_NAME=='test'){
-          // sh '''
-          //COMMITID=$(echo ${GIT_COMMIT}|cut -c 1-6);
-          //"sed 's/daf-mappa-quartiere*/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g' mappa-quartiere.yaml"
-          //  '''
+           sh '''
+          COMMITID=$(echo ${GIT_COMMIT}|cut -c 1-6);
+          "sed 's/daf-mappa-quartiere*/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g' mappa-quartiere.yaml"
+            '''
             sh 'kubectl apply -f mappa-quartiere.yaml --namespace=testci --validate=false'
           }
         }
