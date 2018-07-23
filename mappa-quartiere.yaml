@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: mappa-quartiere
-        image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:1.0.0-SNAPSHOT
+        image: nexus.teamdigitale.test/daf-mappa-quartiere:1.0.0-SNAPSHOT
         imagePullPolicy: Always
 #        lifecycle:
 #          postStart:
