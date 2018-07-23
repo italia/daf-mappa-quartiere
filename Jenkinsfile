@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage('Build') {
       steps { 
-        sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); echo $COMMIT_ID; docker build . -t $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID;' //yarn fail 1:5/6
+        sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); echo $COMMIT_ID; docker build . -t $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID' 
       }
     }
     stage('Test') {
@@ -41,16 +41,16 @@ pipeline {
       steps { 
         script {
           if(env.BRANCH_NAME == 'production'){            
-            sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
+         /*   sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
             sed s#image: nexus\.teamdigitale\.test/daf-mappa-quartiere:*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID# mappa-quartiere.yaml
-            '''
+            ''' */
             sh 'kubectl apply -f mappa-quartiere.yaml'
           }
           if(env.BRANCH_NAME=='test'){
-           sh '''
+         /*  sh '''
           COMMITID=$(echo ${GIT_COMMIT}|cut -c 1-6);
           sed s#image: nexus\.teamdigitale\.test/daf-mappa-quartiere:*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID#g mappa-quartiere.yaml
-            '''
+            '''*/
             sh 'kubectl apply -f mappa-quartiere.yaml --namespace=testci --validate=false'
           }
         }
