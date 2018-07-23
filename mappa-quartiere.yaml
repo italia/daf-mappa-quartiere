@@ -31,6 +31,8 @@ spec:
       containers:
       - name: mappa-quartiere
         image: nexus.teamdigitale.test/daf-mappa-quartiere:1.0.0-SNAPSHOT
+        imagePullSecrets: 
+        - name: nexusregistry
         imagePullPolicy: Always
 #        lifecycle:
 #          postStart:
@@ -47,6 +49,8 @@ spec:
 #          mountPath: /etc/extra_hosts
       - name: daf-server
         image: nexus.daf.teamdigitale.it/daf-server:1.0.0-SNAPSHOT
+        imagePullSecrets: 
+        - name: nexusregistry
         imagePullPolicy: Always
 #        lifecycle:
 #          postStart:
