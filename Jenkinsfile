@@ -31,7 +31,7 @@ pipeline {
           }
           if(env.BRANCH_NAME == 'test'){ 
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID' 
-            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rm -i $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID'  //pulizia risorse macchina IMG
+            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rm -i $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID'
           }
         }
 
