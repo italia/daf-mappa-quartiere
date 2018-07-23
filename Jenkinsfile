@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage('Build') {
       steps { 
-        sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); echo $COMMIT_ID; docker build . -t $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID' //yarn fail 1:5/6
+        sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); echo $COMMIT_ID; docker build . -t $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID;' //yarn fail 1:5/6
       }
     }
     stage('Test') {
@@ -27,11 +27,7 @@ pipeline {
         script {
           if(env.BRANCH_NAME == 'production'){ //push on nexus private repo for the production branch
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID' 
-            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID'  //pulizia risorse macchina IMG
-          }
-          if(env.BRANCH_NAME == 'test'){ 
-            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID' 
-            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID'
+            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rm -i $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID'  //pulizia risorse macchina IMG
           }
         }
 
@@ -42,13 +38,14 @@ pipeline {
         script {
           if(env.BRANCH_NAME == 'production'){            
             sh '''COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);
-            "sed s/image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:*/image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g mappa-quartiere.yaml"'''
+            "sed 's/daf-mappa-quartiere*/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g' mappa-quartiere.yaml"'''
             sh 'kubectl apply -f mappa-quartiere.yaml'
           }
           if(env.BRANCH_NAME=='test'){
-           sh '''
-              sed "s#image: nexus\.teamdigitale\.test\./daf-mappa-quartiere:*#image: nnexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID#"
-            '''
+          // sh '''
+          //COMMITID=$(echo ${GIT_COMMIT}|cut -c 1-6);
+          //"sed 's/daf-mappa-quartiere*/daf-mappa-quartiere:$BUILD_NUMBER-$COMMITID/g' mappa-quartiere.yaml"
+          //  '''
             sh 'kubectl apply -f mappa-quartiere.yaml --namespace=testci --validate=false'
           }
         }
