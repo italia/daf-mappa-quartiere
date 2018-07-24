@@ -47,18 +47,18 @@ spec:
 #        volumeMounts:
 #        - name: hosts
 #          mountPath: /etc/extra_hosts
-#      - name: daf-server
-#        image: nexus.daf.teamdigitale.it/daf-server:1.0.0-SNAPSHOT
-#        imagePullSecrets: 
-#        - name: regsecret
-#        imagePullPolicy: Always
+      - name: daf-server
+        image: nexus.daf.teamdigitale.it/daf-server:1.0.0-SNAPSHOT
+        imagePullSecrets: 
+        - name: regsecret
+        imagePullPolicy: Always
 #        lifecycle:
 #          postStart:
 #            exec:
 #             command: ["/bin/sh", "-c", "cat /etc/extra_hosts >> /etc/hosts"]
-#        ports:
-#        - name: server
-#          containerPort: 4000
+        ports:
+        - name: server
+          containerPort: 4000
       imagePullSecrets:
       - name: regsecret
 #      volumes:
