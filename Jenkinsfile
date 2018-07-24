@@ -17,7 +17,7 @@ pipeline {
         CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME:$BUILD_NUMBER-$COMMIT_ID);
         sleep 5s;
         curl -s -I localhost:3000 | grep 200;
-        docker stop $(docker ps -a -q); #clean up machine resources CONTAINER
+        docker stop $(docker ps -a -q); 
         docker rm $(docker ps -a -q)
 	''' 
       }
@@ -46,7 +46,7 @@ pipeline {
           }  */         
           if(env.BRANCH_NAME=='test'){
           sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
-              sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ; kubectl apply -f mappa-quartiere1.yaml --namespace=testci --validate=false'''             
+              sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;cat mappa-quartiere1.yaml ;kubectl apply -f mappa-quartiere1.yaml --validate=false'''             
           }
         }
       }
