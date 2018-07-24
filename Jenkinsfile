@@ -40,10 +40,10 @@ pipeline {
     stage('Staging') {
       steps { 
         script {
-          if(env.BRANCH_NAME == 'production'){            
+          /*if(env.BRANCH_NAME == 'production'){            
             sh '''
             COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);  sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml ; kubectl apply -f mappa-quartiere.yaml'''
-          }           
+          }  */         
           if(env.BRANCH_NAME=='test'){
            sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
               sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ; kubectl apply -f mappa-quartiere1.yaml --namespace=testci --validate=false '''              
