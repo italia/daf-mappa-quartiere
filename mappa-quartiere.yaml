@@ -48,7 +48,7 @@ spec:
 #        - name: hosts
 #          mountPath: /etc/extra_hosts
       - name: daf-server
-        image: nexus.daf.teamdigitale.it/daf-server:1.0.0-SNAPSHOT
+        image: nexus.teamdigitale.test/daf-server:1.0.0-SNAPSHOT
         imagePullSecrets: 
         - name: regsecret
         imagePullPolicy: Always
