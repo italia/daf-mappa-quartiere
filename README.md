@@ -12,8 +12,9 @@ Currently under development.
 * `/src/models` has the python libraries to obtain the neighbourhood-level KPI
 * `/src/visualization` has the js libraries of the front-end visualization
 * `/src/testing` has the testing modules for the codebase and the processed data
+* `neighbourhood_kpi.tex` is a short paper describing the mathematical model used to evaluate KPI for geolocalized services
 
-Production files are stored in an external repo as a temporary replacement for an API data source.
+Production data source files are stored in an external repo as a temporary replacement for an API data source.
 The server repo can be found [here](https://github.com/esterpantaleo/daf-server).
 
 ## Use
