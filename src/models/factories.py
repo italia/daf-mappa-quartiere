@@ -283,7 +283,7 @@ class TransportStopFactory(UnitFactory):
             propert_data['stop_id'] + '_' + propert_data['route_id']
         # append route types
         route_type_col = 'route_type'
-        gtfs_types_dict = {0: 'Tram', 1: 'Metro', 3: 'Bus'}
+        gtfs_types_dict = {0: 'Tram', 1: 'Metro', 2: 'Rail', 3: 'Bus'}
         assert all(propert_data[route_type_col].isin(gtfs_types_dict.keys())),\
             'Unexpected route type'
         propert_data['routeDesc'] = \
