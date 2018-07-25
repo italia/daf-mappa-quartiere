@@ -291,9 +291,11 @@ class TransportStopFactory(UnitFactory):
 
         users = AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder])
 
-        lengthscales_dict = {0: mean_radius,
-                             1: 2 * mean_radius,
-                             3: mean_radius}
+        lengthscales_dict = {0: mean_radius,  # tram, light rail
+                             1: 2 * mean_radius,  # underground
+                             2: 2 * mean_radius,  # rail
+                             3: mean_radius  # bus
+                             }
         thresholds_dict = {t: None for t in lengthscales_dict}
 
         unit_list = []
