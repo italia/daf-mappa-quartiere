@@ -13,7 +13,9 @@ from scipy.interpolate import griddata
 
 from references import common_cfg, city_settings
 from src.models.city_items import AgeGroup, ServiceType
-from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
+from src.models.core import ServiceValues, MappedPositionsFrame, \
+    DemandFrame, KPICalculator
+from src.models.factories import UnitFactory
 
 plt.rcParams['figure.figsize'] = (20, 14)
 
@@ -51,9 +53,70 @@ class ModelRunner:
                 'key-value dict expected in settings for %s' % service_label
         self.model_settings = model_settings.copy()  # unlink from input
 
-    def run(self):
-        """Triggers the model computation"""
-        pass
+    def _run_for_city(self, model_city, attendance_correction_clip):
+
+        """Run the model on a specific city.
+
+        :return
+            The KPI calculator for that city
+
+        """
+
+        assert isinstance(
+            model_city, city_settings.ModelCity), 'Unexpected type in city'
+
+        print('\n \t\t Running model on: %s \n\n' % model_city.name)
+
+        # STEP 1: Initialise the ServiceUnits
+        loaders = UnitFactory.make_loaders_for_city(model_city)
+        units = []
+        for service_type in self.services:
+            units.extend(loaders[service_type.label].load(
+                **self.model_settings[service_type.label]))
+
+        # STEP 2: Parse demand data
+        demand_data = DemandFrame(
+            model_city.istat_cpa_data, b_duplicates_check=False)
+
+        # STEP 3: Run computation
+        calculator = KPICalculator(demand_data, units, model_city.name)
+
+        # print current value of kernel cutoff
+        print('Ignoring interactions below %s \n' %
+            common_cfg.kernel_value_cutoff)
+
+        # compute and plot demand/supply interaction for localized services
+        calculator.evaluate_services_at_demand(b_evaluate_attendance=True,
+                                        clip_level=attendance_correction_clip)
+        # save attendance if set so
+        for service_type in self.services:
+            loader = loaders[service_type.label]
+            loader.save_units_with_attendance_to_geojson(
+                calculator.evaluator.units_tree[service_type])
+        # aggregate KPI
+        calculator.compute_kpi_for_localized_services()
+        calculator.compute_kpi_for_istat_values()
+
+        # STEP 4: write output JSONs:
+        JSONWriter(calculator).write_all_files_to_default_path()
+
+        return calculator
+
+    def run(self, attendance_correction_clip=1.4):
+
+        """Trigger the model computation.
+
+        :return
+            The calculators list for further plotting or analysis
+
+        """
+
+        out = []
+        for city in self.cities:
+            out.append(self._run_for_city(
+                city, attendance_correction_clip))
+
+        return out
 
 
 class GridMaker:

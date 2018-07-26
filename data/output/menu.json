@@ -442,5 +442,103 @@
         "source_id" : "Milano_quartieri",
         "type" : "layer",
         "url" : ""
+    },
+    {
+        "center" : [
+            12.49,
+            41.91
+        ],
+        "city" : "Roma",
+        "id" : "Roma_quartieri",
+        "indicators" : [
+            {
+                "category" : "",
+                "data_source" : "",
+                "default" : false,
+                "id" : "",
+                "label" : ""
+            }
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "",
+        "type" : "source",
+        "url" : "",
+        "zoom" : 10
+    },
+    {
+        "city" : "Roma",
+        "id" : "Roma_Trasporti",
+        "indicators" : [
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Roma_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Roma",
+        "id" : "Roma_EducazioneCultura",
+        "indicators" : [
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Roma_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Roma",
+        "id" : "Roma_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Roma_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Roma",
+        "id" : "Roma_Vitalita",
+        "indicators" : [
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "tipo_di_alloggi",
+                "label" : "tipo_di_alloggi"
+            },
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "densita_occupati",
+                "label" : "densita_occupati"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Roma_quartieri",
+        "type" : "layer",
+        "url" : ""
     }
 ]
