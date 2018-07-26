@@ -8,12 +8,11 @@ pipeline {
   stages {
     stage('Build') {
       steps { 
-        script {
-          String repo = ${GIT_URL};
-        if(repo.contains("mappa")){
+        script {          
+        if(env.GIT_URL.contains("mappa")){
         sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID' 
         }
-        if(repo.contains("server")){
+        if(env.GIT_URL.contains("server")){
            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $IMAGE_NAME_SERVER:$BUILD_NUMBER-$COMMIT_ID'
         }
         }
@@ -21,9 +20,8 @@ pipeline {
     }
     stage('Test') {
       steps { //sh' != sh'' only one sh command  
-      script { 
-        String repo = ${GIT_URL};
-       if(repo.contains("mappa")){  
+      script {         
+       if(env.GIT_URL.contains("mappa")){  
         sh '''
 	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
         CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID);
@@ -33,7 +31,7 @@ pipeline {
         docker rm $(docker ps -a -q)
 	''' 
        }
-       if(repo.contains("server")){
+       if(env.GIT_URL.contains("server")){
          sh '''
 	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
         CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME_SERVER:$BUILD_NUMBER-$COMMIT_ID);
