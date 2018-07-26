@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: mappa-quartiere
-        image: nexus.teamdigitale.test/daf-mappa-quartiere:	81-f93cff
+        image: nexus.teamdigitale.test/daf-mappa-quartiere:102-15a2a1
         imagePullSecrets: 
         - name: nexusregistry
         imagePullPolicy: Always
@@ -52,7 +52,7 @@ spec:
         imagePullSecrets: 
         - name: regsecret
         imagePullPolicy: Always
-#        lifecycle:
+#        lifecycle
 #          postStart:
 #            exec:
 #             command: ["/bin/sh", "-c", "cat /etc/extra_hosts >> /etc/hosts"]
