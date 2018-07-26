@@ -9,10 +9,10 @@ pipeline {
     stage('Build') {
       steps { 
         script {
-        if($GIT_URL.contains(mappa)){
+        if(${GIT_URL}.contains(mappa)){
         sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID' 
         }
-        if($GIT_URL.contains(server)){
+        if(${GIT_URL}.contains(server)){
            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $IMAGE_NAME_SERVER:$BUILD_NUMBER-$COMMIT_ID'
         }
         }
@@ -21,7 +21,7 @@ pipeline {
     stage('Test') {
       steps { //sh' != sh'' only one sh command  
       script { 
-       if($GIT_URL.contains(mappa)){  
+       if(${GIT_URL}.contains(mappa)){  
         sh '''
 	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
         CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID);
@@ -31,7 +31,7 @@ pipeline {
         docker rm $(docker ps -a -q)
 	''' 
        }
-       if($GIT_URL.contains(server)){
+       if(${GIT_URL}.contains(server)){
          sh '''
 	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
         CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME_SERVER:$BUILD_NUMBER-$COMMIT_ID);
