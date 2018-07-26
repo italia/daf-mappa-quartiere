@@ -8,16 +8,19 @@ pipeline {
   stages {
     stage('Build') {
       steps { 
+        script {
         if($GIT_URL.contains(mappa)){
         sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID' 
         }
         if($GIT_URL.contains(server)){
            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $IMAGE_NAME_SERVER:$BUILD_NUMBER-$COMMIT_ID'
         }
+        }
       }
     }
     stage('Test') {
-      steps { //sh' != sh'' only one sh command   
+      steps { //sh' != sh'' only one sh command  
+      script { 
        if($GIT_URL.contains(mappa)){  
         sh '''
 	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
@@ -37,6 +40,7 @@ pipeline {
         docker stop $(docker ps -a -q); 
         docker rm $(docker ps -a -q)
 	''' 
+       }
       }
     }    
     stage('Upload'){
