@@ -369,4 +369,4 @@ class PharmacyFactory(UnitFactory):
 
 
 class UrbanGreenFactory(UnitFactory):
-    servicetype = ServiceType.UrbanGreen
+    pass
