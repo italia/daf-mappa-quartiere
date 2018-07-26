@@ -42,6 +42,7 @@ pipeline {
 	''' 
        }
       }
+    }
     }    
     stage('Upload'){
       steps {
