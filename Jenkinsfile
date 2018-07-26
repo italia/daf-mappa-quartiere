@@ -36,7 +36,6 @@ pipeline {
 	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
         CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME_SERVER:$BUILD_NUMBER-$COMMIT_ID);
         sleep 5s;
-        curl -s -I localhost:3000 | grep 200;
         docker stop $(docker ps -a -q); 
         docker rm $(docker ps -a -q)
 	''' 
@@ -47,6 +46,7 @@ pipeline {
     stage('Upload'){
       steps {
         script {
+          if(env.GIT_URL.contains("mappa")){ 
           if(env.BRANCH_NAME == 'production'){ //push on nexus private repo for the production branch
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID' 
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID'  //pulizia risorse macchina IMG
@@ -56,7 +56,12 @@ pipeline {
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID'  
           }
         }
-
+        if(env.GIT_URL.contains("server")){
+          if(env.BRANCH_NAME=='test')
+            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $IMAGE_NAME_SERVER:$BUILD_NUMBER-$COMMIT_ID'
+             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $IMAGE_NAME_SERVER:$BUILD_NUMBER-$COMMIT_ID'  
+        }        
+        }
       }
     }
     stage('Staging') {
@@ -66,9 +71,17 @@ pipeline {
             sh '''
             COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);  sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml ; kubectl apply -f mappa-quartiere.yaml'''
           }  */         
+          if(env.GIT_URL.contains("mappa")){ 
           if(env.BRANCH_NAME=='test'){
           sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
-              sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere.yaml ;kubectl apply -f mappa-quartiere.yaml --validate=false'''             
+              sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl apply -f mappa-quartiere1.yaml --validate=false'''             
+          }
+          }
+          if(env.GIT_URL.contains("mappa")){ 
+            if(env.BRANCH_NAME=='test'){
+              sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
+              sed "s#image: nexus.teamdigitale.test/daf-server.*#image: nexus.teamdigitale.test/daf-server:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl apply -f mappa-quartiere1.yaml --validate=false'''             
+            }
           }
         }
       }
