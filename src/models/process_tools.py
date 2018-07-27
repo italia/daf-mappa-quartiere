@@ -71,8 +71,13 @@ class ModelRunner:
         loaders = UnitFactory.make_loaders_for_city(model_city)
         units = []
         for service_type in self.services:
-            units.extend(loaders[service_type.label].load(
-                **self.model_settings[service_type.label]))
+            # check if units are available for selected city
+            if service_type.label in loaders:
+                units.extend(loaders[service_type.label].load(
+                    **self.model_settings[service_type.label]))
+            else:
+                print('Skipping %s for city as data is not available' %
+                      service_type.label)
 
         # STEP 2: Parse demand data
         demand_data = DemandFrame(
@@ -111,12 +116,12 @@ class ModelRunner:
 
         """
 
-        out = []
+        city_calculators = []
         for city in self.cities:
-            out.append(self._run_for_city(
+            city_calculators.append(self._run_for_city(
                 city, attendance_correction_clip))
 
-        return out
+        return city_calculators
 
 
 class GridMaker:
