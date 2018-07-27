@@ -27,7 +27,7 @@ kernel_value_cutoff = 1e-4
 kernel_start_zero_guess = 1  # initial input for kernel in solving
 # Clip level for demand correction:
 # maximum multiple that can be applied in correcting service level
-demand_correction_clip = 1.01
+demand_correction_clip = 1.4
 assert demand_correction_clip > 1, \
     'The clipping factor should be greater than 1'
 

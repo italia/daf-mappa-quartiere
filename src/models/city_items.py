@@ -91,12 +91,12 @@ class ServiceType(Enum):
                 'Farmacie',
                 'Min. Salute')
 
-    UrbanGreen = (5,  # enum id
-                  ServiceArea.Environment,
-                  SummaryNorm.l2,
-                  AgeGroup.all(),
-                  'Aree Verdi',
-                  'Open Data Comuni')
+    #UrbanGreen = (5,  # enum id
+    #              ServiceArea.Environment,
+    #              SummaryNorm.l2,
+    #              AgeGroup.all(),
+    #              'Aree Verdi',
+    #              'Open Data Comuni')
 
     def __init__(self, _, area_of_service,
                  aggr_norm_input=SummaryNorm.l2,

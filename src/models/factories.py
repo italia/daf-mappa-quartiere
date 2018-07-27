@@ -283,7 +283,12 @@ class TransportStopFactory(UnitFactory):
             propert_data['stop_id'] + '_' + propert_data['route_id']
         # append route types
         route_type_col = 'route_type'
-        gtfs_types_dict = {0: 'Tram', 1: 'Metro', 3: 'Bus'}
+        gtfs_types_dict = {0: 'Tram',
+                           1: 'Metro',
+                           2: 'Rail',
+                           3: 'Bus',
+                           7: 'Funicular'
+                           }
         assert all(propert_data[route_type_col].isin(gtfs_types_dict.keys())),\
             'Unexpected route type'
         propert_data['routeDesc'] = \
@@ -291,9 +296,12 @@ class TransportStopFactory(UnitFactory):
 
         users = AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder])
 
-        lengthscales_dict = {0: mean_radius,
-                             1: 2 * mean_radius,
-                             3: mean_radius}
+        lengthscales_dict = {0: mean_radius,  # tram, light rail
+                             1: 2 * mean_radius,  # underground
+                             2: 2 * mean_radius,  # rail
+                             3: mean_radius,  # bus
+                             7: 2 * mean_radius  # funicular
+                             }
         thresholds_dict = {t: None for t in lengthscales_dict}
 
         unit_list = []
@@ -367,4 +375,4 @@ class PharmacyFactory(UnitFactory):
 
 
 class UrbanGreenFactory(UnitFactory):
-    servicetype = ServiceType.UrbanGreen
+    pass

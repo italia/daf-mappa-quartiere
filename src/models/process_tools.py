@@ -13,9 +13,115 @@ from scipy.interpolate import griddata
 
 from references import common_cfg, city_settings
 from src.models.city_items import AgeGroup, ServiceType
-from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
+from src.models.core import ServiceValues, MappedPositionsFrame, \
+    DemandFrame, KPICalculator
+from src.models.factories import UnitFactory
 
 plt.rcParams['figure.figsize'] = (20, 14)
+
+
+class ModelRunner:
+
+    """Collect required settings and run model on various cities
+
+    """
+
+    def __init__(self, model_settings, cities=None, services=None,
+                 b_save_files=True):
+        """Store settings and chosen cities and services"""
+
+        assert isinstance(model_settings, dict), 'Dict needed for settings'
+        assert isinstance(b_save_files, bool), 'Bool needed for b_save_files'
+        if not cities:
+            cities = city_settings.default_cities
+        assert all(isinstance(c, city_settings.ModelCity) for c in cities), \
+            'Unexpected type in cities'
+        if not services:
+            services = ServiceType.all()
+        assert all(isinstance(s, ServiceType) for s in services), \
+            'Unexpected type in cities'
+
+        self.cities = cities
+        self.services = services
+        self.b_save_files = b_save_files
+
+        for service_label in [s.label for s in self.services]:
+            # check all the needed settings are available
+            assert service_label in model_settings, \
+                'Missing settings for %s' % service_label
+            assert isinstance(model_settings[service_label], dict), \
+                'key-value dict expected in settings for %s' % service_label
+        self.model_settings = model_settings.copy()  # unlink from input
+
+    def _run_for_city(self, model_city, attendance_correction_clip):
+
+        """Run the model on a specific city.
+
+        :return
+            The KPI calculator for that city
+
+        """
+
+        assert isinstance(
+            model_city, city_settings.ModelCity), 'Unexpected type in city'
+
+        print('\n \t\t Running model on: %s \n\n' % model_city.name)
+
+        # STEP 1: Initialise the ServiceUnits
+        loaders = UnitFactory.make_loaders_for_city(model_city)
+        units = []
+        for service_type in self.services:
+            # check if units are available for selected city
+            if service_type.label in loaders:
+                units.extend(loaders[service_type.label].load(
+                    **self.model_settings[service_type.label]))
+            else:
+                print('Skipping %s for city as data is not available' %
+                      service_type.label)
+
+        # STEP 2: Parse demand data
+        demand_data = DemandFrame(
+            model_city.istat_cpa_data, b_duplicates_check=False)
+
+        # STEP 3: Run computation
+        calculator = KPICalculator(demand_data, units, model_city.name)
+
+        # print current value of kernel cutoff
+        print('Ignoring interactions below %s \n' %
+            common_cfg.kernel_value_cutoff)
+
+        # compute and plot demand/supply interaction for localized services
+        calculator.evaluate_services_at_demand(b_evaluate_attendance=True,
+                                        clip_level=attendance_correction_clip)
+        # save attendance if set so
+        for service_type in self.services:
+            loader = loaders[service_type.label]
+            loader.save_units_with_attendance_to_geojson(
+                calculator.evaluator.units_tree[service_type])
+        # aggregate KPI
+        calculator.compute_kpi_for_localized_services()
+        calculator.compute_kpi_for_istat_values()
+
+        # STEP 4: write output JSONs:
+        JSONWriter(calculator).write_all_files_to_default_path()
+
+        return calculator
+
+    def run(self, attendance_correction_clip=1.4):
+
+        """Trigger the model computation.
+
+        :return
+            The calculators list for further plotting or analysis
+
+        """
+
+        city_calculators = []
+        for city in self.cities:
+            city_calculators.append(self._run_for_city(
+                city, attendance_correction_clip))
+
+        return city_calculators
 
 
 class GridMaker:
@@ -92,12 +198,14 @@ class GridMaker:
 
     @property
     def longitude_range_km(self):
+        """Get km range along longitude"""
         return geopy.distance.great_circle(
             (self.lat_range[0], self.long_range[0]),
             (self.lat_range[0], self.long_range[1])).km
 
     @property
     def latitude_range_km(self):
+        """Get km range along latitude"""
         return geopy.distance.great_circle(
             (self.lat_range[0], self.long_range[0]),
             (self.lat_range[1], self.long_range[0])).km
@@ -145,18 +253,18 @@ class ValuesPlotter:
                         1], 'X values do not seem on a grid'
                     assert len(y_plot) == grid_shape[0] * grid_shape[
                         1], 'Y values do not seem on a grid'
-                    xi = np.array(x_plot).reshape(grid_shape)
-                    yi = np.array(y_plot).reshape(grid_shape)
-                    zi = z_plot.reshape(grid_shape)
+                    x_i = np.array(x_plot).reshape(grid_shape)
+                    y_i = np.array(y_plot).reshape(grid_shape)
+                    z_i = z_plot.reshape(grid_shape)
                 else:
                     # grid the data using natural neighbour interpolation
-                    xi = np.linspace(min(x_plot), max(x_plot), grid_density)
-                    yi = np.linspace(min(y_plot), max(y_plot), grid_density)
-                    zi = griddata((x_plot, y_plot), z_plot,
-                                  (xi[None, :], yi[:, None]), 'nearest')
+                    x_i = np.linspace(min(x_plot), max(x_plot), grid_density)
+                    y_i = np.linspace(min(y_plot), max(y_plot), grid_density)
+                    z_i = griddata((x_plot, y_plot), z_plot,
+                                   (x_i[None, :], y_i[:, None]), 'nearest')
                 plt.figure()
                 plt.title(age_group)
-                contour_axes = plt.contourf(xi, yi, zi, n_levels)
+                contour_axes = plt.contourf(x_i, y_i, z_i, n_levels)
                 cbar = plt.colorbar(contour_axes)
                 cbar.ax.set_ylabel('Service level')
                 plt.show()

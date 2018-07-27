@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn import gaussian_process
 from matplotlib import pyplot as plt
+import seaborn as sns
 
 import geopy
 import geopy.distance
@@ -313,7 +314,7 @@ class DemandFrame(pd.DataFrame):
         return sample[:, 0], sample[:, 1]
 
     @classmethod
-    def create_from_istat_cpa(cls, city_name):
+    def create_from_city_name(cls, city_name):
         """Constructor caller for DemandFrame"""
         city_config = city_settings.get_city_config(city_name)
         return cls(city_config.istat_cpa_data, b_duplicates_check=False)
@@ -360,17 +361,16 @@ class ServiceEvaluator:
 
     """
 
-    def __init__(self, unit_list, output_services=None):
+    def __init__(self, unit_list):
         assert isinstance(unit_list, list), \
             'List expected, got %s' % type(unit_list)
-        if not output_services:
-            output_services = [t for t in ServiceType]
         assert all([isinstance(u, ServiceUnit) for u in unit_list]),\
             'ServiceUnits expected in list'
         self.units = tuple(unit_list)  # lock ordering
-        self.output_services = output_services
         self.units_tree = {}
-        for service_type in self.output_services:
+
+        # go through the units and parse them according to service types
+        for service_type in ServiceType.all():
             type_units = tuple(
                 [u for u in self.units if u.service == service_type])
             if type_units:
@@ -383,7 +383,7 @@ class ServiceEvaluator:
                     MappedPositionsFrame.from_geopy_points(
                         [u.position for u in service_units])
             else:
-                continue  # no units for this servicetype, do not create key
+                continue  # no units for this service type, do not create key
 
     @property
     def attendance_tree(self):
@@ -738,5 +738,25 @@ class KPICalculator:
                 service_type.label, self.city, min_level, max_level))
         plt.legend(['Residenti', service_type.label])
         plt.show()
+
+        return None
+
+    def plot_attendance_distributions(self):
+        """
+        Plot estimated attendance distribution and, if available,
+        capacities one as well
+        """
+        for service_type, units in self.evaluator.units_tree.items():
+            values = [u.attendance for u in units]
+            sns.distplot(values, 80)
+            labels = ['Estimated attendance']
+            # try to plot capacities as well
+            capacities = [u.capacity for u in units]
+            if not any(np.isnan(capacities)):
+                sns.distplot(capacities, 80)
+                labels.append('Known capacity')
+            plt.title(service_type)
+            plt.legend(labels)
+            plt.show()
 
         return None

@@ -1,12 +1,19 @@
 import unittest
 import numpy as np
 import pandas as pd
-
+import os
+import sys
 import geopy
-from references import common_cfg, istat_kpi, city_settings
+
+# absolute import preparation for when run as script
+root_dir = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.realpath(__file__))))
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
+from references import common_cfg, city_settings
 from src.models.city_items import AgeGroup, ServiceType
-from src.models.core import ServiceUnit, ServiceEvaluator, \
-    MappedPositionsFrame, KPICalculator
+from src.models.core import ServiceUnit, ServiceEvaluator
 
 mock_service_type = next(ServiceType.__iter__())
 mock_age_group = next(AgeGroup.__iter__())
@@ -15,6 +22,8 @@ city = common_cfg.city_list[0]
 
 
 def get_sample_unit(coords=(40, 9)):
+    """Generate a test service unit."""
+
     sample_unit = ServiceUnit(
         service=mock_service_type,
         name='test unit',
@@ -53,7 +62,7 @@ class TestServiceUnit(unittest.TestCase):
                 np.stack(points_list), mock_age_group)
 
             for computed in interactions:
-                self.assertAlmostEquals(np.exp(- sigma ** 2 / 2), computed)
+                self.assertAlmostEqual(np.exp(- sigma ** 2 / 2), computed)
 
 
 class TestCityLoading(unittest.TestCase):
@@ -80,24 +89,17 @@ class TestServiceEvaluator(unittest.TestCase):
 
     def test_constructor(self):
 
-        evaluator = ServiceEvaluator(self.unit_list, [mock_service_type])
+        evaluator = ServiceEvaluator(self.unit_list)
         self.assertIsInstance(evaluator, ServiceEvaluator)
 
     def test_list_evaluation(self):
-        evaluator = ServiceEvaluator(self.unit_list, [mock_service_type])
+        evaluator = ServiceEvaluator(self.unit_list)
         interactions = evaluator.get_interactions_at(
             np.array(self.positions[0:3:2]))
 
         self.assertTrue(interactions)
 
-# initialize the test suite
-loader = unittest.TestLoader()
-suite = unittest.TestSuite()
 
-# add tests to the test suite
-for case in [TestServiceUnit, TestCityLoading, TestServiceEvaluator]:
-    suite.addTests(loader.loadTestsFromTestCase(case))
-
-# initialize a runner, pass it your suite and run it
-runner = unittest.TextTestRunner(verbosity=3)
-result = runner.run(suite)
+if __name__ == '__main__':
+    # Run all tests
+    unittest.main()
