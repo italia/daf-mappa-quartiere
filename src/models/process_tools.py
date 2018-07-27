@@ -95,9 +95,11 @@ class ModelRunner:
                                         clip_level=attendance_correction_clip)
         # save attendance if set so
         for service_type in self.services:
-            loader = loaders[service_type.label]
-            loader.save_units_with_attendance_to_geojson(
-                calculator.evaluator.units_tree[service_type])
+            name = service_type.label
+            if name in loaders:
+                loaders[name].save_units_with_attendance_to_geojson(
+                    calculator.evaluator.units_tree[service_type])
+
         # aggregate KPI
         calculator.compute_kpi_for_localized_services()
         calculator.compute_kpi_for_istat_values()
