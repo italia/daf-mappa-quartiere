@@ -29,11 +29,7 @@ pipeline {
     stage('Upload'){
       steps {
         script { 
-          if(env.BRANCH_NAME == 'production'){ //push on nexus private repo for the production branch
-            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID' 
-            sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID'  //pulizia risorse macchina IMG
-          }
-          if(env.BRANCH_NAME == 'test'){ 
+          if(env.BRANCH_NAME == 'test' || env.BRANCH_NAME == 'production'){ 
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID' 
             sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID'  
           }       
@@ -43,12 +39,7 @@ pipeline {
     stage('Staging') {
       steps { 
         script {
-          /*if(env.BRANCH_NAME == 'production'){            
-            sh '''
-            COMMITID=$(echo ${GIT_COMMIT} | cut -c 1-6);  sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml ; kubectl apply -f mappa-quartiere.yaml'''
-          }  */         
-          if(env.GIT_URL.contains("mappa")){ 
-          if(env.BRANCH_NAME=='test'){
+          if(env.BRANCH_NAME=='test' || env.BRANCH_NAME == 'production'){
           sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
               sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl apply -f mappa-quartiere1.yaml --validate=false'''             
           }
