@@ -250,12 +250,17 @@ class App extends Component {
 	} else {
 	    var source = this.state.cityMenu[this.state.source.index];
             var layer = this.state.cityMenu[this.state.layer.index].indicators[this.state.layer.indicatorIndex];
-	    layer.dataSource = this.state.cityMenu[this.state.layer.index].dataSource;
+	    console.log(layer.dataSource)
+	    if (layer.dataSource === undefined) {
+		console.log(this.state.cityMenu[this.state.layer.index]);
+		layer.dataSource = this.state.cityMenu[this.state.layer.index].dataSource;
+		console.log(layer.dataSource)
+	    }
 	    var values = this.state.features.map(d => d.properties[layer.id])
 		.map((v) => {if (Array.isArray(v)) return averageArray(v); else return v;});
 	    var sortedFeatures = this.state.features
 		.sort((a, b) => b.properties[layer.id] - a.properties[layer.id]);
-
+	    
 	    return (
                 <div className="App">
 		    <div className="App-header">

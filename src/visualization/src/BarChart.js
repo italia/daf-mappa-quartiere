@@ -158,6 +158,7 @@ class BarChart extends Component {
     };
 
     createBarChart() {
+	console.log("creating barchart") ;
 	this.setLabel();
 	this.setYScale();
 	
@@ -226,15 +227,18 @@ class BarChart extends Component {
     };
  
     render() {
-	this.createBarChart();
+	if (this.chartContainer === undefined) {
+	    this.createBarChart();
 
-	var chartContainer = this.chartContainer;
+	    var chartContainer = this.chartContainer;
 	
-	if (this.state.clicked === "none") {
-            select(chartContainer).selectAll("rect.tooltipclick").remove();
-            select(chartContainer).selectAll("text.tooltipclick").remove();
-            select(chartContainer).selectAll("line.tooltipclick").remove();
-        }
+	    if (this.state.clicked === "none") {
+		select(chartContainer).selectAll("rect.tooltipclick").remove();
+		select(chartContainer).selectAll("text.tooltipclick").remove();
+		select(chartContainer).selectAll("line.tooltipclick").remove();
+            }
+	}
+	
 	return (
 		<svg className="BarChart"
                    ref={el => this.chartContainer = el}

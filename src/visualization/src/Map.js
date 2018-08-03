@@ -191,8 +191,8 @@ class Map extends Component {
 		
 		<div className='map-overlay'
 	            id='chart'>
+		
 		<i className="fa fa-info-circle" aria-hidden="true" onClick={this.onClickInfo}></i>
-
                     <BarChart
 	                style={{
 		            width: 350,
@@ -206,7 +206,7 @@ class Map extends Component {
                         data={{
                             city: this.props.options.city, 
                             label: this.state.layer.label,
-                            dataSource: this.state.layer.dataSource,
+                            dataSource: this.props.layer.dataSource,
                             values: this.state.layer.values,
                             colors: this.state.layer.colors
                         }}             
