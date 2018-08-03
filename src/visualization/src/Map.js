@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
 import mapboxgl from 'mapbox-gl'
+import { scaleLinear } from 'd3-scale';
+import { range } from 'd3-array';
 import './App.css'
 import BarChart from './BarChart';
 import Legend from './Legend';
@@ -12,17 +14,24 @@ class Map extends Component {
     
     constructor(props: Props) {
 	super(props);
+
+	var values = props.source.features
+            .sort((a, b) => b.properties[props.layer.id] - a.properties[props.layer.id])
+	    .map((f) => [f.properties[props.joinField], f.properties[props.layer.id]]);
+	var colors =  colorArray(values.map((v) => v[1]), props.layer.colors);
 	
 	this.state = {
 	    hoverElement: "none",
 	    city: props.options.city,
-	    property: props.layer.id,
-	    neighborhood: "none"
+	    layer: { id: props.layer.id, values: values, colors: colors, dataSource: props.layer.dataSource},
+	    neighborhood: "none",
+	    infoElement: "hidden"
 	};
-
+	
 	this.onHoverBarChart = this.onHoverBarChart.bind(this);
 	this.onMouseOutBarChart = this.onMouseOutBarChart.bind(this);
 	this.onClickBarChart = this.onClickBarChart.bind(this);
+	this.onClickInfo = this.onClickInfo.bind(this);
     };
     
     componentWillReceiveProps(nextProps) {
@@ -32,43 +41,35 @@ class Map extends Component {
 	if (this.props.neighborhood !== nextProps.neighborhood) {
 	    this.setState({ neighborhood: nextProps.neighborhood });
 	}
-	if (this.props.layer.id != nextProps.layer.id) {
+	if (this.props.layer.id !== nextProps.layer.id || this.props.options.city !== nextProps.options.city) {
 	    if (this.map !== undefined) {
-		this.map.remove();
+	        this.map.remove();
+		var values = nextProps.source.features
+		    .sort((a, b) => b.properties[nextProps.layer.id] - a.properties[nextProps.layer.id])
+		    .map((f) => [f.properties[nextProps.joinField], f.properties[nextProps.layer.id]]);
+		var colors = colorArray(values.map((v) => v[1]), nextProps.layer.colors);
+		
 		this.setState({
-                    property: nextProps.layer.id,
+                    layer: {id: nextProps.layer.id, values: values, colors: colors}, 
 		    neighborhood: "none"
 		});
 	    }
 	    this.createMap();
 	}
-	if (this.props.options.city != nextProps.options.city) {
-	    if (this.map !== undefined) {
-		this.map.remove();
-		this.setState({
-		    city: nextProps.options.city,
-		    property: nextProps.layer.id,
-		    neighborhood: "none"
-		});
-	    }
-	    this.createMap(); //todo: do not update map if city doesn't change
-	}
-
     };
 
     componentDidMount() {
 	this.createMap();
     };
-    
+
     createMap() {
-	
 	this.map = new mapboxgl.Map({
             container: this.mapContainer,
             style: 'mapbox://styles/mapbox/light-v9',
             center: this.props.options.center,
             zoom: this.props.options.zoom
         });
-
+	
 	this.map.on('load', () => {
 	    var map = this.map;
 	    var props = this.props;
@@ -98,20 +99,22 @@ class Map extends Component {
 		layout: {},
 		source: 'Quartieri'
 	    }, this.firstSymbolId);
+	    
 	    map.setPaintProperty('Quartieri',
 				 'fill-color',
 				 {
-		property: props.layer.id,
-		stops: props.layer.colors.stops
+		property: this.state.layer.id,
+		stops: this.state.layer.colors.stops
 	    });
 	    map.addLayer({
 		id: 'Quartieri-hover',
 		type: "fill",
 		source: 'Quartieri',
 		layout: {},
-		paint: {"fill-color": props.layer.colors.highlight, "fill-opacity": 1},
+		paint: {"fill-color": "black", "fill-opacity": 1},
 		filter: ["==", props.joinField, this.state.hoverElement]
 	    }, this.firstSymbolId);
+	    
 	    map.addLayer({
 		id: 'Quartieri-line',
 		type: 'line',
@@ -126,25 +129,7 @@ class Map extends Component {
                 paint: {"fill-color": "red", "fill-opacity": 1},
                 filter: ["==", props.joinField, ""]
             }, this.firstSymbolId);
-/*
-	    //add geojson with data points
-	    if (props.layer.raw !== "none") {
-		map.addSource(props.layer.id + "_raw", {
-		    type: 'geojson',
-		    data: props.layer.raw.data
-		})
 
-		map.addLayer({
-		    id: props.layer.id + "_raw_layer", 
-		    type: "circle",
-		    source: props.layer.id + "_raw",
-		    paint: {
-			"circle-radius": 3,
-			"circle-color": props.layer.raw.color
-		    }
-		});
-	    }
-*/	    
 	    map.on('mousemove', 'Quartieri', function(e) {
 		var hoverElement = e.features[0].properties[props.joinField];
 		self.setState({ hoverElement: hoverElement }); 
@@ -173,12 +158,18 @@ class Map extends Component {
 	this.setState({ hoverElement: "none" });
     };
 
+    onClickInfo() {
+	var x = (this.state.infoElement === "hidden") ? "10px" : "-4000px";
+	this.setState({infoElement: "visible"});
+    }
+    
     onClickBarChart(d) {
 	var props = this.props;
 	
 	var clicked = d[0];
 	var neighborhood = props.source
 	    .features
+	    .sort((a, b) => b.properties[props.layer.id] - a.properties[props.layer.id])
 	    .filter(d => {
 		return d.properties[props.joinField] === clicked;
 	    })[0]
@@ -200,6 +191,8 @@ class Map extends Component {
 		
 		<div className='map-overlay'
 	            id='chart'>
+		<i className="fa fa-info-circle" aria-hidden="true" onClick={this.onClickInfo}></i>
+
                     <BarChart
 	                style={{
 		            width: 350,
@@ -212,20 +205,18 @@ class Map extends Component {
                         clicked={clicked}
                         data={{
                             city: this.props.options.city, 
-                            label: this.props.layer.label,
-                            dataSource: this.props.layer.dataSource,
-                            headers: [this.props.joinField, this.props.layer.id],
-                            values: this.props.source.features.map(d => [d.properties[self.props.joinField], d.properties[self.props.layer.id]]), 
-                            colors: this.props.layer.colors 
+                            label: this.state.layer.label,
+                            dataSource: this.state.layer.dataSource,
+                            values: this.state.layer.values,
+                            colors: this.state.layer.colors
                         }}             
                     />
-                    <div dangerouslySetInnerHTML={{__html: this.props.layer.description}}></div>		
                 </div>
 	                    
 		<div className='legend-overlay'
 	            id='legend'>
                     <Legend
-                        stops={this.props.layer.colors.stops}
+                        stops={this.state.layer.colors.stops}
                         style={{
 		            width: 700,
 		            height: 60
@@ -238,9 +229,28 @@ class Map extends Component {
 	            nameField={this.props.nameField}
                     dashboard={this.props.dashboard}
 		/>
+		<div className="info-overlay" style={{left: (this.state.infoElement === "hidden") ? "-4000px" : "10px"}} onClick={this.onClickInfo}>
+	            <div dangerouslySetInnerHTML={{__html: this.props.layer.description}}></div>
+                </div>
 	    </div>	   
 	);
     };
-}
+};
     
+function sample(values, C) {
+    var min = Math.min(...values),
+        max = Math.max(...values);
+
+    return [...Array(C).keys()]
+        .map((d) => d * (max - min) / (C - 1)  + min);
+};
+
+function colorArray(values, colors) {
+        values = sample(values, colors.length);
+        return {
+            stops: values.map((d, i) => [values[i], colors[i]]),
+            scale: scaleLinear().domain(values).range(colors)
+        };
+};
+
 export default Map;

@@ -22,7 +22,7 @@ class Dropdown extends Component {
                 </button>
 		
                 <div className="dropdown-content">
-                    {this.props.dropdownContent.map(city => <DropdownElement label={city} handleClick={this.props.handleClick}/>)}
+                    {this.props.dropdownContent.map((l,i) => <DropdownElement label={l} key={'dropdownContent_' + i} handleClick={this.props.handleClick}/>)}
                 </div>
             </div>
         );

@@ -21,10 +21,11 @@ class BarChart extends Component {
     constructor(props) {
 	super(props);
 
-	this.barWidth = Math.min(18, Math.max(this.props.style.height / (this.props.data.values.length * 1.1), 7));
-	this.x = 250;
-	this.y = 50;
-	
+	this.x = 10;
+	this.y = 30;
+
+	this.barWidth = Math.min(15, Math.max(window.innerHeight / (this.props.data.values.length * 1.3), 7)),
+
 	this.state = {
 	    clicked: props.clicked,
 	    hoverElement: props.hoverElements
@@ -33,8 +34,6 @@ class BarChart extends Component {
 	this.createBarChart = this.createBarChart.bind(this);
 	this.visibilityClick = this.visibilityClick.bind(this);
 	this.visibilityHover = this.visibilityHover.bind(this);
-
-	this.createBarChart();
     };
     
     setYScale() {
@@ -71,7 +70,7 @@ class BarChart extends Component {
     createTooltip(visibilityCallback, colorCallback, classCallback) {
 	const chartContainer = this.chartContainer;
 
-	var size = 11;	
+	var size = 11;
 	select(chartContainer)
 	    .selectAll("rect.tooltip" + classCallback())
 	    .data(this.props.data.values)
@@ -86,9 +85,9 @@ class BarChart extends Component {
 	select(chartContainer)
 	    .selectAll("rect.tooltip" + classCallback())
 	    .data(this.props.data.values)   
-	    .attr("x", d =>  this.x - this.yScale(d[1]) - size * 0.6)
+	    .attr("x", (d) =>  this.x + this.yScale(d[1]) + 60) 
 	    .attr("y",  (d, i) => this.y + (i + 0.5) * this.barWidth - 1.2 / 2 * size)
-	    .attr("width", d => (sigFigs(d[1], 2).toString().length + 1) * size * 0.7)
+	    .attr("width", (d) => (sigFigs(d[1], 2).toString().length + 1) * size * 0.7)
 	    .attr("height", size)
 	    .style("fill", colorCallback)
 	    .style("fill-opacity", "1")
@@ -109,7 +108,7 @@ class BarChart extends Component {
             .selectAll("text.tooltip" + classCallback())
             .data(this.props.data.values)
             .attr("text-anchor", "left")
-            .attr("x", d => this.x - this.yScale(d[1]))
+            .attr("x", d => this.x + this.yScale(d[1]) + 60 + size * 0.7)
             .attr("y", (d, i) => this.y + 0.3 * size + (i + 0.5) * this.barWidth)
             .text(d => sigFigs(d[1], 2))
             .style("visibility", visibilityCallback)
@@ -130,9 +129,9 @@ class BarChart extends Component {
         select(chartContainer)
             .selectAll("line.tooltip" + classCallback())
             .data(this.props.data.values)
-	    .attr("x1", d => this.x - this.yScale(d[1]) + (sigFigs(d[1], 2).toString().length + 1) * size * 0.7 - size * 0.7)
+	    .attr("x1", d => this.x + this.yScale(d[1])) //+ (sigFigs(d[1], 2).toString().length + 1) * size * 0.7 - size * 0.7)
             .attr("y1", (d, i) => this.y + (i + 0.5) * this.barWidth)
-            .attr("x2", d => this.x + 100 - this.yScale(d[1]))
+            .attr("x2", d => this.x + 60 + this.yScale(d[1]))
             .attr("y2", (d, i) => this.y + (i + 0.5) * this.barWidth)
 	    .style("stroke", colorCallback)
 	    .style("stroke-width", "1.5px")
@@ -146,15 +145,16 @@ class BarChart extends Component {
         select(chartContainer)
             .append("text")
             .attr("class", "bartitle")
-            .attr("x", 80)
-            .attr("y", 30)
+            .attr("x", 10)
+            .attr("y", 20)
             .text(this.props.data.label);
 	select(chartContainer)
             .append("text")
 	    .attr("class", "dataSource")
-            .attr("x", 3)
-            .attr("y", 780)
+            .attr("x", 50)
+            .attr("y", this.barWidth * (this.props.data.values.length + 2))
 	    .text("Sorgente dati: " + this.props.data.dataSource);
+
     };
 
     createBarChart() {
@@ -198,11 +198,11 @@ class BarChart extends Component {
 	    .selectAll("rect.bar")
 	    .data(this.props.data.values)
             .attr("y", (d, i) => this.y + i * this.barWidth)
-            .attr("x", d => this.x + 100 - this.yScale(d[1]))
+            .attr("x", d => this.x)
             .attr("width", d => this.yScale(d[1]))
             .attr("height", this.barWidth)
             .style("fill", d => {
-		return this.state.hoverElement === d[0] ? this.props.data.colors.highlight : this.props.data.colors.scale(d[1]);
+		return this.state.hoverElement === d[0] ? "black" : this.props.data.colors.scale(d[1]);
 	    })
             .style("stroke", "black")
             .style("stroke-opacity", 0.25)

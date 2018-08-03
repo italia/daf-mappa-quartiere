@@ -1,10 +1,6 @@
 import React, { Component } from 'react';
-import { range } from 'd3-array';
-import { scaleLinear } from 'd3-scale';
 import './App.css';
 import Map from './Map';
-import Menu from './Menu';
-import MenuObject from './MenuObject';
 import Dropdown from './Dropdown';
 
 var localhost = "http://localhost:4000/";
@@ -13,125 +9,28 @@ function getMenuUrl() {
     return localhost + "menu.json";
 };
 
-function getDashboardUrl(c) {
-    return localhost + c + "/Dashboard" + c + ".json";
-};
-
 class App extends Component { 
     
     constructor(props) {
 	super(props);
-
 	this.state = {
-	    menu: null,
             city: "Milano",
-	    source: "none",
+            cityMenu: [],
+            source: "none",
             layer: "none",
-//	    layerRaw: "none",
-//          layerGrid: "none",
-	    features: null,
-	    dashboard: null
+            categories: [],
+            cities: [],
+	    features: []
         };
 	
 	this.changeCity = this.changeCity.bind(this);
         this.changeLayer = this.changeLayer.bind(this);
-			/*if (defaultLayer.raw !== undefined) {
-			    state.layerRaw = {
-				data: jsons[2],
-				color: defaultLayer.raw.color
-			    };
-			}
-			if (defaultLayer.grid !== undefined) {
-			    if (defaultLayer.raw !== undefined){
-				state.layerGrid = { data: jsons[3] };
-			    } else {
-				state.layerGrid = { data: jsons[2] };
-			    }
-                            state.layerGrid.translate = defaultLayer.grid.translate;
-                            state.layerGrid.scale = defaultLayer.grid.scale;
-                            state.layerGrid.colorRange = defaultLayer.grid.colorRange;
-			    console.log(state.layerGrid)
-                            }			  
-		        if (defaultLayer.raw !== undefined){
-				    fetch(defaultLayer.raw.url)
-					.then(response => response.json())
-					.then(jsonLayerRawData => {	    
-					    this.setState({
-						menu: menu,
-						layer: defaultLayer,
-						source: defaultSource,
-						features: features,
-						layerRaw: {
-						    data: jsonLayerRawData,
-						    color: defaultLayer.raw.color
-						}
-					    });
-					});*/
-	   
     };
 
-    componentDidUpdate() {
-	if (this.state.dashboard === null){
-	    
-            this.fetchDashboard();
-	    
-	} else if (this.state.source === "none") {
-
-            var defaultLayer = this.state.menu.getDefaultLayer(this.state.city);
-            var defaultSource = this.state.menu.getDefaultSource(this.state.city, defaultLayer.sourceId);
-            /*if (defaultLayer.raw !== undefined) {             
-              urls.push(defaultLayer.raw.url);                                                                      
-              }                                                                                                                  
-              if (defaultLayer.grid !== undefined) {                                                                                               
-              urls.push(defaultLayer.grid.url);                                                                                                             
-              }*/
-
-            this.fetchSource(defaultSource);
-
-        } else if (this.state.layer ==="none") {
-
-            var defaultLayer = this.state.menu.getDefaultLayer(this.state.city);
-	    
-            this.fetchLayer(defaultLayer);
-            //Promise.all(urls.map(url => fetch(url).then(response => response.json())))                               
-            //    .then(jsons => {
-        }
+    componentDidMount() {
+	this.fetchMenu();
     };
     
-    componentDidMount() {	
-	if (this.state.menu === null) {
-            this.fetchMenu();
-	}
-    };
-
-    fetchDashboard() {
-	var url = getDashboardUrl(this.state.city);
-	fetch(url)
-            .then(response => response.json())
-            .then(dashboard => {
-		fetch(dashboard.url)
-		    .then(response => response.json())
-		    .then(json => {
-			dashboard.data = json;
-			
-			this.setState({
-			    dashboard: dashboard
-			})
-		    });
-            });
-    };
-    
-    fetchSource(source) {
-	return fetch(source.url)
-	    .then(response => response.json())
-	    .then(json => {
-                this.setState({
-                    source: source,
-                    features: json.features
-                });
-            });
-    };
-
     /*
     writeDashboardFile(jsonLayer) {
 	var m = jsonLayer.map(v => {
@@ -203,75 +102,83 @@ class App extends Component {
         }})))
 	}
 */
-    fetchLayer(layer) {
-	return fetch(layer.layerUrl)
-	    .then(response => response.json())
-	    .then(jsonLayer => {
-//		this.writeDashboardFile(jsonLayer)
-	
-		var joinField = this.state.source.joinField;
-                var layerField = layer.id;
-		var features = this.mergeFeatures(this.state.features, jsonLayer, joinField, layerField);
-		var values = features.map((d) => d.properties[layer.id]);
-	
-                layer.colorSet = this.getColorSet(layer, values);
-/*
-		if (layer.raw !== undefined){
-		    fetch(layer.raw.url)
-			.then(response => response.json())
-			.then(jsonLayerRawData => {
-			    this.setState({
-				layer: layer,
-				features: features,
-				layerRaw: {
-				    data: jsonLayerRawData,
-				    color: layer.raw.color
-				}
-			    });
-			});
-			} else {*/
-                this.setState({
-                    layer: layer,
-                    features: features
-                });
-		//layerRaw: "none"  
-            });
-    };
-    
-    getColorSet(layer, values) {
-	values = sample(values, layer.colors.length);
-	
-	return {
-	    stops: values.map((d, i) => [values[i], layer.colors[i]]),
-	    scale: scaleLinear().domain(values).range(layer.colors),
-	    highlight: (layer.highlight === undefined) ? "black" : layer.highlight
-	};
-    };
-    
-    mergeFeatures(features, jsonLayer, joinField, layerField) {
-	
-	var quartieri = jsonLayer.map(d => d[joinField]);
-	features.forEach(d => {
-            var index = quartieri.indexOf(d.properties[joinField]);
-	    if (index === -1) console.log("quartiere not found") 
-	    var value = jsonLayer[index][layerField];
-	    if (Array.isArray(value)) value = sumArray(value);
-   
-            d.properties[layerField] = value;
-        });
-        features = features
-            .sort((a, b) => b.properties[layerField] - a.properties[layerField]);
-	return features;
-    };
     	
     fetchMenu() {
-	var url = getMenuUrl(); 
+	var url = getMenuUrl();
+	
         return fetch(url)
-	    .then(response => response.json())
-            .then(json => {
-		this.setState({
-		    menu: new MenuObject({ data: json })
+	    .then((response) => response.json())
+            .then((fullMenu) => {
+
+		var cities = [];
+                fullMenu.forEach((l) => {
+                    if (cities.indexOf(l.city) === -1) {
+                        cities.push(l.city);
+                    }
+                });
+		
+		var cityMenu = fullMenu.filter((l) => l.city === this.state.city); 
+		var source = {
+		    index: cityMenu
+			.map((l) => l.type)
+			.indexOf("source")
+		};
+		var defaultLayer = cityMenu
+		    .map((l, index) => {
+		    if (l.indicators !== undefined) {
+			var indicatorIndex = l.indicators.map((d) => d.default).indexOf(true);
+			return {index: index, indicatorIndex: indicatorIndex};
+		    } else {
+			return {index: index, indicatorIndex: -1};
+		    }
+		})
+		    .filter((l) => l.indicatorIndex > -1)[0];
+
+		var categories = [];
+		cityMenu.forEach((l) => {
+		    if (l.indicators !== undefined) {
+			l.indicators
+			    .map((i) => i.category)
+			    .forEach((c) => {
+				if (categories.indexOf(c) === -1)
+				    categories.push(c);
+			    })
+		    }
 		});
+		var joinField = cityMenu[source.index].joinField;
+		
+		Promise.all(cityMenu.map((l) =>
+					 fetch(localhost + l.url)
+					 .then(response => response.json())))
+                    .then((jsons) => {
+			var features = jsons[source.index].features;			
+			var quartieri = features.map((f) => f.properties[joinField]);
+			
+			jsons.map((json, i) => {
+		            if (i !== source.index) {
+				var jsonQuartieri = json.map((j) => j[joinField]);
+				var mapping = quartieri.map((q) => jsonQuartieri.indexOf(q));
+				
+				cityMenu[i].indicators.map((l) => l.id)
+				    .map((jsonField) => 
+					features.forEach((f, q) => {
+					    var v = json[mapping[q]][jsonField];
+					    features[q].properties[jsonField] = (Array.isArray(v)) ? averageArray(v) : v;
+					})
+				    );
+				//  this.writeDashboardFile(jsonLayer)                        	
+			    }
+			});
+			
+			this.setState({
+			    cityMenu: cityMenu,
+			    source: source,
+			    layer: defaultLayer,
+			    categories: categories,
+			    cities: cities,
+			    features: features
+			});		
+                    });           
 	    });
     };
     
@@ -279,104 +186,138 @@ class App extends Component {
         if (this.state.city !== label) {
             this.setState({
 		city: label,
-		dashboard: null,
 		layer: "none",
 		source: "none",
-		features: null
+		cityMenu: [],
+		features: []
             });
         }
     };
 
-    changeLayer(d) {
-        if (this.state.layer.id !== d.id) {
-            this.setState({ layer: d });
+    getLayerByLabel(label) {
+	var layer = this.state.cityMenu.map((l, index) => {
+	    if (l.indicators !== undefined) {
+		var indicatorIndex = l.indicators.map((d) => d.label).indexOf(label);
+		return { index: index, indicatorIndex: indicatorIndex };
+	    } else {
+		return { index: index, indicatorIndex: -1};
+	    }
+	})
+	    .filter((l) => l.indicatorIndex > -1)[0];
+	return layer;
+    };
+
+    getLayerByCategory(c) {
+	var layers = this.state.cityMenu.reduce((a, l, index) => {
+	    
+	    if (l.indicators !== undefined) {
+		
+		l.indicators.forEach((i, indicatorIndex) => {
+		    if (i.category === c) {
+			a.push({index: index, indicatorIndex: indicatorIndex});
+		    }
+		});
+            }
+	    return a;
+	}, []);
+	return layers;
+    };
+
+    getLayer(layer) {
+	return this.state.cityMenu[layer.index].indicators[layer.indicatorIndex];
+    };
+
+    getCategoryMenu(category) {
+	return this.getLayerByCategory(category)
+            .map((l) => {
+                return this.state.cityMenu[l.index]
+                    .indicators[l.indicatorIndex]
+                    .label;
+            });
+    };
+    
+    changeLayer(d, label) {
+	var currentLayer = this.getLayer(this.state.layer);
+	if (currentLayer.label !== label) {
+	    this.setState({layer: this.getLayerByLabel(label)});
         }
     };
-	
-    componentWillUpdate(nextProps, nextState) {
-	if (nextState.menu !== this.state.menu) {
-
-	    if (this.state.dashboard === null){
-		this.fetchDashboard();
-	    }
-	    
-	}
-
-	if (nextState.layer !== this.state.layer) {
-	    
-	    this.fetchLayer(nextState.layer);
-	    
-	} 	
-    };
-        
+	        
     render() {	
 	var self = this;
-	
-	if (this.state.layer === "none") {
+	if (self.state.features.length === 0) {
 	    return null;
 	} else {
+	    var source = this.state.cityMenu[this.state.source.index];
+            var layer = this.state.cityMenu[this.state.layer.index].indicators[this.state.layer.indicatorIndex];
+	    layer.dataSource = this.state.cityMenu[this.state.layer.index].dataSource;
+	    var values = this.state.features.map(d => d.properties[layer.id])
+		.map((v) => {if (Array.isArray(v)) return averageArray(v); else return v;});
+	    var sortedFeatures = this.state.features
+		.sort((a, b) => b.properties[layer.id] - a.properties[layer.id]);
+
 	    return (
                 <div className="App">
 		    <div className="App-header">
 		        <div style={{ display: "flex", justifyContent: "space-between" }}>
-		            <Menu
-	                        menu={this.state.menu.getCategories(this.state.city)}
-	                        handleClick={this.changeLayer}/> 
+		            <div>
+		                {self.state.categories
+		                 .map((category, i) => 
+	                              <Dropdown
+				          label={category}
+				          key={'dropdown_' + i}
+				          dropdownContent={self.getCategoryMenu(category)}
+				          handleClick={self.changeLayer}/>
+			        )}
+		            </div>
+
 		            <h2>Mappa dei quartieri di {this.state.city}</h2>
                 
-		            <Dropdown label={this.state.city} dropdownContent={this.state.menu.cities } handleClick={this.changeCity}/>
+		            <Dropdown label={this.state.city} dropdownContent={this.state.cities} handleClick={this.changeCity}/>
 		        </div>
 		    </div>
 		    <div>	            
 		        <Map	                        
 	                    options={{
 		                city: this.state.city,
-		                center: this.state.source.center,
-		                zoom: this.state.source.zoom
+		                center: source.center,
+		                zoom: source.zoom
 			    }} 
 	                    source={{
 		                type: "FeatureCollection",
-		                features: this.state.features
+		                features: sortedFeatures
 			    }}
 	                    layer={{
-		                id: this.state.layer.id,
-	                        label: this.state.layer.label,
-		                dataSource: this.state.layer.dataSource,
-		                headers: [this.state.source.joinField, this.state.layer.id],
-			        values: this.state.features.map(d => [d.properties[self.state.source.joinField], d.properties[self.state.layer.id]]),
-			        colors: this.state.layer.colorSet,
-				description: this.state.layer.description
+		                id: layer.id,
+	                        label: layer.label,
+		                dataSource: layer.dataSource,
+		                headers: [source.joinField, layer.id],
+			        colors: layer.colors,
+				description: layer.description
 		            }}
-	                    joinField={this.state.source.joinField}
-	                    nameField={this.state.source.nameField}
-	                    dashboard={this.state.dashboard}
+	                    joinField={source.joinField}
+	                    nameField={source.nameField}
+	                    dashboard={null}
 		        />
 		    </div>	
 	         </div>
 	    )
 	}
     };
-}
-
-function sample(values, C) {
-    var min = Math.min(...values),
-        max = Math.max(...values);
-    
-    return [...Array(C).keys()]
-        .map((d) => d * (max - min) / (C - 1)  + min);
 };
 
-function sumArray(a) {
+function averageArray(a) {
     var sum = 0;
     var l = 0;
     for (var i=0; i<a.length; i++) {
         if (a[i] !== "NaN"){
             l = l + 1;
-	    sum = sum + a[i];
+            sum = sum + a[i];
         }
     }
     return sum / l;
 };
 
 export default App;
+
 
