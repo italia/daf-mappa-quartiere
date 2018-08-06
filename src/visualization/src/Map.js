@@ -15,7 +15,7 @@ class Map extends Component {
     constructor(props: Props) {
 	super(props);
 
-	var values = props.source.features
+	var values = props.features
             .sort((a, b) => b.properties[props.layer.id] - a.properties[props.layer.id])
 	    .map((f) => [f.properties[props.joinField], f.properties[props.layer.id]]);
 	var colors =  colorArray(values.map((v) => v[1]), props.layer.colors);
@@ -44,7 +44,7 @@ class Map extends Component {
 	if (this.props.layer.id !== nextProps.layer.id || this.props.options.city !== nextProps.options.city) {
 	    if (this.map !== undefined) {
 	        this.map.remove();
-		var values = nextProps.source.features
+		var values = nextProps.features
 		    .sort((a, b) => b.properties[nextProps.layer.id] - a.properties[nextProps.layer.id])
 		    .map((f) => [f.properties[nextProps.joinField], f.properties[nextProps.layer.id]]);
 		var colors = colorArray(values.map((v) => v[1]), nextProps.layer.colors);
@@ -69,16 +69,17 @@ class Map extends Component {
             center: this.props.options.center,
             zoom: this.props.options.zoom
         });
+
+	var map = this.map;
 	
-	this.map.on('load', () => {
-	    var map = this.map;
+	map.on('load', () => {
 	    var props = this.props;
 	    var self = this;
 
 	    map.setLayoutProperty('country-label-lg', 'text-field', '{name_it}');
 	    map.addSource('Quartieri', {
 		type: 'geojson',
-		data: props.source
+		data: { type: "FeatureCollection", features: props.features }
 	    });
 	    
 	    var layers = map.getStyle().layers;
@@ -100,12 +101,6 @@ class Map extends Component {
 		source: 'Quartieri'
 	    }, this.firstSymbolId);
 	    
-	    map.setPaintProperty('Quartieri',
-				 'fill-color',
-				 {
-		property: this.state.layer.id,
-		stops: this.state.layer.colors.stops
-	    });
 	    map.addLayer({
 		id: 'Quartieri-hover',
 		type: "fill",
@@ -145,9 +140,16 @@ class Map extends Component {
 		self.setState({ neighborhood: neighborhood });
 		map.setFilter('Quartieri-click', ['==', props.joinField, clicked]);
             });
+
+	    map.setPaintProperty('Quartieri',
+                                 'fill-color',       
+                                 {          
+                property: this.state.layer.id,  
+                stops: this.state.layer.colors.stops  
+            });
 	});
     };
-    
+	
     onHoverBarChart(d) {
 	this.map.setFilter('Quartieri-hover', ['==', this.props.joinField, d[0]]);
 	this.setState({ hoverElement: d[0] });
@@ -159,16 +161,14 @@ class Map extends Component {
     };
 
     onClickInfo() {
-	var x = (this.state.infoElement === "hidden") ? "10px" : "-4000px";
-	this.setState({infoElement: "visible"});
+	this.setState({infoElement: (this.state.infoElement === "hidden") ? "visible" : "hidden"});
     }
     
     onClickBarChart(d) {
 	var props = this.props;
 	
 	var clicked = d[0];
-	var neighborhood = props.source
-	    .features
+	var neighborhood = props.features
 	    .sort((a, b) => b.properties[props.layer.id] - a.properties[props.layer.id])
 	    .filter(d => {
 		return d.properties[props.joinField] === clicked;

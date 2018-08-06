@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
+import CityMenu from './CityMenu';
 import Map from './Map';
 import Dropdown from './Dropdown';
 
@@ -16,8 +17,8 @@ class App extends Component {
 	this.state = {
             city: "Milano",
             cityMenu: [],
-            source: "none",
-            layer: "none",
+            sourceIndex: -1,
+            layerIndex: [-1, -1],
             categories: [],
             cities: [],
 	    features: []
@@ -102,78 +103,63 @@ class App extends Component {
         }})))
 	}
 */
-    	
-    fetchMenu() {
-	var url = getMenuUrl();
-	
-        return fetch(url)
+
+    getCities(menu) {
+	var cities = [];
+	menu.forEach((l) => {
+            if (cities.indexOf(l.city) === -1) {
+                cities.push(l.city);
+            }
+        });
+	return cities;
+    };
+    
+    fetchMenu() {	
+        return fetch(getMenuUrl())
 	    .then((response) => response.json())
             .then((fullMenu) => {
 
-		var cities = [];
-                fullMenu.forEach((l) => {
-                    if (cities.indexOf(l.city) === -1) {
-                        cities.push(l.city);
-                    }
-                });
+		var cities = this.getCities(fullMenu);		
+		var cityMenu = new CityMenu({ menu: fullMenu, city: this.state.city }); 
 		
-		var cityMenu = fullMenu.filter((l) => l.city === this.state.city); 
-		var source = {
-		    index: cityMenu
-			.map((l) => l.type)
-			.indexOf("source")
-		};
-		var defaultLayer = cityMenu
-		    .map((l, index) => {
-		    if (l.indicators !== undefined) {
-			var indicatorIndex = l.indicators.map((d) => d.default).indexOf(true);
-			return {index: index, indicatorIndex: indicatorIndex};
-		    } else {
-			return {index: index, indicatorIndex: -1};
-		    }
-		})
-		    .filter((l) => l.indicatorIndex > -1)[0];
-
-		var categories = [];
-		cityMenu.forEach((l) => {
-		    if (l.indicators !== undefined) {
-			l.indicators
-			    .map((i) => i.category)
-			    .forEach((c) => {
-				if (categories.indexOf(c) === -1)
-				    categories.push(c);
-			    })
-		    }
-		});
-		var joinField = cityMenu[source.index].joinField;
+		var sourceIndex = cityMenu.getIndex({type: "source"});
+		var defaultLayerIndex = cityMenu.getIndex({type: "layer", default: true});
 		
-		Promise.all(cityMenu.map((l) =>
-					 fetch(localhost + l.url)
-					 .then(response => response.json())))
-                    .then((jsons) => {
-			var features = jsons[source.index].features;			
+		
+		var categories = cityMenu.getCategories();
+		var joinField = cityMenu.get(sourceIndex).joinField;
+		
+		Promise.all(cityMenu.fetch({localhost: localhost}))
+		    .then((jsons) => {
+			var features = jsons[sourceIndex].features;			
 			var quartieri = features.map((f) => f.properties[joinField]);
 			
-			jsons.map((json, i) => {
-		            if (i !== source.index) {
-				var jsonQuartieri = json.map((j) => j[joinField]);
-				var mapping = quartieri.map((q) => jsonQuartieri.indexOf(q));
+			jsons.forEach((json, j) => {
+		            if (j !== sourceIndex) {
+				var jsonQuartieri = json.map((d) => d[joinField]);
 				
-				cityMenu[i].indicators.map((l) => l.id)
+				var mapping = quartieri.map((d) => jsonQuartieri.indexOf(d));
+				
+				cityMenu.get(j).indicators.map((l) => l.id)
 				    .map((jsonField) => 
-					features.forEach((f, q) => {
-					    var v = json[mapping[q]][jsonField];
-					    features[q].properties[jsonField] = (Array.isArray(v)) ? averageArray(v) : v;
+					features.forEach((f, d) => {
+					    var v = json[mapping[d]][jsonField];
+					    features[d].properties[jsonField] = (Array.isArray(v)) ? averageArray(v) : v;
 					})
-				    );
+					);
+				//define dataSource if undefined
+				cityMenu.get(j).indicators.forEach((d) => {
+				    if (d.dataSource === undefined) {
+					d.dataSource = cityMenu.cityMenu[j].dataSource;
+				    }
+				})
 				//  this.writeDashboardFile(jsonLayer)                        	
 			    }
 			});
-			
 			this.setState({
 			    cityMenu: cityMenu,
-			    source: source,
-			    layer: defaultLayer,
+			    sourceIndex: sourceIndex,
+			    layerIndex: defaultLayerIndex,
 			    categories: categories,
 			    cities: cities,
 			    features: features
@@ -181,65 +167,23 @@ class App extends Component {
                     });           
 	    });
     };
-    
+
     changeCity(d, label) {
         if (this.state.city !== label) {
             this.setState({
-		city: label,
-		layer: "none",
-		source: "none",
-		cityMenu: [],
-		features: []
+                city: label,
+                layerIndex: [-1, -1],
+                sourceIndex: -1,
+                cityMenu: [],
+                features: []
             });
         }
     };
-
-    getLayerByLabel(label) {
-	var layer = this.state.cityMenu.map((l, index) => {
-	    if (l.indicators !== undefined) {
-		var indicatorIndex = l.indicators.map((d) => d.label).indexOf(label);
-		return { index: index, indicatorIndex: indicatorIndex };
-	    } else {
-		return { index: index, indicatorIndex: -1};
-	    }
-	})
-	    .filter((l) => l.indicatorIndex > -1)[0];
-	return layer;
-    };
-
-    getLayerByCategory(c) {
-	var layers = this.state.cityMenu.reduce((a, l, index) => {
-	    
-	    if (l.indicators !== undefined) {
-		
-		l.indicators.forEach((i, indicatorIndex) => {
-		    if (i.category === c) {
-			a.push({index: index, indicatorIndex: indicatorIndex});
-		    }
-		});
-            }
-	    return a;
-	}, []);
-	return layers;
-    };
-
-    getLayer(layer) {
-	return this.state.cityMenu[layer.index].indicators[layer.indicatorIndex];
-    };
-
-    getCategoryMenu(category) {
-	return this.getLayerByCategory(category)
-            .map((l) => {
-                return this.state.cityMenu[l.index]
-                    .indicators[l.indicatorIndex]
-                    .label;
-            });
-    };
     
     changeLayer(d, label) {
-	var currentLayer = this.getLayer(this.state.layer);
+	var currentLayer = this.state.cityMenu.getLayer(this.state.layerIndex);
 	if (currentLayer.label !== label) {
-	    this.setState({layer: this.getLayerByLabel(label)});
+	    this.setState({layerIndex: this.state.cityMenu.getIndex({label: label})});
         }
     };
 	        
@@ -248,30 +192,19 @@ class App extends Component {
 	if (self.state.features.length === 0) {
 	    return null;
 	} else {
-	    var source = this.state.cityMenu[this.state.source.index];
-            var layer = this.state.cityMenu[this.state.layer.index].indicators[this.state.layer.indicatorIndex];
-	    console.log(layer.dataSource)
-	    if (layer.dataSource === undefined) {
-		console.log(this.state.cityMenu[this.state.layer.index]);
-		layer.dataSource = this.state.cityMenu[this.state.layer.index].dataSource;
-		console.log(layer.dataSource)
-	    }
-	    var values = this.state.features.map(d => d.properties[layer.id])
-		.map((v) => {if (Array.isArray(v)) return averageArray(v); else return v;});
-	    var sortedFeatures = this.state.features
-		.sort((a, b) => b.properties[layer.id] - a.properties[layer.id]);
-	    
+	    var source = this.state.cityMenu.getSource(this.state.sourceIndex);
+            var layer = this.state.cityMenu.getLayer(this.state.layerIndex);
 	    return (
                 <div className="App">
 		    <div className="App-header">
 		        <div style={{ display: "flex", justifyContent: "space-between" }}>
 		            <div>
-		                {self.state.categories
+		            {self.state.cityMenu.getCategories()
 		                 .map((category, i) => 
 	                              <Dropdown
 				          label={category}
 				          key={'dropdown_' + i}
-				          dropdownContent={self.getCategoryMenu(category)}
+				          dropdownContent={self.state.cityMenu.getCategoryMenu(category)}
 				          handleClick={self.changeLayer}/>
 			        )}
 		            </div>
@@ -288,10 +221,7 @@ class App extends Component {
 		                center: source.center,
 		                zoom: source.zoom
 			    }} 
-	                    source={{
-		                type: "FeatureCollection",
-		                features: sortedFeatures
-			    }}
+	                    features={this.state.features}
 	                    layer={{
 		                id: layer.id,
 	                        label: layer.label,
