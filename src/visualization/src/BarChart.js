@@ -6,6 +6,7 @@ import { select } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import { transition } from 'd3-transition';
 import { axisBottom } from 'd3-axis';
+import Legend from './Legend';
 
 function sigFigs(n, sig) {
     if (n < 10) {
@@ -237,12 +238,18 @@ class BarChart extends Component {
     render() {
 	this.createBarChart();
 		
-	return (
+	return (<div>
 		<svg className="BarChart"
                    ref={el => this.chartContainer = el}
-                   width={this.props.style.width}
-                   height={this.props.style.height}
 		/>
+		<Legend
+                        stops={this.props.data.colors.stops}
+                        style={{
+                            width: 300,
+                            height: 40
+			}}
+                />
+		</div>
 	);
     };
 }

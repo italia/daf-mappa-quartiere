@@ -49,7 +49,7 @@ a:hover {
 }
 
 .BarChart {
-    height: 85vh;
+    height: 82vh;
     width: 300px;
     display: block;
 }
@@ -128,7 +128,7 @@ a:hover {
     bottom: 0;
     background: rgba(255, 255, 255, 0.8);
     border-radius: 8px;
-    height: 85vh;
+    height: 90vh;
     width: 300px;
     top: 80px;
     left: 10px;
@@ -136,15 +136,6 @@ a:hover {
     padding-left: 20px;
     padding-right: 15px;
     text-align: justify;
-}
-
-.legend-overlay {
-    position: absolute;
-    background: none;
-    height: 70px;
-    width: 300px;
-    left: 500px;
-    bottom: 0px;
 }
 
 .dataSource {

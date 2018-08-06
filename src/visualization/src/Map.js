@@ -154,6 +154,7 @@ class Map extends Component {
 
 	    map.on('click', 'Quartieri', function(e) {
 		var neighborhood = e.features[0].properties;
+		console.log(neighborhood)
 		var clicked = neighborhood[props.joinField];
 		self.setState({ neighborhood: neighborhood });
 		map.setFilter('Quartieri-click', ['==', props.joinField, clicked]);
@@ -214,7 +215,7 @@ class Map extends Component {
                     <BarChart
 	                style={{
 		            width: 350,
-			    height: 850
+			    height: 500
 			}}
                         hoverElement={this.state.hoverElement}        
                         onHover={this.onHoverBarChart}
@@ -230,17 +231,7 @@ class Map extends Component {
                         }}             
                     />
                 </div>
-	                    
-		<div className='legend-overlay'
-	            id='legend'>
-                    <Legend
-                        stops={this.state.layer.colors.stops}
-                        style={{
-		            width: 700,
-		            height: 60
-			}}
-                    />                                  
-                </div>
+	                 
 		
                 <Dashboard
 	            neighborhood={this.state.neighborhood}
