@@ -141,7 +141,7 @@ class BarChart extends Component {
     setLabel() {	
 	select(".bartitle").remove();
 	select(this.chartContainer).selectAll(".dataSource").remove();
-	const chartContainer = this.chartContainer;  
+	const chartContainer = this.chartContainer;
         select(chartContainer)
             .append("text")
             .attr("class", "bartitle")
@@ -158,29 +158,28 @@ class BarChart extends Component {
     };
 
     createBarChart() {
-	console.log("creating barchart") ;
 	this.setLabel();
 	this.setYScale();
 	
 	const chartContainer = this.chartContainer;
-
+	
 	select(chartContainer)
 	    .append("text")
 	    .attr("id", "description");
-
+	
 	select(chartContainer)
 	    .append("text")
 	    .attr("id", "property")
 	    .attr("x", 20)
 	    .attr("y", 60 + this.barWidth * 2);
-
+	
 	select(chartContainer)
 	    .selectAll("rect.bar")
 	    .data(this.props.data.values)
 	    .enter()
 	    .append("rect")
-            .attr("class", "bar")
-            .on("mouseover", d => {
+	    .attr("class", "bar")
+	    .on("mouseover", d => {
 		this.setState({ hoverElement: d[0] });
 		this.props.onHover(d);
 	    })
@@ -193,28 +192,33 @@ class BarChart extends Component {
 	    .selectAll("rect.bar")
 	    .data(this.props.data.values)
 	    .exit()
-            .remove();
+	    .remove();
 	
 	select(chartContainer)
 	    .selectAll("rect.bar")
 	    .data(this.props.data.values)
-            .attr("y", (d, i) => this.y + i * this.barWidth)
-            .attr("x", d => this.x)
-            .attr("width", d => this.yScale(d[1]))
-            .attr("height", this.barWidth)
-            .style("fill", d => {
+	    .attr("y", (d, i) => this.y + i * this.barWidth)
+	    .attr("x", d => this.x)
+	    .attr("width", d => this.yScale(d[1]))
+	    .attr("height", this.barWidth)
+	    .style("fill", d => {
 		return this.state.hoverElement === d[0] ? "black" : this.props.data.colors.scale(d[1]);
 	    })
-            .style("stroke", "black")
-            .style("stroke-opacity", 0.25)
+	    .style("stroke", "black")
+	    .style("stroke-opacity", 0.25)
 	    .on("click", d => {
 		this.setState({ clicked: d[0] });
 		this.props.onClick(d);
 	    });
- 
+	
 	this.createTooltip(this.visibilityHover, this.colorHover, this.classHover);
 	this.createTooltip(this.visibilityClick, this.colorClick, this.classClick);
 
+	if (this.state.clicked === "none") {
+            select(chartContainer).selectAll("rect.tooltipclick").remove();
+            select(chartContainer).selectAll("text.tooltipclick").remove();
+            select(chartContainer).selectAll("line.tooltipclick").remove();
+        }
     };
   
     componentWillReceiveProps(nextProps) {
@@ -225,20 +229,14 @@ class BarChart extends Component {
 	    this.setState({ hoverElement: nextProps.hoverElement });
 	}
     };
- 
+    
+    componentDidMount() {
+	this.createBarChart();
+    };
+    
     render() {
-	if (this.chartContainer === undefined) {
-	    this.createBarChart();
-
-	    var chartContainer = this.chartContainer;
-	
-	    if (this.state.clicked === "none") {
-		select(chartContainer).selectAll("rect.tooltipclick").remove();
-		select(chartContainer).selectAll("text.tooltipclick").remove();
-		select(chartContainer).selectAll("line.tooltipclick").remove();
-            }
-	}
-	
+	this.createBarChart();
+		
 	return (
 		<svg className="BarChart"
                    ref={el => this.chartContainer = el}

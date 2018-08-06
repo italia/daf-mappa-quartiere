@@ -11,6 +11,8 @@ function getMenuUrl() {
 };
 
 class App extends Component { 
+    fullMenu;
+    cities = [];
     
     constructor(props) {
 	super(props);
@@ -20,7 +22,6 @@ class App extends Component {
             sourceIndex: -1,
             layerIndex: [-1, -1],
             categories: [],
-            cities: [],
 	    features: []
         };
 	
@@ -29,7 +30,13 @@ class App extends Component {
     };
 
     componentDidMount() {
-	this.fetchMenu();
+	fetch(getMenuUrl())
+            .then((response) => response.json())
+	    .then((menu) => {
+		this.setFullMenu(menu);
+		this.setCities();
+		this.fetch(this.state.city);
+	    });
     };
     
     /*
@@ -104,79 +111,68 @@ class App extends Component {
 	}
 */
 
-    getCities(menu) {
-	var cities = [];
-	menu.forEach((l) => {
-            if (cities.indexOf(l.city) === -1) {
-                cities.push(l.city);
+    setCities() {
+	this.fullMenu.forEach((l) => {
+            if (this.cities.indexOf(l.city) === -1) {
+                this.cities.push(l.city);
             }
         });
-	return cities;
     };
-    
-    fetchMenu() {	
-        return fetch(getMenuUrl())
-	    .then((response) => response.json())
-            .then((fullMenu) => {
 
-		var cities = this.getCities(fullMenu);		
-		var cityMenu = new CityMenu({ menu: fullMenu, city: this.state.city }); 
+    setFullMenu(menu) {
+	this.fullMenu = menu;
+    };
+	
+    fetch(city) {
+	var cityMenu = new CityMenu({ menu: this.fullMenu, city: city });
+	
+	var sourceIndex = cityMenu.getIndex({type: "source"});
+	var defaultLayerIndex = cityMenu.getIndex({type: "layer", default: true});
+	
+	var categories = cityMenu.getCategories();
+	var joinField = cityMenu.get(sourceIndex).joinField;
+	
+	Promise.all(cityMenu.fetch({localhost: localhost}))
+	    .then((jsons) => {
+		var features = jsons[sourceIndex].features;			
+		var quartieri = features.map((f) => f.properties[joinField]);
 		
-		var sourceIndex = cityMenu.getIndex({type: "source"});
-		var defaultLayerIndex = cityMenu.getIndex({type: "layer", default: true});
-		
-		
-		var categories = cityMenu.getCategories();
-		var joinField = cityMenu.get(sourceIndex).joinField;
-		
-		Promise.all(cityMenu.fetch({localhost: localhost}))
-		    .then((jsons) => {
-			var features = jsons[sourceIndex].features;			
-			var quartieri = features.map((f) => f.properties[joinField]);
+		jsons.forEach((json, j) => {
+		    if (j !== sourceIndex) {
+			var jsonQuartieri = json.map((d) => d[joinField]);
 			
-			jsons.forEach((json, j) => {
-		            if (j !== sourceIndex) {
-				var jsonQuartieri = json.map((d) => d[joinField]);
-				
-				var mapping = quartieri.map((d) => jsonQuartieri.indexOf(d));
-				
-				cityMenu.get(j).indicators.map((l) => l.id)
-				    .map((jsonField) => 
-					features.forEach((f, d) => {
-					    var v = json[mapping[d]][jsonField];
-					    features[d].properties[jsonField] = (Array.isArray(v)) ? averageArray(v) : v;
-					})
-					);
-				//define dataSource if undefined
-				cityMenu.get(j).indicators.forEach((d) => {
-				    if (d.dataSource === undefined) {
-					d.dataSource = cityMenu.cityMenu[j].dataSource;
-				    }
-				})
-				//  this.writeDashboardFile(jsonLayer)                        	
+			var mapping = quartieri.map((d) => jsonQuartieri.indexOf(d));
+			
+			cityMenu.get(j).indicators.map((l) => l.id)
+			    .map((jsonField) => 
+				 features.forEach((f, d) => {
+				     var v = json[mapping[d]][jsonField];
+				     features[d].properties[jsonField] = (Array.isArray(v)) ? averageArray(v) : v;
+				 })
+				);
+			//define dataSource if undefined
+			cityMenu.get(j).indicators.forEach((d) => {
+			    if (d.dataSource === undefined) {
+				d.dataSource = cityMenu.cityMenu[j].dataSource;
 			    }
-			});
-			this.setState({
-			    cityMenu: cityMenu,
-			    sourceIndex: sourceIndex,
-			    layerIndex: defaultLayerIndex,
-			    categories: categories,
-			    cities: cities,
-			    features: features
-			});		
-                    });           
-	    });
+			})
+			//  this.writeDashboardFile(jsonLayer)                        	
+		    }
+		});
+		this.setState({
+		    city: city,
+		    cityMenu: cityMenu,
+		    sourceIndex: sourceIndex,
+		    layerIndex: defaultLayerIndex,
+		    categories: categories,
+		    features: features
+		});		
+            });           
     };
 
     changeCity(d, label) {
         if (this.state.city !== label) {
-            this.setState({
-                city: label,
-                layerIndex: [-1, -1],
-                sourceIndex: -1,
-                cityMenu: [],
-                features: []
-            });
+            this.fetch(label);
         }
     };
     
@@ -211,7 +207,7 @@ class App extends Component {
 
 		            <h2>Mappa dei quartieri di {this.state.city}</h2>
                 
-		            <Dropdown label={this.state.city} dropdownContent={this.state.cities} handleClick={this.changeCity}/>
+		            <Dropdown label={this.state.city} dropdownContent={this.cities} handleClick={this.changeCity}/>
 		        </div>
 		    </div>
 		    <div>	            
