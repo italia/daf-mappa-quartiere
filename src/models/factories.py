@@ -217,7 +217,7 @@ class LibraryFactory(UnitFactory):
         # Modifica e specifica che per le fasce d'età
         possible_users = AgeGroup.all_but([AgeGroup.Newborn, AgeGroup.Kinder])
         type_age_dict = {
-            'Specializzata': [],
+            'Specializzata': [], # do not consider it
             'Importante non specializzata': possible_users,
             'Pubblica': possible_users,
             'NON SPECIFICATA': possible_users,
