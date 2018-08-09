@@ -88,11 +88,13 @@ class ModelRunner:
 
         # print current value of kernel cutoff
         print('Ignoring interactions below %s \n' %
-            common_cfg.kernel_value_cutoff)
+              common_cfg.kernel_value_cutoff)
 
         # compute and plot demand/supply interaction for localized services
-        calculator.evaluate_services_at_demand(b_evaluate_attendance=True,
-                                        clip_level=attendance_correction_clip)
+        calculator.evaluate_services_at_demand(
+            b_evaluate_attendance=True,
+            clip_level=attendance_correction_clip)
+
         # save attendance if set so
         for service_type in self.services:
             name = service_type.label
@@ -424,14 +426,14 @@ class JSONWriter:
         """Load current menu from json and replace the calculator city info
         with new data"""
         with open(os.path.join(
-            common_cfg.viz_output_path, 'menu.json'), 'r') as orig_file:
+                common_cfg.viz_output_path, 'menu.json'), 'r') as orig_file:
             current_menu = json.load(orig_file)
 
         other_items = [v for v in current_menu if v['city'] != self.city.name]
         updated_menu = other_items + self.make_menu()
 
         with open(os.path.join(
-            common_cfg.viz_output_path, 'menu.json'), 'w') as menu_file:
+                common_cfg.viz_output_path, 'menu.json'), 'w') as menu_file:
             self._dump_json(updated_menu, menu_file)
 
     def write_all_files_to_default_path(self):

@@ -5,6 +5,7 @@ from collections import Counter
 import geopy
 from references import common_cfg
 
+
 # Enum classes
 class AgeGroup(Enum):
 
@@ -122,7 +123,7 @@ class ServiceType(Enum):
                 'Farmacie',
                 'Min. Salute')
 
-    #UrbanGreen = (5,  # enum id
+    # UrbanGreen = (5,  # enum id
     #              ServiceArea.Environment,
     #              SummaryNorm.l2,
     #              AgeGroup.all(),
