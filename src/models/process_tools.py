@@ -80,7 +80,7 @@ class ModelRunner:
                       service_type.label)
 
         # STEP 2: Parse demand data
-        demand_data = DemandFrame(
+        demand_data = DemandFrame.create_from_raw_istat_data(
             model_city.istat_cpa_data, b_duplicates_check=False)
 
         # STEP 3: Run computation
