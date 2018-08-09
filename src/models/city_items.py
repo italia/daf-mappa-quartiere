@@ -7,11 +7,18 @@ from references import common_cfg
 
 # Enum classes
 class AgeGroup(Enum):
+
+    """Store the age ranges that are relevant to the modelled public
+    services.
+    The start age is included, the end age is excluded.
+
+    """
+
     Newborn = (0, 3)
     Kinder = (3, 6)
-    ChildPrimary = (6, 10)
-    ChildMid = (10, 15)
-    ChildHigh = (15, 19)
+    ChildPrimary = (6, 11)
+    ChildMid = (11, 14)
+    ChildHigh = (14, 19)
     Young = (19, 25)
     Junior = (25, 35)
     Senior = (35, 50)
