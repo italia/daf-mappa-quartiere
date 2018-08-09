@@ -81,7 +81,7 @@ class ModelRunner:
 
         # STEP 2: Parse demand data
         demand_data = DemandFrame.create_from_raw_istat_data(
-            model_city.istat_cpa_data, b_duplicates_check=False)
+            model_city.istat_cpa_data)
 
         # STEP 3: Run computation
         calculator = KPICalculator(demand_data, units, model_city.name)
