@@ -145,7 +145,7 @@ a:hover {
 .dashboard-overlay {
     position: absolute;
     background: rgba(225, 225, 225, 0.8);
-    overflow: auto;
+    overflow: visible;
     border-radius: 8px;
 }
 
@@ -168,8 +168,8 @@ a:hover {
 #dashboard {
     padding-left: 20px;
     padding-top: 0px;
-    height: 450px;
-    width: 450px;
+    height: 360px;
+    width: 300px;
     top: 90px;
     right: 30px;
     font-size: 18px;
@@ -177,4 +177,9 @@ a:hover {
 
 #dashboardSvg {
     display: block;
+}
+
+h3 {
+    font-size: 18px;
+    text-align: left;
 }

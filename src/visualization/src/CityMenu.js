@@ -15,9 +15,10 @@ class CityMenu extends Component {
     };
 
     fetch(params) {
-	return this.cityMenu.map((l) =>
-                          fetch(params.localhost + l.url)
-				 .then(response => response.json()))
+	return this.cityMenu.map((l) =>{
+				 console.log(l);
+                          return fetch(params.localhost + l.url)
+		.then(response => response.json());})
     };
 
     get(i) {
@@ -96,6 +97,20 @@ class CityMenu extends Component {
             });
     };
 
+    getLayerIds() {
+	var ids = [];
+        this.cityMenu.filter((m) => (m.indicators.length > 0))
+            .forEach((m) => { m.indicators.forEach((i) => ids.push(i.id))});
+        return ids;
+    };
+
+    getLayerLabels() {
+	var labels = [];
+        this.cityMenu.filter((m) => (m.indicators.length > 0))
+            .forEach((m) => { m.indicators.forEach((i) => labels.push(i.label))});
+        return labels;
+    };
+    
     render() {
 	return null;
     };

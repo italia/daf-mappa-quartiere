@@ -25,11 +25,12 @@ class BarChart extends Component {
 	this.x = 10;
 	this.y = 30;
 
-	this.barWidth = Math.min(15, Math.max(window.innerHeight / (this.props.data.values.length * 1.3), 7)),
+	this.barWidth = Math.min(15, Math.max(window.innerHeight / (this.props.data.values.length * 2), 5.5)),
 
 	this.state = {
+	    city: props.data.city,
 	    clicked: props.clicked,
-	    hoverElement: props.hoverElements
+	    hovered: props.hovered
 	};
 	
 	this.createBarChart = this.createBarChart.bind(this);
@@ -45,7 +46,7 @@ class BarChart extends Component {
     };
 
     visibilityHover(d, i) {
-	return (this.state.hoverElement === d[0]) ? "visible" : "hidden";
+	return (this.state.hovered === d[0]) ? "visible" : "hidden";
     };
 
     visibilityClick(d, i) {
@@ -130,7 +131,7 @@ class BarChart extends Component {
         select(chartContainer)
             .selectAll("line.tooltip" + classCallback())
             .data(this.props.data.values)
-	    .attr("x1", d => this.x + this.yScale(d[1])) //+ (sigFigs(d[1], 2).toString().length + 1) * size * 0.7 - size * 0.7)
+	    .attr("x1", d => this.x + this.yScale(d[1]))
             .attr("y1", (d, i) => this.y + (i + 0.5) * this.barWidth)
             .attr("x2", d => this.x + 60 + this.yScale(d[1]))
             .attr("y2", (d, i) => this.y + (i + 0.5) * this.barWidth)
@@ -181,11 +182,11 @@ class BarChart extends Component {
 	    .append("rect")
 	    .attr("class", "bar")
 	    .on("mouseover", d => {
-		this.setState({ hoverElement: d[0] });
+		this.setState({ hovered: d[0] });
 		this.props.onHover(d);
 	    })
 	    .on("mouseout", d => {
-		this.setState({ hoverElement: "none" });
+		this.setState({ hovered: "none" });
 		this.props.onMouseOut(d);
 	    });
 	
@@ -203,7 +204,7 @@ class BarChart extends Component {
 	    .attr("width", d => this.yScale(d[1]))
 	    .attr("height", this.barWidth)
 	    .style("fill", d => {
-		return this.state.hoverElement === d[0] ? "black" : this.props.data.colors.scale(d[1]);
+		return this.state.hovered === d[0] ? "black" : this.props.data.colors.scale(d[1]);
 	    })
 	    .style("stroke", "black")
 	    .style("stroke-opacity", 0.25)
@@ -214,20 +215,17 @@ class BarChart extends Component {
 	
 	this.createTooltip(this.visibilityHover, this.colorHover, this.classHover);
 	this.createTooltip(this.visibilityClick, this.colorClick, this.classClick);
-
-	if (this.state.clicked === "none") {
-            select(chartContainer).selectAll("rect.tooltipclick").remove();
-            select(chartContainer).selectAll("text.tooltipclick").remove();
-            select(chartContainer).selectAll("line.tooltipclick").remove();
-        }
     };
   
     componentWillReceiveProps(nextProps) {
 	if (this.props.clicked !== nextProps.clicked) {
 	    this.setState({ clicked: nextProps.clicked });
 	}
-	if (this.props.hoverElement !== nextProps.hoverElement) {
-	    this.setState({ hoverElement: nextProps.hoverElement });
+	if (this.props.hovered !== nextProps.hovered) {
+	    this.setState({ hovered: nextProps.hovered });
+	}
+	if (this.props.data.city !== nextProps.data.city) {
+            this.setState({ city: nextProps.data.city });
 	}
     };
     
@@ -237,7 +235,11 @@ class BarChart extends Component {
     
     render() {
 	this.createBarChart();
-		
+	if (this.state.clicked === "none") {  
+            select(this.chartContainer).selectAll("rect.tooltipclick").remove(); 
+            select(this.chartContainer).selectAll("text.tooltipclick").remove();    
+            select(this.chartContainer).selectAll("line.tooltipclick").remove();
+        }
 	return (<div>
 		<svg className="BarChart"
                    ref={el => this.chartContainer = el}
