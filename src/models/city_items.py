@@ -1,15 +1,25 @@
 import numpy as np
+import pandas as pd
 from enum import Enum
+from collections import Counter
 import geopy
+from references import common_cfg
 
 
 # Enum classes
 class AgeGroup(Enum):
+
+    """Store the age ranges that are relevant to the modelled public
+    services.
+    The start age is included, the end age is excluded.
+
+    """
+
     Newborn = (0, 3)
     Kinder = (3, 6)
-    ChildPrimary = (6, 10)
-    ChildMid = (10, 15)
-    ChildHigh = (15, 19)
+    ChildPrimary = (6, 11)
+    ChildMid = (11, 14)
+    ChildHigh = (14, 19)
     Young = (19, 25)
     Junior = (25, 35)
     Senior = (35, 50)
@@ -33,15 +43,37 @@ class AgeGroup(Enum):
         return [g for g in cls if g not in excluded]
 
     @classmethod
-    def classify_array(cls, array_in):
-        return [cls.find_age_group(y) for y in array_in]
-
-    @classmethod
     def find_age_group(cls, x):
+        """Assign an AgeGroup to input age. Raise if no one is found."""
         for g in cls.all():
             if g.comprehends(x):
                 return g
         raise 'Classes are not adjacent, failed to classify %s' % x
+
+    @classmethod
+    def classify_array(cls, array_in):
+        return [cls.find_age_group(y) for y in array_in]
+
+    @classmethod
+    def get_rebinning_operator(cls):
+        """Get a mapping from istat labels to available AgeGroups."""
+        # initalise output
+        rebinning_operator = pd.DataFrame(
+            0.0,
+            index=common_cfg.istat_age_dict.keys(),
+            columns=AgeGroup.all()
+            )
+
+        # fill it by row:
+        for istat_label in rebinning_operator.index:
+            ages = common_cfg.istat_age_dict[istat_label]
+            # aggregate ages for target AgeGroups
+            new_labels = Counter(AgeGroup.classify_array(ages))
+            weights = {k: v / len(ages) for k, v in new_labels.items()}
+            # update in place
+            rebinning_operator.loc[istat_label].update(pd.Series(weights))
+
+        return rebinning_operator
 
     @property
     def range(self):
@@ -91,7 +123,7 @@ class ServiceType(Enum):
                 'Farmacie',
                 'Min. Salute')
 
-    #UrbanGreen = (5,  # enum id
+    # UrbanGreen = (5,  # enum id
     #              ServiceArea.Environment,
     #              SummaryNorm.l2,
     #              AgeGroup.all(),

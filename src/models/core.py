@@ -255,23 +255,10 @@ class DemandFrame(pd.DataFrame):
         super().__init__()
         self.__dict__.update(df_input.copy().__dict__)
 
-        # prepare the AgeGroups cardinalities
-        groups_col = 'ageGroup'
-        people_by_sample_age = common_cfg.fill_sample_ages_in_cpa_columns(self)
-        data_by_group = people_by_sample_age.rename(
-            AgeGroup.find_age_group, axis='columns').T
-        # index is now given by AgeGroup items
-        data_by_group.index.name = groups_col
-        # extract to convert to categorical and groupby
-        data_by_group = data_by_group.reset_index()
-        data_by_group[groups_col] = \
-            data_by_group[groups_col].astype('category')
-        ages_by_section = data_by_group.groupby(groups_col).sum().T
-        self['PeopleTot'] = ages_by_section.sum(axis=1)
         # report all ages
         for col in self.OUTPUT_AGES:
-            self[col] = ages_by_section.get(
-                col, np.zeros_like(self.iloc[:, 0]))
+            if col not in self.columns:
+                self[col] = np.zeros_like(self.iloc[:, 0])
 
         # extract long and lat and build geopy locations
         self[common_cfg.coord_col_names[0]] = self['geometry'].apply(
@@ -301,23 +288,35 @@ class DemandFrame(pd.DataFrame):
             )
 
     def get_age_sample(self, age_group=None, n_sample=1000):
-
+        """Get a geolocalized sample of a specific age group, or sum them
+        all together and sample from the resulting distribution (default)"""
         if age_group is not None:
             coord, n_repeat = self.mapped_positions.align(
                 self.ages_frame[age_group], axis=0)
         else:
             coord, n_repeat = self.mapped_positions.align(
                 self.ages_frame.sum(axis=1), axis=0)
-        idx = np.repeat(range(coord.shape[0]), n_repeat)
+        idx = np.repeat(range(coord.shape[0]), n_repeat.astype(int))
         coord = coord[common_cfg.coord_col_names].iloc[idx]
         sample = coord.sample(int(n_sample)).as_matrix()
         return sample[:, 0], sample[:, 1]
 
     @classmethod
-    def create_from_city_name(cls, city_name):
+    def _parse_input_ages(cls, df_istat):
+        """Parse istat data to feed cls constructor"""
+        operator = AgeGroup.get_rebinning_operator()
+        rebinned_population = df_istat[operator.index.values].dot(
+            operator)
+        extended_data = pd.concat(
+            [rebinned_population[cls.OUTPUT_AGES], df_istat],
+            axis=1)
+        return extended_data
+
+    @classmethod
+    def create_from_raw_istat_data(cls, df_istat):
         """Constructor caller for DemandFrame"""
-        city_config = city_settings.get_city_config(city_name)
-        return cls(city_config.istat_cpa_data, b_duplicates_check=False)
+        parsed_df = cls._parse_input_ages(df_istat)
+        return cls(parsed_df, b_duplicates_check=False)
 
 
 class ServiceValues(dict):

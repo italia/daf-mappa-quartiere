@@ -50,6 +50,10 @@ sezione_col_name = 'SEZ2011'
 id_quartiere_col_name = 'IDquartiere'
 quartiere_desc_col_name = 'quartiere'
 
+# Mapping from column labels to relevant ages:
+istat_age_dict = {'P%i' % (i + 14):
+                      np.arange(5 * i, 5 * (i + 1)) for i in range(16)}
+
 # per quanto riguarda censimento abitazioni, da quello che ho visto
 # escluderei i campi A44, da PF a PF9, E27 per ora
 excluded_columns = ['A44', 'E27'] + ['PF%i' % (i + 1) for i in range(9)] + \
@@ -123,7 +127,7 @@ def fill_sample_ages_in_cpa_columns(frame_in):
     Extract a representative age for hardcoded
     age-band columns in standard istat data
     """
-    assert isinstance(frame_in, pd.DataFrame), 'Series expected in input'
+    assert isinstance(frame_in, pd.DataFrame), 'Dataframe expected in input'
     istat_age_dict = {'P%i' % (i + 14): 3 + 5 * i for i in range(16)}
     istat_ages = frame_in.loc[:, list(istat_age_dict.keys())].copy()
 
