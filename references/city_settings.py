@@ -24,11 +24,6 @@ class ModelCity(dict):
             self.istat_cpa_data.geometry)
         self.convhull = self.boundary.convex_hull
 
-    @property
-    def service_paths(self):
-        return {s: os.path.join(
-            common_cfg.processed_path, self[s]) for s in self.keys()}
-
 
 default_cities = [
     ModelCity(

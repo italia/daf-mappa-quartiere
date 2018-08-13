@@ -68,10 +68,11 @@ class UnitFactory:
 
         return propert_data, locations
 
-    def save_units_with_attendance_to_geojson(self, units_list):
+
+    def append_matching_units_attendance_data(self, units_list):
+
         """ Trim units to the ones of this loader type and
-        append attendance for matching id. Then export original unit data
-        completed with attendance in geojson format"""
+        append attendance for matching id."""
 
         data = gpd.GeoDataFrame(self._raw_data).copy()
         # convert bool in GeoDataFrame to str in order to save it
@@ -92,31 +93,22 @@ class UnitFactory:
                  'Affluenza': [u.attendance for u in compatible_units]})
             data = data.merge(unit_frame, on=self.id_col)
 
-        # save file and overwrite if it already exists
-        # TODO: this should be replaced with DAF API call to push data
-        try:
-            os.remove(self.output_path)
-        except OSError:
-            pass
-        data.to_file(self.output_path, driver='GeoJSON')
-
         return data
+
+
+    def save_units_with_attendance_to_geojson(self, units_list):
+        """Collect attendance data and call saving interface."""
+
+        data_to_save = self.append_matching_units_attendance_data(units_list)
+        # call writer
+        data_io.write_service_units_attendance(
+            self.model_city, self.servicetype, data_to_save)
+
+        return None
 
     @property
     def n_units(self):
         return self._raw_data.shape[0]
-
-    @property
-    def file_path(self):
-        # this refers to the hardcoded paths in references/city_settings.py
-        return self.model_city.service_paths[self.servicetype]
-
-    @property
-    def output_path(self):
-        _, fullfile = os.path.split(self.file_path)
-        filename, _ = os.path.splitext(fullfile)
-        return os.path.join(
-            common_cfg.units_output_path, filename + '.geojson')
 
     @staticmethod
     def get_factory(service_type):

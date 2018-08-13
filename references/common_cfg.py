@@ -61,7 +61,6 @@ excluded_columns = ['A44', 'E27'] + ['PF%i' % (i + 1) for i in range(9)] + \
 
 # Json/GeoJson path parameters
 output_path = os.path.join(project_root, 'data/output')
-units_output_path = os.path.join(project_root, 'data/output/units')
 viz_output_path = os.path.join(project_root, 'data/output')
 istat_layer_name = 'Istat'
 vitality_layer_name = 'Vitality'
