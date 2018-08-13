@@ -28,9 +28,13 @@ class UnitFactory:
     id_col = ''
 
     def __init__(self, model_city, sep_input=';', decimal_input=','):
+        """Load and cache the input data for the service units"""
+
         assert isinstance(
             model_city, city_settings.ModelCity), 'ModelCity expected'
         self.model_city = model_city
+
+        # TODO: this should be replaced with DAF API call to fetch data
         self._raw_data = pd.read_csv(
             self.file_path, sep=sep_input, decimal=decimal_input)
 
@@ -94,7 +98,7 @@ class UnitFactory:
             os.remove(self.output_path)
         except OSError:
             pass
-
+            # TODO: this should be replaced with DAF API call to push data
         data.to_file(self.output_path, driver='GeoJSON')
 
         return data
@@ -105,6 +109,7 @@ class UnitFactory:
 
     @property
     def file_path(self):
+        # this refers to the hardcoded paths in references/city_settings.py
         return self.model_city.service_paths[self.servicetype]
 
     @property

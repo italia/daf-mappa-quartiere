@@ -278,7 +278,7 @@ class ValuesPlotter:
 
 class JSONWriter:
 
-    """Handle IO output from model to JSON for visualization.
+    """Handle output from model to JSON for visualization.
 
     """
 
@@ -440,9 +440,12 @@ class JSONWriter:
         # update menu
         self._update_menu_in_default_path()
 
-        # build and write all areas
+        # build areas output
         areas_output = self.make_serviceareas_output()
+
+        # write it
         for name, data in areas_output.items():
+            # TODO: this should be replaced with DAF API call to push data
             filename = '%s_%s.json' % (self.city.name, name)
             with open(os.path.join(common_cfg.output_path,
                                    filename), 'w') as area_file:
