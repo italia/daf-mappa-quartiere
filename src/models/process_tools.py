@@ -32,7 +32,7 @@ class ModelRunner:
         assert isinstance(model_settings, dict), 'Dict needed for settings'
         assert isinstance(b_save_files, bool), 'Bool needed for b_save_files'
         if not cities:
-            cities = city_settings.default_cities
+            cities = city_settings.DEFAULT_CITIES
         assert all(isinstance(c, city_settings.ModelCity) for c in cities), \
             'Unexpected type in cities'
         if not services:

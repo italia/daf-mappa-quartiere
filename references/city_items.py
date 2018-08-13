@@ -1,10 +1,10 @@
+from collections import Counter
+from enum import Enum
 import numpy as np
 import pandas as pd
-from enum import Enum
-from collections import Counter
 import geopy
-from references import common_cfg
 
+from references import common_cfg
 
 # Enum classes
 class AgeGroup(Enum):
@@ -43,12 +43,12 @@ class AgeGroup(Enum):
         return [g for g in cls if g not in excluded]
 
     @classmethod
-    def find_age_group(cls, x):
+    def find_age_group(cls, input_age):
         """Assign an AgeGroup to input age. Raise if no one is found."""
-        for g in cls.all():
-            if g.comprehends(x):
-                return g
-        raise 'Classes are not adjacent, failed to classify %s' % x
+        for group in cls.all():
+            if group.comprehends(input_age):
+                return group
+        raise 'Classes are not adjacent, failed to classify %s' % input_age
 
     @classmethod
     def classify_array(cls, array_in):
@@ -158,9 +158,11 @@ class ServiceType(Enum):
 
 
 # test utility
-def get_random_pos(n):
-    out = list(map(geopy.Point, list(zip(np.round(
-        np.random.uniform(45.40, 45.50, n), 5),
-        np.round(np.random.uniform(9.1, 9.3, n), 5)
-    ))))
+def get_random_pos(n_positions):
+    out = list(map(
+        geopy.Point,
+        list(zip(
+            np.round(np.random.uniform(45.40, 45.50, n_positions), 5),
+            np.round(np.random.uniform(9.1, 9.3, n_positions), 5)))
+        ))
     return out

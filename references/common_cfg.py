@@ -1,10 +1,14 @@
+"""Module to store application-wide constants that are used both in offline
+data preprocessing and model evaluation."""
+
+import os
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
-import os
 from geopy import distance as geodist
 from geopy import Point as geoPoint
-import numpy as np
+
 
 from scipy.sparse.csgraph import connected_components
 
@@ -51,8 +55,8 @@ id_quartiere_col_name = 'IDquartiere'
 quartiere_desc_col_name = 'quartiere'
 
 # Mapping from column labels to relevant ages:
-istat_age_dict = {'P%i' % (i + 14):
-                      np.arange(5 * i, 5 * (i + 1)) for i in range(16)}
+istat_age_dict = {'P%i' % (i + 14): np.arange(5 * i, 5 * (i + 1))
+                  for i in range(16)}
 
 # per quanto riguarda censimento abitazioni, da quello che ho visto
 # escluderei i campi A44, da PF a PF9, E27 per ora
@@ -70,14 +74,14 @@ menu_group_template = {
     'type': "source",  # or 'layer'
     'url': '',
     'sourceId': '',  # id of the source geojson
-                'indicators': [   # list of different indicators
-                    {'category': '',
-                     'label': '',
-                     'id': '',
-                     'default': False,
-                     'data_source': '',
-                     }]
-}
+    'indicators': [{   # list of different indicators
+        'category': '',
+        'label': '',
+        'id': '',
+        'default': False,
+        'data_source': '',
+        }]
+    }
 
 # TPL parameters
 tpl_path = os.path.join(project_root, 'data/raw/tpl/')
@@ -90,7 +94,7 @@ tpl_route_type = {
     "5": "Cable car",
     "6": "Gondola, Suspended cable car",
     "7": "Funicular"
-}
+    }
 
 # Loading tools
 cached_metadata = pd.read_csv(os.path.join(
@@ -103,15 +107,16 @@ def detect_similar_locations(positions_list, tol=0.003):
     """
     n_positions = len(positions_list)
     test_dist = 10 * np.ones([n_positions] * 2)
-    for i in range(n_positions):
-        for j in np.arange(i + 1, n_positions):
-            test_dist[i, j] = geodist.great_circle(
-                positions_list[i], positions_list[j]).km
+    for i_pos in range(n_positions):
+        for j_pos in np.arange(i_pos + 1, n_positions):
+            test_dist[i_pos, j_pos] = geodist.great_circle(
+                positions_list[i_pos], positions_list[j_pos]).km
     graph_matrix = (test_dist < tol).astype(float)
     # find groups of positions that are close together
     _, labels = connected_components(graph_matrix, directed=False)
 
     return labels
+
 
 def get_istat_metadata():
     return cached_metadata
@@ -119,18 +124,6 @@ def get_istat_metadata():
 
 def get_istat_filelist():
     return [f for f in os.listdir(cpa_path) if f.startswith('R')]
-
-
-def fill_sample_ages_in_cpa_columns(frame_in):
-    """
-    Extract a representative age for hardcoded
-    age-band columns in standard istat data
-    """
-    assert isinstance(frame_in, pd.DataFrame), 'Dataframe expected in input'
-    istat_age_dict = {'P%i' % (i + 14): 3 + 5 * i for i in range(16)}
-    istat_ages = frame_in.loc[:, list(istat_age_dict.keys())].copy()
-
-    return istat_ages.rename(istat_age_dict, axis='columns')
 
 
 def df_to_gdf(input_df):
@@ -154,8 +147,8 @@ def csv_to_geojson(input_fp, output_fp):
                            compression='bz2',
                            sep=';',
                            encoding='utf-8')
-    geojson_data = (csv_data.pipe(df_to_gdf)
-                            .drop(['extra'], axis=1)
-                            .to_json())
+    geojson_data = (
+        csv_data.pipe(
+            df_to_gdf).drop(['extra'], axis=1).to_json())
     with open(output_fp, 'w') as geojson_file:
         geojson_file.write(geojson_data)

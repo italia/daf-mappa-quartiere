@@ -8,8 +8,8 @@ from references import data_io
 
 class ModelCity:
     """Stores all the initalised settings for a city in the application."""
-    def __init__(self,
-                 name, zones_path, zoom_center_tuple, available_services):
+    def __init__(self, name, zones_path, zoom_center_tuple,
+                 available_services):
 
         assert isinstance(available_services, list), 'List expected'
 
@@ -27,7 +27,7 @@ class ModelCity:
         self.convhull = self.boundary.convex_hull
 
 
-default_cities = [
+DEFAULT_CITIES = [
     ModelCity(
         'Milano',
         '',
@@ -56,30 +56,30 @@ default_cities = [
          ServiceType.Pharmacy]
         ),
     ModelCity(
-         'Firenze',
-         '',
-         (10, [11.2462600, 43.7792500]), # zoom level and center for d3
+        'Firenze',
+        '',
+        (10, [11.2462600, 43.7792500]), # zoom level and center for d3
         [ServiceType.School,
          ServiceType.Library,
          ServiceType.TransportStop,
          ServiceType.Pharmacy]
         ),
     ModelCity(
-         'Roma',
-         '',
-         (10, [12.49, 41.91]),  # zoom level and center for d3
-         [ServiceType.School,
-          ServiceType.Library,
-          ServiceType.TransportStop,
-          ServiceType.Pharmacy]
-         )
+        'Roma',
+        '',
+        (10, [12.49, 41.91]),  # zoom level and center for d3
+        [ServiceType.School,
+         ServiceType.Library,
+         ServiceType.TransportStop,
+         ServiceType.Pharmacy]
+        )
     ]
 
-city_names_list = [city.name for city in default_cities]
+CITY_NAMES_LIST = [city.name for city in DEFAULT_CITIES]
 
 
 def get_city_config(city_name):
     """Get default config for a given city name."""
-    settings = [c for c in default_cities if c.name == city_name]
+    settings = [c for c in DEFAULT_CITIES if c.name == city_name]
     assert len(settings) == 1, 'Error in recognising city'
     return settings[0]

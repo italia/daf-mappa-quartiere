@@ -577,7 +577,7 @@ class KPICalculator:
     census-section-based and position based KPIs"""
 
     def __init__(self, demand_frame, service_units, city_name):
-        assert city_name in city_settings.city_names_list,\
+        assert city_name in city_settings.CITY_NAMES_LIST,\
             'Unrecognized city name %s' % city_name
         assert isinstance(demand_frame, DemandFrame), 'Demand frame expected'
         assert all(
