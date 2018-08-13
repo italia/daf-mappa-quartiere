@@ -62,11 +62,11 @@ def fetch_istat_section_data(city):
 
 
 def write_service_units_attendance(city, service_type, data_to_save):
-    """Write provided data to geojson format."""
+    """Write provided unit attendance data to geojson format."""
 
     # TODO: replace hardcoding with API
     units_write_path = os.path.join(local_write_folder,
-                             'units', # units subfolder
+                             'units',  # define units subfolder
                              city.name + '_' + service_filenames_mapping[
                                  service_type] + '.geojson')
 
@@ -78,3 +78,7 @@ def write_service_units_attendance(city, service_type, data_to_save):
     data_to_save.to_file(units_write_path, driver='GeoJSON')
 
     return None
+
+
+def write_json_kpi_file(city, service_type, data_to_save):
+    """Write provided KPI data to json format."""

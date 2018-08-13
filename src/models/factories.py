@@ -1,5 +1,3 @@
-import os
-import os.path
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -124,11 +122,10 @@ class UnitFactory:
 
     @classmethod
     def make_loaders_for_city(cls, model_city):
-        """Get all the available factories for a city"""
-        loaders_dict = {}
-        for service_type in model_city:
-            loaders_dict[service_type.label] = cls.get_factory(
-                service_type)(model_city)
+        """Get all the available factories for a city."""
+        loaders_dict = {
+            s.label: cls.get_factory(s)(model_city)
+            for s in model_city.services}
         return loaders_dict
 
 
