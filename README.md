@@ -9,7 +9,7 @@ Currently under development.
 ## Files
 * `/data` contains the source files. _raw_ and _interim_ are used for preprocessing. _processed_ contains the standardized data as it is loaded into the model and _output_ contains the model outputs in the format needed for the visualization 
 * `/notebooks` has the Jupyter notebooks that can be used to interactively run the data pipeline steps
-* `/references` contains the model-wide settings that are used in the pipeline, such as paths and available cities details
+* `/references` contains the application-wide settings that are used in the pipeline, such as paths and available cities details
 * `/src/models` has the python libraries to obtain the neighbourhood-level KPI
 * `/src/visualization` has the js libraries of the front-end visualization
 * `/src/testing` has the testing modules for the codebase and the processed data
@@ -25,7 +25,7 @@ In a future version, data input and output could be integrated in DAF (e.g. via 
 To do so, the following changes can be made:
 * *input*: files currently in `/data/output` should be made available in DAF and the _UnitFactory_ class in `src/models/factories.py` has to be updated to fetch the data via API rather than reading from local file. 
 Current file specifications for each city are defined in `references/city_settings.py`: this could be made redundant once API calls are available.
-* *output*: the _JSONWriter_ class currently saves json output files locally; it should be updated to push the data to the API and update the data server.
+* *output*: the _JSONWriter_ class currently saves KPI output files in JSON format locally; it should be updated to push the data to the API. The _UnitFactory_ has a method to export unit geojson with attendance estimates: once the unit geojsons are online, a specific API call to update attendance estimate could be implemented.
 
 ## Use
 
