@@ -67,7 +67,7 @@ class UnitFactory:
         return propert_data, locations
 
 
-    def append_matching_units_attendance_data(self, units_list):
+    def append_matching_units_attendance(self, units_list):
 
         """ Trim units to the ones of this loader type and
         append attendance for matching id."""
@@ -97,7 +97,7 @@ class UnitFactory:
     def save_units_with_attendance_to_geojson(self, units_list):
         """Collect attendance data and call saving interface."""
 
-        data_to_save = self.append_matching_units_attendance_data(units_list)
+        data_to_save = self.append_matching_units_attendance(units_list)
         # call writer
         data_io.write_service_units_attendance(
             self.model_city, self.servicetype, data_to_save)
@@ -278,7 +278,7 @@ class TransportStopFactory(UnitFactory):
                            2: 'Rail',
                            3: 'Bus',
                            7: 'Funicular'
-                           }
+                          }
         assert all(propert_data[route_type_col].isin(gtfs_types_dict.keys())),\
             'Unexpected route type'
         propert_data['routeDesc'] = \
@@ -291,7 +291,7 @@ class TransportStopFactory(UnitFactory):
                              2: 2 * mean_radius,  # rail
                              3: mean_radius,  # bus
                              7: 2 * mean_radius  # funicular
-                             }
+                            }
         thresholds_dict = {t: None for t in lengthscales_dict}
 
         unit_list = []

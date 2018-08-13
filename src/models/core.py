@@ -1,3 +1,6 @@
+"""Define the core classes that process the data
+to get geolocalised KPI and attendance estimates"""
+
 from time import time
 import functools
 import warnings
@@ -389,8 +392,9 @@ class ServiceEvaluator:
         out = {}
         for service_type, service_units in self.units_tree.items():
             if service_units:
-                out[service_type] = pd.DataFrame(np.array([
-                    [u.attendance, u.capacity] for u in service_units]),
+                out[service_type] = pd.DataFrame(
+                    np.array(
+                        [[u.attendance, u.capacity] for u in service_units]),
                     columns=['Attendance', 'Capacity'])
             else:
                 continue  # no units for this service type, do not create key
@@ -423,9 +427,8 @@ class ServiceEvaluator:
             start = time()
             # compute a lower bound for pairwise distances
             # if this is larger than threshold, set the interaction to zero.
-            distance_matrix = cdist(
-                service_coord_array, lonlat_targets) * min(
-                common_cfg.approx_tile_deg_to_km)
+            distance_matrix = cdist(service_coord_array, lonlat_targets) * \
+                              min(common_cfg.approx_tile_deg_to_km)
 
             print(service_type,
                   'Approx distance matrix in %.4f' % (time() - start))
@@ -660,7 +663,7 @@ class KPICalculator:
                     common_cfg.id_quartiere_col_name).min() - tol,
                 values_at_locations.groupby(
                     common_cfg.id_quartiere_col_name).max() + tol
-                          )
+                )
             # sum weighted fractions by neighbourhood
             weighted_sums = self.weighted_values[service].groupby(
                 common_cfg.id_quartiere_col_name).sum()
@@ -671,15 +674,15 @@ class KPICalculator:
                 service.demand_ages)] = np.nan
             self.quartiere_kpi[service] = (
                 weighted_sums / self.ages_totals).reindex(
-                columns=DemandFrame.OUTPUT_AGES, copy=False)
+                    columns=DemandFrame.OUTPUT_AGES, copy=False)
 
             # check that the weighted mean lies
             # between min and max in the neighbourhood
             for col in self.quartiere_kpi[service].columns:
                 b_good = (self.quartiere_kpi[service][col].between(
                     check_range[0][col],
-                    check_range[1][col]) | self.quartiere_kpi[service][
-                    col].isnull())
+                    check_range[1][col]) | self.quartiere_kpi[
+                        service][col].isnull())
                 assert all(b_good),\
                     ''' -- Unexpected error in mean computation:
                             Service: %s,
