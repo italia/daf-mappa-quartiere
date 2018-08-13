@@ -94,11 +94,11 @@ class UnitFactory:
             data = data.merge(unit_frame, on=self.id_col)
 
         # save file and overwrite if it already exists
+        # TODO: this should be replaced with DAF API call to push data
         try:
             os.remove(self.output_path)
         except OSError:
             pass
-            # TODO: this should be replaced with DAF API call to push data
         data.to_file(self.output_path, driver='GeoJSON')
 
         return data
