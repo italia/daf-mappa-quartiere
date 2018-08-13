@@ -1,17 +1,39 @@
 """Module to perform read and write operations."""
 import geopandas as gpd
+import pandas as pd
 import numpy as np
 import os
-from references import common_cfg
 
-# from references.city_items import ServiceType
+from references import common_cfg
+from references.city_items import ServiceType
 
 local_load_folder = common_cfg.processed_path
 
+# TODO: when files are available in DAF, server addresses can go here
+service_filenames_mapping = {
+    ServiceType.School: 'scuole.csv',
+    ServiceType.Library: 'biblioteche.csv',
+    ServiceType.TransportStop: 'TPL.csv',
+    ServiceType.Pharmacy: 'farmacie.csv',
+    }
+
+csv_read_settings = {'sep': ';', 'decimal': ','}
+
 
 def fetch_service_units(service_type, city):
-    #local_load_folder
-    pass
+    """Fetch the provided type service units data for the selected city."""
+
+    load_path = os.path.join(local_load_folder, city.name + '_' +
+                             service_filenames_mapping[service_type])
+
+    if service_type in [ServiceType.Pharmacy, ServiceType.TransportStop]:
+        # temporary bespoke setting
+        service_df = pd.read_csv(load_path, sep=';', decimal='.')
+    else:
+        # default
+        service_df = pd.read_csv(load_path, **csv_read_settings)
+
+    return service_df
 
 
 def fetch_istat_section_data(city):

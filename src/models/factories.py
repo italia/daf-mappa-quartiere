@@ -7,7 +7,7 @@ import geopy
 import geopy.distance
 import shapely
 
-from references import city_settings, common_cfg
+from references import city_settings, common_cfg, data_io
 
 # enum classes for the model
 from references.city_items import AgeGroup, ServiceType
@@ -27,16 +27,15 @@ class UnitFactory:
     servicetype = None
     id_col = ''
 
-    def __init__(self, model_city, sep_input=';', decimal_input=','):
+    def __init__(self, model_city):
         """Load and cache the input data for the service units"""
 
         assert isinstance(
             model_city, city_settings.ModelCity), 'ModelCity expected'
         self.model_city = model_city
 
-        # TODO: this should be replaced with DAF API call to fetch data
-        self._raw_data = pd.read_csv(
-            self.file_path, sep=sep_input, decimal=decimal_input)
+        self._raw_data = data_io.fetch_service_units(
+            self.servicetype, self.model_city)
 
     def extract_locations(self):
         """Preprocess the location data"""
@@ -274,9 +273,6 @@ class TransportStopFactory(UnitFactory):
     type_col = 'routeDesc'
     id_col = 'stopCode'
 
-    def __init__(self, model_city):
-        super().__init__(model_city, decimal_input='.')
-
     def load(self, mean_radius):
 
         assert mean_radius, 'Please provide a reference radius for stops'
@@ -342,9 +338,6 @@ class PharmacyFactory(UnitFactory):
     servicetype = ServiceType.Pharmacy
     name_col = 'CODICEIDENTIFICATIVOFARMACIA'
     id_col = name_col
-
-    def __init__(self, model_city):
-        super().__init__(model_city, decimal_input='.')
 
     def load(self, mean_radius=None):
         assert mean_radius, 'Please provide a reference radius for pharmacies'
