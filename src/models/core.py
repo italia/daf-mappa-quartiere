@@ -14,7 +14,7 @@ from scipy.spatial.distance import cdist
 
 from references import common_cfg, istat_kpi, city_settings
 # enum classes for the model
-from src.models.city_items import AgeGroup, ServiceType
+from references.city_items import AgeGroup, ServiceType
 
 GaussianKernel = gaussian_process.kernels.RBF
 

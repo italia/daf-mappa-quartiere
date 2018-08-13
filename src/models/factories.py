@@ -10,7 +10,7 @@ import shapely
 from references import city_settings, common_cfg
 
 # enum classes for the model
-from src.models.city_items import AgeGroup, ServiceType
+from references.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceUnit
 
 

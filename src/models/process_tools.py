@@ -12,7 +12,7 @@ import shapely
 from scipy.interpolate import griddata
 
 from references import common_cfg, city_settings
-from src.models.city_items import AgeGroup, ServiceType
+from references.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceValues, MappedPositionsFrame, \
     DemandFrame, KPICalculator
 from src.models.factories import UnitFactory

@@ -12,7 +12,7 @@ if root_dir not in sys.path:
     sys.path.append(root_dir)
 
 from references import common_cfg, city_settings
-from src.models.city_items import AgeGroup, ServiceType
+from references.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceUnit, ServiceEvaluator
 
 mock_service_type = next(ServiceType.__iter__())

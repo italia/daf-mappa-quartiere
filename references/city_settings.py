@@ -2,7 +2,7 @@ import os
 import geopandas as gpd
 import shapely
 import numpy as np
-from src.models.city_items import ServiceType
+from references.city_items import ServiceType
 from references import common_cfg
 
 

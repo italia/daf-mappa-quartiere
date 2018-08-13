@@ -2,7 +2,7 @@
 print('\n Initialising MappaQuartiere model pipeline...')
 
 from references import common_cfg
-from src.models.city_items import ServiceType
+from references.city_items import ServiceType
 from src.models.process_tools import ModelRunner
 
 if __name__ == '__main__':
