@@ -97,7 +97,7 @@ class ModelRunner:
         # save attendance if set so
         for service_type in self.services:
             name = service_type.label
-            if name in loaders:
+            if self.b_save_files and name in loaders:
                 loaders[name].save_units_with_attendance_to_geojson(
                     calculator.evaluator.units_tree[service_type])
 
@@ -105,8 +105,9 @@ class ModelRunner:
         calculator.compute_kpi_for_localized_services()
         calculator.compute_kpi_for_istat_values()
 
-        # STEP 4: write output JSONs:
-        JSONWriter(calculator).write_all_files()
+        if self.b_save_files:
+            # STEP 4: write output JSONs:
+            JSONWriter(calculator).write_all_files()
 
         return calculator
 
