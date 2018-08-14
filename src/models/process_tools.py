@@ -299,6 +299,16 @@ class JSONWriter:
             area = serv_type.service_area
             self.areas_tree[area] = [serv_type] + self.areas_tree.get(area, [])
 
+    @property
+    def null_areas(self):
+        out = []
+        for area, services in self.areas_tree.items():
+            null_layer_flags = [
+                self.layers_data[s].isnull().all().all() for s in services]
+            if all(null_layer_flags):
+                out.append(area)
+        return out
+
     def make_menu(self):
 
         def make_output_menu(city, services, istat_layers=None):
@@ -373,7 +383,7 @@ class JSONWriter:
             )
         return json_list
 
-    def make_serviceareas_output(self, precision=4):
+    def make_serviceareas_output(self, precision=4, b_drop_null_areas=True):
 
         out = dict()
         # tool to format frame data that does not depend on age
@@ -398,8 +408,11 @@ class JSONWriter:
         out[common_cfg.vitality_layer_name] = prepare_frame_data(
             self.vitality_data)
 
-        # make layers
         for area, layers in self.areas_tree.items():
+            # skip area if it is null and the flag is active
+            if b_drop_null_areas and area in self.null_areas:
+                continue
+
             layer_list = []
             for service in layers:
                 data = self.layers_data[service].round(precision)
@@ -422,11 +435,12 @@ class JSONWriter:
 
     def _get_updated_menu_string(self):
         """Load current menu from json and replace the calculator city info
-        with new data"""
+        with new data."""
         current_menu = data_io.fetch_current_menu()
-
         other_items = [v for v in current_menu if v['city'] != self.city.name]
         updated_menu = other_items + self.make_menu()
+        # sort it to keep a consistent file standard
+        updated_menu.sort(key=lambda elem: elem['city'])
 
         return self._convert_to_json_string(updated_menu)
 
