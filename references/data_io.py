@@ -8,8 +8,10 @@ import geopandas as gpd
 from references import common_cfg
 from references.city_items import ServiceType
 
-LOCAL_LOAD_FOLDER = common_cfg.processed_path
-LOCAL_WRITE_FOLDER = common_cfg.output_path
+# expecting to be in root/references
+PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+LOCAL_LOAD_FOLDER = os.path.join(PROJECT_ROOT, 'data/processed/')
+LOCAL_WRITE_FOLDER = os.path.join(PROJECT_ROOT, 'data/output')
 # save menu alongside other files
 LOCAL_MENU_PATH = os.path.join(LOCAL_WRITE_FOLDER, 'menu.json')
 

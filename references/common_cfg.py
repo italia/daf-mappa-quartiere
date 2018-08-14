@@ -1,24 +1,14 @@
 """Module to store application-wide constants that are used both in offline
 data preprocessing and model evaluation."""
 
-import os
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+
 from shapely.geometry import Point
 from geopy import distance as geodist
 from geopy import Point as geoPoint
-
-
 from scipy.sparse.csgraph import connected_components
-
-project_root = os.path.dirname(
-    os.path.dirname(__file__))  # expected to be in root/references
-
-processed_path = os.path.join(project_root, 'data/processed/')
-
-# cities included in the project
-city_list = ['Milano', 'Torino', 'Roma', 'Bari', 'Firenze']
 
 # Location conventions
 coord_col_names = ['Long', 'Lat']
@@ -29,6 +19,7 @@ positions_col = 'Positions'
 # interaction values below this level will be set to 0
 kernel_value_cutoff = 1e-4
 kernel_start_zero_guess = 1  # initial input for kernel in solving
+
 # Clip level for demand correction:
 # maximum multiple that can be applied in correcting service level
 demand_correction_clip = 1.4
@@ -48,8 +39,6 @@ approx_tile_deg_to_km = 1 / np.array(
      km_step.destination(geoPoint(center), 0).latitude - center[0]])
 
 # Istat parameters
-cpa_path = os.path.join(
-    project_root, 'data/raw/istat/dati-cpa_2011/Sezioni di Censimento/')
 sezione_col_name = 'SEZ2011'
 id_quartiere_col_name = 'IDquartiere'
 quartiere_desc_col_name = 'quartiere'
@@ -63,9 +52,7 @@ istat_age_dict = {'P%i' % (i + 14): np.arange(5 * i, 5 * (i + 1))
 excluded_columns = ['A44', 'E27'] + ['PF%i' % (i + 1) for i in range(9)] + \
                    ['SEZ', 'SHAPE_LEN'] + coord_col_names
 
-# Json/GeoJson path parameters
-output_path = os.path.join(project_root, 'data/output')
-viz_output_path = os.path.join(project_root, 'data/output')
+# Json/GeoJson parameters
 istat_layer_name = 'Istat'
 vitality_layer_name = 'Vitality'
 menu_group_template = {
@@ -84,7 +71,6 @@ menu_group_template = {
     }
 
 # TPL parameters
-tpl_path = os.path.join(project_root, 'data/raw/tpl/')
 tpl_route_type = {
     "0": "Tram, Streetcar, Light rail",
     "1": "Subway, Metro",
@@ -96,9 +82,6 @@ tpl_route_type = {
     "7": "Funicular"
     }
 
-# Loading tools
-cached_metadata = pd.read_csv(os.path.join(
-    cpa_path, 'tracciato_2011_sezioni.csv'), sep=';', encoding='cp1252')
 
 def detect_similar_locations(positions_list, tol=0.003):
     """This function flags the groups of locations that are within a
@@ -116,14 +99,6 @@ def detect_similar_locations(positions_list, tol=0.003):
     _, labels = connected_components(graph_matrix, directed=False)
 
     return labels
-
-
-def get_istat_metadata():
-    return cached_metadata
-
-
-def get_istat_filelist():
-    return [f for f in os.listdir(cpa_path) if f.startswith('R')]
 
 
 def df_to_gdf(input_df):
