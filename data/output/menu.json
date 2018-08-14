@@ -1,120 +1,6 @@
 [
     {
         "center" : [
-            7.191383,
-            46
-        ],
-        "city" : "Torino",
-        "id" : "Torino_quartieri",
-        "indicators" : [
-            {
-                "category" : "",
-                "data_source" : "",
-                "default" : false,
-                "id" : "",
-                "label" : ""
-            }
-        ],
-        "joinField" : "IDquartiere",
-        "sourceId" : "",
-        "type" : "source",
-        "url" : "",
-        "zoom" : 12
-    },
-    {
-        "city" : "Torino",
-        "id" : "Torino_EducazioneCultura",
-        "indicators" : [
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIBACT",
-                "id" : "Library",
-                "label" : "Biblioteche"
-            },
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Torino",
-        "id" : "Torino_Trasporti",
-        "indicators" : [
-            {
-                "category" : "Trasporti",
-                "data_source" : "GTFS Comuni",
-                "id" : "TransportStop",
-                "label" : "Fermate TPL"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Torino",
-        "id" : "Torino_Ambiente",
-        "indicators" : [
-            {
-                "category" : "Ambiente",
-                "data_source" : "Open Data Comuni",
-                "id" : "UrbanGreen",
-                "label" : "Aree Verdi"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Torino",
-        "id" : "Torino_Salute",
-        "indicators" : [
-            {
-                "category" : "Salute",
-                "data_source" : "Min. Salute",
-                "id" : "Pharmacy",
-                "label" : "Farmacie"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Torino",
-        "id" : "Torino_Vitalita",
-        "indicators" : [
-            {
-                "category" : "Vitalita",
-                "data_source" : "ISTAT",
-                "id" : "tipo_di_alloggi",
-                "label" : "tipo_di_alloggi"
-            },
-            {
-                "category" : "Vitalita",
-                "data_source" : "ISTAT",
-                "id" : "densita_occupati",
-                "label" : "densita_occupati"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "center" : [
             16.871871,
             41.117143
         ],
@@ -137,51 +23,19 @@
     },
     {
         "city" : "Bari",
-        "id" : "Bari_Ambiente",
-        "indicators" : [
-            {
-                "category" : "Ambiente",
-                "data_source" : "Open Data Comuni",
-                "id" : "UrbanGreen",
-                "label" : "Aree Verdi"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Bari_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Bari",
-        "id" : "Bari_Trasporti",
-        "indicators" : [
-            {
-                "category" : "Trasporti",
-                "data_source" : "GTFS Comuni",
-                "id" : "TransportStop",
-                "label" : "Fermate TPL"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Bari_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Bari",
         "id" : "Bari_EducazioneCultura",
         "indicators" : [
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIBACT",
-                "id" : "Library",
-                "label" : "Biblioteche"
-            },
             {
                 "category" : "EducazioneCultura",
                 "data_source" : "MIUR",
                 "id" : "School",
                 "label" : "Scuole"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
             }
         ],
         "sourceId" : "",
@@ -207,6 +61,22 @@
     },
     {
         "city" : "Bari",
+        "id" : "Bari_Trasporti",
+        "indicators" : [
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Bari_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Bari",
         "id" : "Bari_Vitalita",
         "indicators" : [
             {
@@ -214,6 +84,12 @@
                 "data_source" : "ISTAT",
                 "id" : "tipo_di_alloggi",
                 "label" : "tipo_di_alloggi"
+            },
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "densita_occupati",
+                "label" : "densita_occupati"
             }
         ],
         "sourceId" : "",
@@ -245,13 +121,19 @@
     },
     {
         "city" : "Firenze",
-        "id" : "Firenze_Trasporti",
+        "id" : "Firenze_EducazioneCultura",
         "indicators" : [
             {
-                "category" : "Trasporti",
-                "data_source" : "GTFS Comuni",
-                "id" : "TransportStop",
-                "label" : "Fermate TPL"
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
             }
         ],
         "sourceId" : "",
@@ -277,35 +159,13 @@
     },
     {
         "city" : "Firenze",
-        "id" : "Firenze_EducazioneCultura",
+        "id" : "Firenze_Trasporti",
         "indicators" : [
             {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            },
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIBACT",
-                "id" : "Library",
-                "label" : "Biblioteche"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Firenze_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Firenze",
-        "id" : "Firenze_Ambiente",
-        "indicators" : [
-            {
-                "category" : "Ambiente",
-                "data_source" : "Open Data Comuni",
-                "id" : "UrbanGreen",
-                "label" : "Aree Verdi"
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
             }
         ],
         "sourceId" : "",
@@ -322,6 +182,12 @@
                 "data_source" : "ISTAT",
                 "id" : "tipo_di_alloggi",
                 "label" : "tipo_di_alloggi"
+            },
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "densita_occupati",
+                "label" : "densita_occupati"
             }
         ],
         "sourceId" : "",
@@ -353,6 +219,28 @@
     },
     {
         "city" : "Milano",
+        "id" : "Milano_EducazioneCultura",
+        "indicators" : [
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
         "id" : "Milano_Salute",
         "indicators" : [
             {
@@ -376,44 +264,6 @@
                 "data_source" : "GTFS Comuni",
                 "id" : "TransportStop",
                 "label" : "Fermate TPL"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_EducazioneCultura",
-        "indicators" : [
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIBACT",
-                "id" : "Library",
-                "label" : "Biblioteche"
-            },
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_Ambiente",
-        "indicators" : [
-            {
-                "category" : "Ambiente",
-                "data_source" : "Open Data Comuni",
-                "id" : "UrbanGreen",
-                "label" : "Aree Verdi"
             }
         ],
         "sourceId" : "",
@@ -467,35 +317,19 @@
     },
     {
         "city" : "Roma",
-        "id" : "Roma_Trasporti",
-        "indicators" : [
-            {
-                "category" : "Trasporti",
-                "data_source" : "GTFS Comuni",
-                "id" : "TransportStop",
-                "label" : "Fermate TPL"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Roma_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Roma",
         "id" : "Roma_EducazioneCultura",
         "indicators" : [
-            {
-                "category" : "EducazioneCultura",
-                "data_source" : "MIBACT",
-                "id" : "Library",
-                "label" : "Biblioteche"
-            },
             {
                 "category" : "EducazioneCultura",
                 "data_source" : "MIUR",
                 "id" : "School",
                 "label" : "Scuole"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
             }
         ],
         "sourceId" : "",
@@ -512,6 +346,22 @@
                 "data_source" : "Min. Salute",
                 "id" : "Pharmacy",
                 "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Roma_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Roma",
+        "id" : "Roma_Trasporti",
+        "indicators" : [
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
             }
         ],
         "sourceId" : "",
@@ -538,6 +388,104 @@
         ],
         "sourceId" : "",
         "source_id" : "Roma_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "center" : [
+            7.191383,
+            46
+        ],
+        "city" : "Torino",
+        "id" : "Torino_quartieri",
+        "indicators" : [
+            {
+                "category" : "",
+                "data_source" : "",
+                "default" : false,
+                "id" : "",
+                "label" : ""
+            }
+        ],
+        "joinField" : "IDquartiere",
+        "sourceId" : "",
+        "type" : "source",
+        "url" : "",
+        "zoom" : 12
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_EducazioneCultura",
+        "indicators" : [
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
+            },
+            {
+                "category" : "EducazioneCultura",
+                "data_source" : "MIBACT",
+                "id" : "Library",
+                "label" : "Biblioteche"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Trasporti",
+        "indicators" : [
+            {
+                "category" : "Trasporti",
+                "data_source" : "GTFS Comuni",
+                "id" : "TransportStop",
+                "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Vitalita",
+        "indicators" : [
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "tipo_di_alloggi",
+                "label" : "tipo_di_alloggi"
+            },
+            {
+                "category" : "Vitalita",
+                "data_source" : "ISTAT",
+                "id" : "densita_occupati",
+                "label" : "densita_occupati"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
         "type" : "layer",
         "url" : ""
     }
