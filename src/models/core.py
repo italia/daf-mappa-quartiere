@@ -335,7 +335,7 @@ class ServiceValues(dict):
 
         # initialise for all service types
         super().__init__(
-            {service: pd.DataFrame(0.0, index=mapped_positions.index,
+            {service: pd.DataFrame(np.nan, index=mapped_positions.index,
                                    columns=DemandFrame.OUTPUT_AGES)
              for service in ServiceType})
 
@@ -665,8 +665,10 @@ class KPICalculator:
                     common_cfg.id_quartiere_col_name).max() + tol
                 )
             # sum weighted fractions by neighbourhood
+            # if all nans, report NaN (min_count setting)
             weighted_sums = self.weighted_values[service].groupby(
-                common_cfg.id_quartiere_col_name).sum()
+                common_cfg.id_quartiere_col_name).sum(min_count=1)
+
             # set to NaN value the age groups that have no people or there is
             #  no demand for the service
             weighted_sums[self.ages_totals == 0] = np.nan
