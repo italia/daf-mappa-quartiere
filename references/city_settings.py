@@ -1,104 +1,85 @@
-import os
-import geopandas as gpd
+"""Module to store all the city-specific settings for the application."""
+
 import shapely
-import numpy as np
-from src.models.city_items import ServiceType
-from references import common_cfg
+
+from references.city_items import ServiceType
+from references import data_io
 
 
-class ModelCity(dict):
-    load_folder = common_cfg.processed_path
+class ModelCity:
+    """Stores all the initalised settings for a city in the application."""
+    def __init__(self, name, zones_path, zoom_center_tuple,
+                 available_services):
 
-    def __init__(self,
-                 name, zones_path, zoom_center_tuple, service_layers_dict):
+        assert isinstance(available_services, list), 'List expected'
+
         self.name = name
         self.source = zones_path
         self.zoom_center = zoom_center_tuple
-        self.istat_cpa_data = self._get_istat_cpa_data()
+        self.services = available_services
+
+        # load istat data
+        self.istat_cpa_data = data_io.fetch_istat_section_data(self)
+
         # precompute city boundary
         self.boundary = shapely.ops.cascaded_union(
             self.istat_cpa_data.geometry)
         self.convhull = self.boundary.convex_hull
 
-        super().__init__(service_layers_dict)
 
-    def _get_istat_cpa_data(self):
-        # hardcoded filename standard
-        loaded = gpd.read_file(os.path.join(
-            self.load_folder, self.name + '_sezioni.geojson'))
-
-        # check coordinate system (we use epsg 4326)
-        assert loaded.crs['init'] == 'epsg:4326',\
-            'Please make sure the input coordinate ref system is epsg:4326'
-        assert {common_cfg.sezione_col_name,
-                common_cfg.id_quartiere_col_name} <= set(loaded.columns),\
-            'Missing expected standard columns for city %s' % self.name
-
-        # cast sezione ID as int
-        loaded[common_cfg.sezione_col_name] = \
-            loaded[common_cfg.sezione_col_name].astype(np.int64)
-
-        return loaded.set_index(common_cfg.sezione_col_name)
-
-    @property
-    def service_paths(self):
-        return {s: os.path.join(
-            self.load_folder, self[s]) for s in self.keys()}
-
-
-default_cities = [
+DEFAULT_CITIES = [
     ModelCity(
         'Milano',
         '',
         (11, [9.191383, 45.464211]),  # zoom level and center for d3
-        {ServiceType.School: 'Milano_scuole.csv',
-         ServiceType.Library: 'Milano_biblioteche.csv',
-         ServiceType.TransportStop: 'Milano_TPL.csv',
-         ServiceType.Pharmacy: 'Milano_farmacie.csv',
-         }),
+        [ServiceType.School,
+         ServiceType.Library,
+         ServiceType.TransportStop,
+         ServiceType.Pharmacy]
+        ),
     ModelCity(
         'Torino',
         '',
         (12, [7.191383, 46]),  # zoom level and center for d3
-        {ServiceType.School: 'Torino_scuole.csv',
-         ServiceType.Library: 'Torino_biblioteche.csv',
-         ServiceType.TransportStop: 'Torino_TPL.csv',
-         ServiceType.Pharmacy: 'Torino_farmacie.csv',
-         }),
+        [ServiceType.School,
+         ServiceType.Library,
+         ServiceType.TransportStop,
+         ServiceType.Pharmacy]
+        ),
     ModelCity(
         'Bari',
         '',
         (10, [16.871871, 41.117143]),  # zoom level and center for d3
-        {ServiceType.School: 'Bari_scuole.csv',
-         ServiceType.Library: 'Bari_biblioteche.csv',
-         #ServiceType.TransportStop: 'Bari_TPL.csv',
-         ServiceType.Pharmacy: 'Bari_farmacie.csv',
-         }),
+        [ServiceType.School,
+         ServiceType.Library,
+         #ServiceType.TransportStop,
+         ServiceType.Pharmacy]
+        ),
     ModelCity(
-         'Firenze',
-         '',
-         (10, [11.2462600, 43.7792500]),  # zoom level and center for d3
-         {ServiceType.School: 'Firenze_scuole.csv',
-          ServiceType.Library: 'Firenze_biblioteche.csv',
-          ServiceType.TransportStop: 'Firenze_TPL.csv',
-          ServiceType.Pharmacy: 'Firenze_farmacie.csv',
-          }),
+        'Firenze',
+        '',
+        (10, [11.2462600, 43.7792500]), # zoom level and center for d3
+        [ServiceType.School,
+         ServiceType.Library,
+         ServiceType.TransportStop,
+         ServiceType.Pharmacy]
+        ),
     ModelCity(
-         'Roma',
-         '',
-         (10, [12.49, 41.91]),  # zoom level and center for d3
-         {ServiceType.School: 'Roma_scuole.csv',
-          ServiceType.Library: 'Roma_biblioteche.csv',
-          ServiceType.TransportStop: 'Roma_TPL.csv',
-          ServiceType.Pharmacy: 'Roma_farmacie.csv',
-          })
-
+        'Roma',
+        '',
+        (10, [12.49, 41.91]),  # zoom level and center for d3
+        [ServiceType.School,
+         ServiceType.Library,
+         ServiceType.TransportStop,
+         ServiceType.Pharmacy]
+        )
     ]
 
-city_names_list = [city.name for city in default_cities]
+CITY_NAMES_LIST = [city.name for city in DEFAULT_CITIES]
 
 
 def get_city_config(city_name):
-    settings = [c for c in default_cities if c.name == city_name]
+    """Get default config for a given city name."""
+    settings = [c for c in DEFAULT_CITIES if c.name == city_name]
     assert len(settings) == 1, 'Error in recognising city'
     return settings[0]

@@ -1,5 +1,3 @@
-import os
-import os.path
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -7,10 +5,10 @@ import geopy
 import geopy.distance
 import shapely
 
-from references import city_settings, common_cfg
+from references import city_settings, common_cfg, data_io
 
 # enum classes for the model
-from src.models.city_items import AgeGroup, ServiceType
+from references.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceUnit
 
 
@@ -27,16 +25,15 @@ class UnitFactory:
     servicetype = None
     id_col = ''
 
-    def __init__(self, model_city, sep_input=';', decimal_input=','):
+    def __init__(self, model_city):
         """Load and cache the input data for the service units"""
 
         assert isinstance(
             model_city, city_settings.ModelCity), 'ModelCity expected'
         self.model_city = model_city
 
-        # TODO: this should be replaced with DAF API call to fetch data
-        self._raw_data = pd.read_csv(
-            self.file_path, sep=sep_input, decimal=decimal_input)
+        self._raw_data = data_io.fetch_service_units(
+            self.servicetype, self.model_city)
 
     def extract_locations(self):
         """Preprocess the location data"""
@@ -69,10 +66,11 @@ class UnitFactory:
 
         return propert_data, locations
 
-    def save_units_with_attendance_to_geojson(self, units_list):
+
+    def append_matching_units_attendance(self, units_list):
+
         """ Trim units to the ones of this loader type and
-        append attendance for matching id. Then export original unit data
-        completed with attendance in geojson format"""
+        append attendance for matching id."""
 
         data = gpd.GeoDataFrame(self._raw_data).copy()
         # convert bool in GeoDataFrame to str in order to save it
@@ -93,31 +91,22 @@ class UnitFactory:
                  'Affluenza': [u.attendance for u in compatible_units]})
             data = data.merge(unit_frame, on=self.id_col)
 
-        # save file and overwrite if it already exists
-        # TODO: this should be replaced with DAF API call to push data
-        try:
-            os.remove(self.output_path)
-        except OSError:
-            pass
-        data.to_file(self.output_path, driver='GeoJSON')
-
         return data
+
+
+    def save_units_with_attendance_to_geojson(self, units_list):
+        """Collect attendance data and call saving interface."""
+
+        data_to_save = self.append_matching_units_attendance(units_list)
+        # call writer
+        data_io.write_service_units_attendance(
+            self.model_city, self.servicetype, data_to_save)
+
+        return None
 
     @property
     def n_units(self):
         return self._raw_data.shape[0]
-
-    @property
-    def file_path(self):
-        # this refers to the hardcoded paths in references/city_settings.py
-        return self.model_city.service_paths[self.servicetype]
-
-    @property
-    def output_path(self):
-        _, fullfile = os.path.split(self.file_path)
-        filename, _ = os.path.splitext(fullfile)
-        return os.path.join(
-            common_cfg.units_output_path, filename + '.geojson')
 
     @staticmethod
     def get_factory(service_type):
@@ -133,11 +122,10 @@ class UnitFactory:
 
     @classmethod
     def make_loaders_for_city(cls, model_city):
-        """Get all the available factories for a city"""
-        loaders_dict = {}
-        for service_type in model_city:
-            loaders_dict[service_type.label] = cls.get_factory(
-                service_type)(model_city)
+        """Get all the available factories for a city."""
+        loaders_dict = {
+            s.label: cls.get_factory(s)(model_city)
+            for s in model_city.services}
         return loaders_dict
 
 
@@ -274,9 +262,6 @@ class TransportStopFactory(UnitFactory):
     type_col = 'routeDesc'
     id_col = 'stopCode'
 
-    def __init__(self, model_city):
-        super().__init__(model_city, decimal_input='.')
-
     def load(self, mean_radius):
 
         assert mean_radius, 'Please provide a reference radius for stops'
@@ -293,7 +278,7 @@ class TransportStopFactory(UnitFactory):
                            2: 'Rail',
                            3: 'Bus',
                            7: 'Funicular'
-                           }
+                          }
         assert all(propert_data[route_type_col].isin(gtfs_types_dict.keys())),\
             'Unexpected route type'
         propert_data['routeDesc'] = \
@@ -306,7 +291,7 @@ class TransportStopFactory(UnitFactory):
                              2: 2 * mean_radius,  # rail
                              3: mean_radius,  # bus
                              7: 2 * mean_radius  # funicular
-                             }
+                            }
         thresholds_dict = {t: None for t in lengthscales_dict}
 
         unit_list = []
@@ -342,9 +327,6 @@ class PharmacyFactory(UnitFactory):
     servicetype = ServiceType.Pharmacy
     name_col = 'CODICEIDENTIFICATIVOFARMACIA'
     id_col = name_col
-
-    def __init__(self, model_city):
-        super().__init__(model_city, decimal_input='.')
 
     def load(self, mean_radius=None):
         assert mean_radius, 'Please provide a reference radius for pharmacies'

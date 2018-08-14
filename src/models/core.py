@@ -1,3 +1,6 @@
+"""Define the core classes that process the data
+to get geolocalised KPI and attendance estimates"""
+
 from time import time
 import functools
 import warnings
@@ -14,7 +17,7 @@ from scipy.spatial.distance import cdist
 
 from references import common_cfg, istat_kpi, city_settings
 # enum classes for the model
-from src.models.city_items import AgeGroup, ServiceType
+from references.city_items import AgeGroup, ServiceType
 
 GaussianKernel = gaussian_process.kernels.RBF
 
@@ -332,7 +335,7 @@ class ServiceValues(dict):
 
         # initialise for all service types
         super().__init__(
-            {service: pd.DataFrame(0.0, index=mapped_positions.index,
+            {service: pd.DataFrame(np.nan, index=mapped_positions.index,
                                    columns=DemandFrame.OUTPUT_AGES)
              for service in ServiceType})
 
@@ -389,8 +392,9 @@ class ServiceEvaluator:
         out = {}
         for service_type, service_units in self.units_tree.items():
             if service_units:
-                out[service_type] = pd.DataFrame(np.array([
-                    [u.attendance, u.capacity] for u in service_units]),
+                out[service_type] = pd.DataFrame(
+                    np.array(
+                        [[u.attendance, u.capacity] for u in service_units]),
                     columns=['Attendance', 'Capacity'])
             else:
                 continue  # no units for this service type, do not create key
@@ -423,9 +427,8 @@ class ServiceEvaluator:
             start = time()
             # compute a lower bound for pairwise distances
             # if this is larger than threshold, set the interaction to zero.
-            distance_matrix = cdist(
-                service_coord_array, lonlat_targets) * min(
-                common_cfg.approx_tile_deg_to_km)
+            distance_matrix = cdist(service_coord_array, lonlat_targets) * \
+                              min(common_cfg.approx_tile_deg_to_km)
 
             print(service_type,
                   'Approx distance matrix in %.4f' % (time() - start))
@@ -577,7 +580,7 @@ class KPICalculator:
     census-section-based and position based KPIs"""
 
     def __init__(self, demand_frame, service_units, city_name):
-        assert city_name in city_settings.city_names_list,\
+        assert city_name in city_settings.CITY_NAMES_LIST,\
             'Unrecognized city name %s' % city_name
         assert isinstance(demand_frame, DemandFrame), 'Demand frame expected'
         assert all(
@@ -660,10 +663,12 @@ class KPICalculator:
                     common_cfg.id_quartiere_col_name).min() - tol,
                 values_at_locations.groupby(
                     common_cfg.id_quartiere_col_name).max() + tol
-                          )
+                )
             # sum weighted fractions by neighbourhood
+            # if all nans, report NaN (min_count setting)
             weighted_sums = self.weighted_values[service].groupby(
-                common_cfg.id_quartiere_col_name).sum()
+                common_cfg.id_quartiere_col_name).sum(min_count=1)
+
             # set to NaN value the age groups that have no people or there is
             #  no demand for the service
             weighted_sums[self.ages_totals == 0] = np.nan
@@ -671,15 +676,15 @@ class KPICalculator:
                 service.demand_ages)] = np.nan
             self.quartiere_kpi[service] = (
                 weighted_sums / self.ages_totals).reindex(
-                columns=DemandFrame.OUTPUT_AGES, copy=False)
+                    columns=DemandFrame.OUTPUT_AGES, copy=False)
 
             # check that the weighted mean lies
             # between min and max in the neighbourhood
             for col in self.quartiere_kpi[service].columns:
                 b_good = (self.quartiere_kpi[service][col].between(
                     check_range[0][col],
-                    check_range[1][col]) | self.quartiere_kpi[service][
-                    col].isnull())
+                    check_range[1][col]) | self.quartiere_kpi[
+                        service][col].isnull())
                 assert all(b_good),\
                     ''' -- Unexpected error in mean computation:
                             Service: %s,

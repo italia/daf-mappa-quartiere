@@ -11,14 +11,14 @@ root_dir = os.path.dirname(os.path.dirname(
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
-from references import common_cfg, city_settings
-from src.models.city_items import AgeGroup, ServiceType
+from references import city_settings
+from references.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceUnit, ServiceEvaluator
 
 mock_service_type = next(ServiceType.__iter__())
 mock_age_group = next(AgeGroup.__iter__())
 lengthscale = 1
-city = common_cfg.city_list[0]
+city = city_settings.CITY_NAMES_LIST[0]
 
 
 def get_sample_unit(coords=(40, 9)):

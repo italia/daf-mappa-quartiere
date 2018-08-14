@@ -1,4 +1,3 @@
-import os
 import json
 import re
 import numpy as np
@@ -11,8 +10,8 @@ import geopy.distance
 import shapely
 from scipy.interpolate import griddata
 
-from references import common_cfg, city_settings
-from src.models.city_items import AgeGroup, ServiceType
+from references import common_cfg, city_settings, data_io
+from references.city_items import AgeGroup, ServiceType
 from src.models.core import ServiceValues, MappedPositionsFrame, \
     DemandFrame, KPICalculator
 from src.models.factories import UnitFactory
@@ -33,7 +32,7 @@ class ModelRunner:
         assert isinstance(model_settings, dict), 'Dict needed for settings'
         assert isinstance(b_save_files, bool), 'Bool needed for b_save_files'
         if not cities:
-            cities = city_settings.default_cities
+            cities = city_settings.DEFAULT_CITIES
         assert all(isinstance(c, city_settings.ModelCity) for c in cities), \
             'Unexpected type in cities'
         if not services:
@@ -107,7 +106,7 @@ class ModelRunner:
         calculator.compute_kpi_for_istat_values()
 
         # STEP 4: write output JSONs:
-        JSONWriter(calculator).write_all_files_to_default_path()
+        JSONWriter(calculator).write_all_files()
 
         return calculator
 
@@ -300,6 +299,16 @@ class JSONWriter:
             area = serv_type.service_area
             self.areas_tree[area] = [serv_type] + self.areas_tree.get(area, [])
 
+    @property
+    def null_areas(self):
+        out = []
+        for area, services in self.areas_tree.items():
+            null_layer_flags = [
+                self.layers_data[s].isnull().all().all() for s in services]
+            if all(null_layer_flags):
+                out.append(area)
+        return out
+
     def make_menu(self):
 
         def make_output_menu(city, services, istat_layers=None):
@@ -374,7 +383,7 @@ class JSONWriter:
             )
         return json_list
 
-    def make_serviceareas_output(self, precision=4):
+    def make_serviceareas_output(self, precision=4, b_drop_null_areas=True):
 
         out = dict()
         # tool to format frame data that does not depend on age
@@ -399,8 +408,11 @@ class JSONWriter:
         out[common_cfg.vitality_layer_name] = prepare_frame_data(
             self.vitality_data)
 
-        # make layers
         for area, layers in self.areas_tree.items():
+            # skip area if it is null and the flag is active
+            if b_drop_null_areas and area in self.null_areas:
+                continue
+
             layer_list = []
             for service in layers:
                 data = self.layers_data[service].round(precision)
@@ -413,40 +425,33 @@ class JSONWriter:
         return out
 
     @classmethod
-    def _dump_json(cls, input_obj, file_io):
-        """Replace default nan export with class setting"""
+    def _convert_to_json_string(cls, input_obj):
+        """Apply common JSON format and replace default nan export with class
+        setting"""
         string_json = json.dumps(input_obj, **cls.write_options_dict)
         # replace default 'Nan' with cls property string
         regex = re.compile(r'\bNaN\b', flags=re.IGNORECASE)
-        string_json = re.sub(regex, cls.nan_string, string_json)
-        # write to file
-        file_io.write(string_json)
+        return re.sub(regex, cls.nan_string, string_json)
 
-    def _update_menu_in_default_path(self):
+    def _get_updated_menu_string(self):
         """Load current menu from json and replace the calculator city info
-        with new data"""
-        with open(os.path.join(
-                common_cfg.viz_output_path, 'menu.json'), 'r') as orig_file:
-            current_menu = json.load(orig_file)
-
+        with new data."""
+        current_menu = data_io.fetch_current_menu()
         other_items = [v for v in current_menu if v['city'] != self.city.name]
         updated_menu = other_items + self.make_menu()
+        # sort it to keep a consistent file standard
+        updated_menu.sort(key=lambda elem: elem['city'])
 
-        with open(os.path.join(
-                common_cfg.viz_output_path, 'menu.json'), 'w') as menu_file:
-            self._dump_json(updated_menu, menu_file)
+        return self._convert_to_json_string(updated_menu)
 
-    def write_all_files_to_default_path(self):
+    def write_all_files(self):
         # update menu
-        self._update_menu_in_default_path()
+        data_io.write_updated_menu(self._get_updated_menu_string())
 
         # build areas output
         areas_output = self.make_serviceareas_output()
 
-        # write it
-        for name, data in areas_output.items():
-            # TODO: this should be replaced with DAF API call to push data
-            filename = '%s_%s.json' % (self.city.name, name)
-            with open(os.path.join(common_cfg.output_path,
-                                   filename), 'w') as area_file:
-                self._dump_json(data, area_file)
+        # convert and write
+        for area_name, values in areas_output.items():
+            json_string = self._convert_to_json_string(values)
+            data_io.write_json_kpi_file(self.city, area_name, json_string)
