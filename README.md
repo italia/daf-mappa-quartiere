@@ -22,7 +22,8 @@ The server repo can be found [here](https://github.com/esterpantaleo/daf-server)
 
 ### TODO: DAF integration
 In a future version, data input and output could be integrated in DAF (e.g. via API).
-In order to do so, API calls have to be placed in the module `references/data_io.py`, which collects all the read and write interfaces for the model.
+* API calls can be defined in the module `references/data_io.py`, which collects all the read and write interfaces for the model
+* Example source files for existing cities and services are available in `data/processed/daf_sources` folder
 
 ## Use
 
