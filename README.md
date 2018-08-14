@@ -22,10 +22,7 @@ The server repo can be found [here](https://github.com/esterpantaleo/daf-server)
 
 ### TODO: DAF integration
 In a future version, data input and output could be integrated in DAF (e.g. via API).
-To do so, the following changes can be made:
-* *input*: files currently in `/data/output` should be made available in DAF and the _UnitFactory_ class in `src/models/factories.py` has to be updated to fetch the data via API rather than reading from local file. 
-Current file specifications for each city are defined in `references/city_settings.py`: this could be made redundant once API calls are available.
-* *output*: the _JSONWriter_ class currently saves KPI output files in JSON format locally; it should be updated to push the data to the API. The _UnitFactory_ has a method to export unit geojson with attendance estimates: once the unit geojsons are online, a specific API call to update attendance estimate could be implemented.
+In order to do so, API calls have to be placed in the module `references/data_io.py`, which collects all the read and write interfaces for the model.
 
 ## Use
 
