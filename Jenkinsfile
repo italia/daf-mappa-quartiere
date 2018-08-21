@@ -6,9 +6,9 @@ pipeline {
   }
   stages {
     stage('Build') {
-      slackSend (message: "BUILD START: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' CHECK THE RESULT ON: https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-MappaQuartiere/activity")
-      steps { 
-        script {          
+        steps { 
+        script {         
+        slackSend (message: "BUILD START: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' CHECK THE RESULT ON: https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-MappaQuartiere/activity") 
         sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID' 
         }
       }
