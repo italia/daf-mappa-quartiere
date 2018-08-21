@@ -6,6 +6,7 @@ pipeline {
   }
   stages {
     stage('Build') {
+      slackSend (message: "BUILD START: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' CHECK THE RESULT ON: https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-MappaQuartiere/activity")
       steps { 
         script {          
         sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID' 
@@ -46,5 +47,24 @@ pipeline {
         }
       }
     }
+    stage('Prod') {
+      node('slave-produzione'){
+      steps { 
+        script {
+          if(env.BRANCH_NAME=='master' ){   
+            // FINIRE VEDERE NEXUS
+          sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
+              sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl apply -f mappa-quartiere1.yaml --validate=false'''             
+          slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-MappaQuartiere/activity")
+          }
+        }
+        }
+      }
+    }
   }
+  post { 
+        failure { 
+            slackSend (color: '#ff0000', message: "FAIL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/CI-MappaQuartiere/activity")
+        }
+    }
 }

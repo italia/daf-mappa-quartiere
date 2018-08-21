@@ -1,3 +1,6 @@
+## status
+[Build Status](http://131.1.252.41/job/CI-MappaQuartiere/job/test/badge/icon)
+
 # Introduction
 This dashboard lets users explore different neighborhoods in different cities in Italy using data from ISTAT and other public sources. Currently under development.
 
