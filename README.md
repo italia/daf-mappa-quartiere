@@ -6,6 +6,11 @@ The output metrics are built on open data collected from various sources (ISTAT,
 
 Currently under development.
 
+## Kubernetes Getting Started
+```
+kubectl apply -f mappa-quartiere-<environment>.yaml
+```
+
 ## Files
 * `/data` contains the source files. _raw_ and _interim_ are used for preprocessing. _processed_ contains the standardized data as it is loaded into the model and _output_ contains the model outputs in the format needed for the visualization 
 * `/notebooks` has the Jupyter notebooks that can be used to interactively run the data pipeline steps
@@ -42,3 +47,5 @@ The files and folder structure is designed to follow the specs at:
 https://github.com/drivendata/cookiecutter-data-science
 The visualization uses React and has been built with [Create React App](https://github.com/facebookincubator/create-react-app).
 
+# Use
+To see the visualization first follow instructions in [this repo](https://github.com/esterpantaleo/daf-server/README.md) (this will start a server at `localhost:4000`), then cd into [src/visualization/](src/visualization) and then run `npm i` and `npm start`. You should see a dashboard at `localhost:3000`.
