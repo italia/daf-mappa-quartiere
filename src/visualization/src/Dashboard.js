@@ -1,33 +1,51 @@
 import React, { Component } from 'react';
 import './App.css';
-import PieChartWithLegend from './PieChartWithLegend.js';
-import BarChart2WithLegend from './BarChart2WithLegend.js';
-
-function sigFigs(n, sig) {
-    if (n < 1) {
-	var mult = Math.pow(10, sig - Math.floor(Math.log(n) / Math.LN10) - 1);  
-	return Math.round(n * mult) / mult;
-    } else
-	return Math.round(n);
-};
+import { render } from 'react-dom';
+import { VictoryChart, VictoryTheme, VictoryGroup, VictoryArea, VictoryPolarAxis, VictoryLabel } from 'victory';
 
 class Dashboard extends Component {
+    maxima;
+    
     constructor(props: Props) {
-	super(props);
+        super(props);
+
+        this.state = {
+            city: props.city,
+            neighborhood: props.neighborhood,
+            hoverNeighborhood: props.neighborhood,
+            infoElement: "hidden"
+        };
+    };
+    
+    componentDidMount() {
+	this.maxima = this.props.ids
+            .reduce((o, key) =>
+                    ({ ...o, [key]: Math.ceil(Math.max(...this.props.features.map(f => f.properties[key])))}), {});
+    };
+    
+    componentWillReceiveProps(nextProps) {
+	this.maxima = nextProps.ids
+	    .reduce((o, key) =>
+		    ({ ...o, [key]: Math.ceil(Math.max(...nextProps.features.map(f => f.properties[key])))}), {});
 	
-	this.state = {
-	    neighborhood: props.neighborhood
-	};
     };
 
-    //otherwise it's updated at each mouse move
-    shouldComponentUpdate(nextProps) {
-	if (nextProps.neighborhood !== this.props.neighborhood)
-	    return true;
-	return false;
+    getIndexFromNeighborhood(n) {
+        var joinField = this.props.joinField;
+        return (n === "none") ? "none" : n[joinField];
     };
-	
-    render() {	
+
+    shouldComponentUpdate(nextProps, nextState) {
+	if (this.props.city != nextProps.city)
+	    return true;
+	if (this.getIndexFromNeighborhood(this.props.neighborhood) !== this.getIndexFromNeighborhood(nextProps.neighborhood))
+            return true;
+	if (this.getIndexFromNeighborhood(this.props.hoverNeighborhood) !== this.getIndexFromNeighborhood(nextProps.hoverNeighborhood))
+            return true;
+	return false;
+    };	
+    	
+    render() {
 	if (this.props.neighborhood === "none") {
 	    return (
 		<div
@@ -37,76 +55,71 @@ class Dashboard extends Component {
 		</div>
 	    );
 	}
-	var piechartsY = this.props.dashboard.piechart.length * 100;
+	console.log(this.props.ids)
+	console.log(this.maxima)
+	var mydata = [this.props.ids.map((key) => {return {
+            x: key,
+            y: this.props.neighborhood[key] / this.maxima[key]
+        }})];
+     
+        if (this.props.hoverNeighborhood !== "none") {
+            mydata.push(this.props.ids.map((key) => {return {
+                x: key,
+                y: this.props.hoverNeighborhood[key] / this.maxima[key]
+            }}));
+        }
 	
-	//to do add IDquartiere in Milano_dashboard.json
-	var properties = this.props.neighborhood;
 	return (
 	    <div className='dashboard-overlay' id='dashboard'>
 	        <div>
-		    <h3 style={{textAlign: 'left'}}>
-		        {properties[this.props.nameField]}
-		    </h3>
-		    <ul style={{textAlign: 'left', padding: 0}}>
-	                {
-		            this.props.dashboard.list
-				.map(l => {
-				    
-				    return (
-					    <li>
-					        {l.label} : {sigFigs(this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][l.field], 2)}
-				            </li>
-				    );
-	                        })
-			}
-		    </ul>
-		</div>
-		
-		<svg width='445' height='950'>
-	            {
-		        this.props.dashboard.barchart2
-			    .map((d, i) => {
-				var data1 = {
-				    values: d.data1.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]),
-				    color: d.data1.color,
-				    label: d.data1.label
-				};
-				var data2 = {
-				    values: d.data2.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]),
-				    color: d.data2.color,
-				    label: d.data2.label
-				};
-				return (
-					<BarChart2WithLegend
-				            key={i + "bar"}
-				            y={20 + i*200}
-				            title={d.label}
-				            data1={data1}
-				            data2={data2}
-				            labels={d.labels}
-					    dataSource={this.props.dashboard.dataSource}
-					/>
-				)})
-		    }
-	            {
-                        this.props.dashboard.piechart
-                            .map((p, i) => {
-                                var values = p.fields.map(f => this.props.dashboard.data[this.props.neighborhood.IDquartiere-1][f]);
-				
-                                return (
-                                        <PieChartWithLegend
-                                            key={i}
-                                            y={350 + i*200 + 15}
-                                            title={p.label}
-                                            labels={p.labels}
-                                            values={values}
-                                            colors={p.colors}
-                                            dataSource={this.props.dashboard.dataSource}
-                                         />
-                                )})
-                    }
+		    <h3>
+		        {this.props.neighborhood[this.props.nameField]}
+	            </h3>
+		<div style={{fontSize: "12px", textAlign: "left"}}>
+		        Confronta i diversi indicatori in questo quartiere.
+		    </div>
+                    <VictoryChart polar 
+                        theme={VictoryTheme.material}
+                        domain={{ y: [ 0, 1 ] }}
+                    >
+                        <VictoryGroup colorScale={["red", "black"]}
+                            style={{ data: { fillOpacity: 0.2, strokeWidth: 2 } }}
+                        >
+                            {mydata.map((data, i) => {
+                                return <VictoryArea key={i} data={data}/>;
+                            })}
+                        </VictoryGroup>
+                        {
+                        Object.keys(this.maxima).map((key, i) => {
+                            return (
+                                <VictoryPolarAxis key={i} dependentAxis
+                                    style={{
+                                        axisLabel: { padding: 10 },
+                                        axis: { stroke: "none" },
+                                        grid: { stroke: "grey", strokeWidth: 0.25, opacity: 0.5 }
+                                    }}
+                                    tickLabelComponent={
+                                        <VictoryLabel labelPlacement="vertical"/>
+                                    }
+                                    labelPlacement="perpendicular"
+                                    axisValue={i + 1} label={this.props.labels[i]}
+                                    tickFormat={(t) => Math.ceil(t * this.maxima[key])}
+                                    tickValues={[0.25, 0.5, 0.75]}
+                                />
+                            );
+                        })
+                        }
+                        <VictoryPolarAxis
+                            labelPlacement="parallel"
+                            tickFormat={() => ""}
+                            style={{
+                                axis: { stroke: "none" },
+                                grid: { stroke: "grey", opacity: 0.5 }
+                            }}
+                        />
 
-		</svg>
+                    </VictoryChart>
+	        </div>
 	    </div>
 	);
     };

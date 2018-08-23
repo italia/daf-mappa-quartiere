@@ -1,4 +1,3 @@
-import os
 import json
 import re
 import numpy as np
@@ -11,11 +10,122 @@ import geopy.distance
 import shapely
 from scipy.interpolate import griddata
 
-from references import common_cfg, city_settings
-from src.models.city_items import AgeGroup, ServiceType
-from src.models.core import ServiceValues, MappedPositionsFrame, KPICalculator
+from references import common_cfg, city_settings, data_io
+from references.city_items import AgeGroup, ServiceType
+from src.models.core import ServiceValues, MappedPositionsFrame, \
+    DemandFrame, KPICalculator
+from src.models.factories import UnitFactory
 
 plt.rcParams['figure.figsize'] = (20, 14)
+
+
+class ModelRunner:
+
+    """Collect required settings and run model on various cities
+
+    """
+
+    def __init__(self, model_settings, cities=None, services=None,
+                 b_save_files=True):
+        """Store settings and chosen cities and services"""
+
+        assert isinstance(model_settings, dict), 'Dict needed for settings'
+        assert isinstance(b_save_files, bool), 'Bool needed for b_save_files'
+        if not cities:
+            cities = city_settings.DEFAULT_CITIES
+        assert all(isinstance(c, city_settings.ModelCity) for c in cities), \
+            'Unexpected type in cities'
+        if not services:
+            services = ServiceType.all()
+        assert all(isinstance(s, ServiceType) for s in services), \
+            'Unexpected type in cities'
+
+        self.cities = cities
+        self.services = services
+        self.b_save_files = b_save_files
+
+        for service_label in [s.label for s in self.services]:
+            # check all the needed settings are available
+            assert service_label in model_settings, \
+                'Missing settings for %s' % service_label
+            assert isinstance(model_settings[service_label], dict), \
+                'key-value dict expected in settings for %s' % service_label
+        self.model_settings = model_settings.copy()  # unlink from input
+
+    def _run_for_city(self, model_city, attendance_correction_clip):
+
+        """Run the model on a specific city.
+
+        :return
+            The KPI calculator for that city
+
+        """
+
+        assert isinstance(
+            model_city, city_settings.ModelCity), 'Unexpected type in city'
+
+        print('\n \t\t Running model on: %s \n\n' % model_city.name)
+
+        # STEP 1: Initialise the ServiceUnits
+        loaders = UnitFactory.make_loaders_for_city(model_city)
+        units = []
+        for service_type in self.services:
+            # check if units are available for selected city
+            if service_type.label in loaders:
+                units.extend(loaders[service_type.label].load(
+                    **self.model_settings[service_type.label]))
+            else:
+                print('Skipping %s for city as data is not available' %
+                      service_type.label)
+
+        # STEP 2: Parse demand data
+        demand_data = DemandFrame.create_from_raw_istat_data(
+            model_city.istat_cpa_data)
+
+        # STEP 3: Run computation
+        calculator = KPICalculator(demand_data, units, model_city.name)
+
+        # print current value of kernel cutoff
+        print('Ignoring interactions below %s \n' %
+              common_cfg.kernel_value_cutoff)
+
+        # compute and plot demand/supply interaction for localized services
+        calculator.evaluate_services_at_demand(
+            b_evaluate_attendance=True,
+            clip_level=attendance_correction_clip)
+
+        # save attendance if set so
+        for service_type in self.services:
+            name = service_type.label
+            if self.b_save_files and name in loaders:
+                loaders[name].save_units_with_attendance_to_geojson(
+                    calculator.evaluator.units_tree[service_type])
+
+        # aggregate KPI
+        calculator.compute_kpi_for_localized_services()
+        calculator.compute_kpi_for_istat_values()
+
+        if self.b_save_files:
+            # STEP 4: write output JSONs:
+            JSONWriter(calculator).write_all_files()
+
+        return calculator
+
+    def run(self, attendance_correction_clip=1.4):
+
+        """Trigger the model computation.
+
+        :return
+            The calculators list for further plotting or analysis
+
+        """
+
+        city_calculators = []
+        for city in self.cities:
+            city_calculators.append(self._run_for_city(
+                city, attendance_correction_clip))
+
+        return city_calculators
 
 
 class GridMaker:
@@ -92,12 +202,14 @@ class GridMaker:
 
     @property
     def longitude_range_km(self):
+        """Get km range along longitude"""
         return geopy.distance.great_circle(
             (self.lat_range[0], self.long_range[0]),
             (self.lat_range[0], self.long_range[1])).km
 
     @property
     def latitude_range_km(self):
+        """Get km range along latitude"""
         return geopy.distance.great_circle(
             (self.lat_range[0], self.long_range[0]),
             (self.lat_range[1], self.long_range[0])).km
@@ -145,18 +257,18 @@ class ValuesPlotter:
                         1], 'X values do not seem on a grid'
                     assert len(y_plot) == grid_shape[0] * grid_shape[
                         1], 'Y values do not seem on a grid'
-                    xi = np.array(x_plot).reshape(grid_shape)
-                    yi = np.array(y_plot).reshape(grid_shape)
-                    zi = z_plot.reshape(grid_shape)
+                    x_i = np.array(x_plot).reshape(grid_shape)
+                    y_i = np.array(y_plot).reshape(grid_shape)
+                    z_i = z_plot.reshape(grid_shape)
                 else:
                     # grid the data using natural neighbour interpolation
-                    xi = np.linspace(min(x_plot), max(x_plot), grid_density)
-                    yi = np.linspace(min(y_plot), max(y_plot), grid_density)
-                    zi = griddata((x_plot, y_plot), z_plot,
-                                  (xi[None, :], yi[:, None]), 'nearest')
+                    x_i = np.linspace(min(x_plot), max(x_plot), grid_density)
+                    y_i = np.linspace(min(y_plot), max(y_plot), grid_density)
+                    z_i = griddata((x_plot, y_plot), z_plot,
+                                   (x_i[None, :], y_i[:, None]), 'nearest')
                 plt.figure()
                 plt.title(age_group)
-                contour_axes = plt.contourf(xi, yi, zi, n_levels)
+                contour_axes = plt.contourf(x_i, y_i, z_i, n_levels)
                 cbar = plt.colorbar(contour_axes)
                 cbar.ax.set_ylabel('Service level')
                 plt.show()
@@ -166,7 +278,7 @@ class ValuesPlotter:
 
 class JSONWriter:
 
-    """Handle IO output from model to JSON for visualization.
+    """Handle output from model to JSON for visualization.
 
     """
 
@@ -187,6 +299,16 @@ class JSONWriter:
         for serv_type in self.layers_data:
             area = serv_type.service_area
             self.areas_tree[area] = [serv_type] + self.areas_tree.get(area, [])
+
+    @property
+    def null_areas(self):
+        out = []
+        for area, services in self.areas_tree.items():
+            null_layer_flags = [
+                self.layers_data[s].isnull().all().all() for s in services]
+            if all(null_layer_flags):
+                out.append(area)
+        return out
 
     def make_menu(self):
 
@@ -262,7 +384,7 @@ class JSONWriter:
             )
         return json_list
 
-    def make_serviceareas_output(self, precision=4):
+    def make_serviceareas_output(self, precision=4, b_drop_null_areas=True):
 
         out = dict()
         # tool to format frame data that does not depend on age
@@ -287,8 +409,11 @@ class JSONWriter:
         out[common_cfg.vitality_layer_name] = prepare_frame_data(
             self.vitality_data)
 
-        # make layers
         for area, layers in self.areas_tree.items():
+            # skip area if it is null and the flag is active
+            if b_drop_null_areas and area in self.null_areas:
+                continue
+
             layer_list = []
             for service in layers:
                 data = self.layers_data[service].round(precision)
@@ -301,37 +426,33 @@ class JSONWriter:
         return out
 
     @classmethod
-    def _dump_json(cls, input_obj, file_io):
-        """Replace default nan export with class setting"""
+    def _convert_to_json_string(cls, input_obj):
+        """Apply common JSON format and replace default nan export with class
+        setting"""
         string_json = json.dumps(input_obj, **cls.write_options_dict)
         # replace default 'Nan' with cls property string
         regex = re.compile(r'\bNaN\b', flags=re.IGNORECASE)
-        string_json = re.sub(regex, cls.nan_string, string_json)
-        # write to file
-        file_io.write(string_json)
+        return re.sub(regex, cls.nan_string, string_json)
 
-    def _update_menu_in_default_path(self):
+    def _get_updated_menu_string(self):
         """Load current menu from json and replace the calculator city info
-        with new data"""
-        with open(os.path.join(
-            common_cfg.viz_output_path, 'menu.json'), 'r') as orig_file:
-            current_menu = json.load(orig_file)
-
+        with new data."""
+        current_menu = data_io.fetch_current_menu()
         other_items = [v for v in current_menu if v['city'] != self.city.name]
         updated_menu = other_items + self.make_menu()
+        # sort it to keep a consistent file standard
+        updated_menu.sort(key=lambda elem: elem['city'])
 
-        with open(os.path.join(
-            common_cfg.viz_output_path, 'menu.json'), 'w') as menu_file:
-            self._dump_json(updated_menu, menu_file)
+        return self._convert_to_json_string(updated_menu)
 
-    def write_all_files_to_default_path(self):
+    def write_all_files(self):
         # update menu
-        self._update_menu_in_default_path()
+        data_io.write_updated_menu(self._get_updated_menu_string())
 
-        # build and write all areas
+        # build areas output
         areas_output = self.make_serviceareas_output()
-        for name, data in areas_output.items():
-            filename = '%s_%s.json' % (self.city.name, name)
-            with open(os.path.join(common_cfg.output_path,
-                                   filename), 'w') as area_file:
-                self._dump_json(data, area_file)
+
+        # convert and write
+        for area_name, values in areas_output.items():
+            json_string = self._convert_to_json_string(values)
+            data_io.write_json_kpi_file(self.city, area_name, json_string)

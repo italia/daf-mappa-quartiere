@@ -1,4 +1,8 @@
-
+neighbourhood_kpi.aux
+neighbourhood_kpi.log
+neighbourhood_kpi.pdf
+neighbourhood_kpi.synctex.gz
+	
 data/raw/istat
 
 notebooks/preprocessing/\.ipynb_checkpoints/
@@ -46,3 +50,9 @@ data/interim/
 data/raw/cultura/
 
 data/raw/health/
+
+data/raw/tpl/roma/
+
+data/raw/Roma_specific/
+
+data/raw/tpl/firenze/ataf\.gtfs

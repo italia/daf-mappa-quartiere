@@ -1,3 +1,6 @@
+"""Define the core classes that process the data
+to get geolocalised KPI and attendance estimates"""
+
 from time import time
 import functools
 import warnings
@@ -5,6 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn import gaussian_process
 from matplotlib import pyplot as plt
+import seaborn as sns
 
 import geopy
 import geopy.distance
@@ -13,7 +17,7 @@ from scipy.spatial.distance import cdist
 
 from references import common_cfg, istat_kpi, city_settings
 # enum classes for the model
-from src.models.city_items import AgeGroup, ServiceType
+from references.city_items import AgeGroup, ServiceType
 
 GaussianKernel = gaussian_process.kernels.RBF
 
@@ -254,23 +258,10 @@ class DemandFrame(pd.DataFrame):
         super().__init__()
         self.__dict__.update(df_input.copy().__dict__)
 
-        # prepare the AgeGroups cardinalities
-        groups_col = 'ageGroup'
-        people_by_sample_age = common_cfg.fill_sample_ages_in_cpa_columns(self)
-        data_by_group = people_by_sample_age.rename(
-            AgeGroup.find_age_group, axis='columns').T
-        # index is now given by AgeGroup items
-        data_by_group.index.name = groups_col
-        # extract to convert to categorical and groupby
-        data_by_group = data_by_group.reset_index()
-        data_by_group[groups_col] = \
-            data_by_group[groups_col].astype('category')
-        ages_by_section = data_by_group.groupby(groups_col).sum().T
-        self['PeopleTot'] = ages_by_section.sum(axis=1)
         # report all ages
         for col in self.OUTPUT_AGES:
-            self[col] = ages_by_section.get(
-                col, np.zeros_like(self.iloc[:, 0]))
+            if col not in self.columns:
+                self[col] = np.zeros_like(self.iloc[:, 0])
 
         # extract long and lat and build geopy locations
         self[common_cfg.coord_col_names[0]] = self['geometry'].apply(
@@ -300,23 +291,35 @@ class DemandFrame(pd.DataFrame):
             )
 
     def get_age_sample(self, age_group=None, n_sample=1000):
-
+        """Get a geolocalized sample of a specific age group, or sum them
+        all together and sample from the resulting distribution (default)"""
         if age_group is not None:
             coord, n_repeat = self.mapped_positions.align(
                 self.ages_frame[age_group], axis=0)
         else:
             coord, n_repeat = self.mapped_positions.align(
                 self.ages_frame.sum(axis=1), axis=0)
-        idx = np.repeat(range(coord.shape[0]), n_repeat)
+        idx = np.repeat(range(coord.shape[0]), n_repeat.astype(int))
         coord = coord[common_cfg.coord_col_names].iloc[idx]
         sample = coord.sample(int(n_sample)).as_matrix()
         return sample[:, 0], sample[:, 1]
 
     @classmethod
-    def create_from_istat_cpa(cls, city_name):
+    def _parse_input_ages(cls, df_istat):
+        """Parse istat data to feed cls constructor"""
+        operator = AgeGroup.get_rebinning_operator()
+        rebinned_population = df_istat[operator.index.values].dot(
+            operator)
+        extended_data = pd.concat(
+            [rebinned_population[cls.OUTPUT_AGES], df_istat],
+            axis=1)
+        return extended_data
+
+    @classmethod
+    def create_from_raw_istat_data(cls, df_istat):
         """Constructor caller for DemandFrame"""
-        city_config = city_settings.get_city_config(city_name)
-        return cls(city_config.istat_cpa_data, b_duplicates_check=False)
+        parsed_df = cls._parse_input_ages(df_istat)
+        return cls(parsed_df, b_duplicates_check=False)
 
 
 class ServiceValues(dict):
@@ -332,7 +335,7 @@ class ServiceValues(dict):
 
         # initialise for all service types
         super().__init__(
-            {service: pd.DataFrame(0.0, index=mapped_positions.index,
+            {service: pd.DataFrame(np.nan, index=mapped_positions.index,
                                    columns=DemandFrame.OUTPUT_AGES)
              for service in ServiceType})
 
@@ -360,17 +363,16 @@ class ServiceEvaluator:
 
     """
 
-    def __init__(self, unit_list, output_services=None):
+    def __init__(self, unit_list):
         assert isinstance(unit_list, list), \
             'List expected, got %s' % type(unit_list)
-        if not output_services:
-            output_services = [t for t in ServiceType]
         assert all([isinstance(u, ServiceUnit) for u in unit_list]),\
             'ServiceUnits expected in list'
         self.units = tuple(unit_list)  # lock ordering
-        self.output_services = output_services
         self.units_tree = {}
-        for service_type in self.output_services:
+
+        # go through the units and parse them according to service types
+        for service_type in ServiceType.all():
             type_units = tuple(
                 [u for u in self.units if u.service == service_type])
             if type_units:
@@ -383,15 +385,16 @@ class ServiceEvaluator:
                     MappedPositionsFrame.from_geopy_points(
                         [u.position for u in service_units])
             else:
-                continue  # no units for this servicetype, do not create key
+                continue  # no units for this service type, do not create key
 
     @property
     def attendance_tree(self):
         out = {}
         for service_type, service_units in self.units_tree.items():
             if service_units:
-                out[service_type] = pd.DataFrame(np.array([
-                    [u.attendance, u.capacity] for u in service_units]),
+                out[service_type] = pd.DataFrame(
+                    np.array(
+                        [[u.attendance, u.capacity] for u in service_units]),
                     columns=['Attendance', 'Capacity'])
             else:
                 continue  # no units for this service type, do not create key
@@ -424,9 +427,8 @@ class ServiceEvaluator:
             start = time()
             # compute a lower bound for pairwise distances
             # if this is larger than threshold, set the interaction to zero.
-            distance_matrix = cdist(
-                service_coord_array, lonlat_targets) * min(
-                common_cfg.approx_tile_deg_to_km)
+            distance_matrix = cdist(service_coord_array, lonlat_targets) * \
+                              min(common_cfg.approx_tile_deg_to_km)
 
             print(service_type,
                   'Approx distance matrix in %.4f' % (time() - start))
@@ -578,7 +580,7 @@ class KPICalculator:
     census-section-based and position based KPIs"""
 
     def __init__(self, demand_frame, service_units, city_name):
-        assert city_name in city_settings.city_names_list,\
+        assert city_name in city_settings.CITY_NAMES_LIST,\
             'Unrecognized city name %s' % city_name
         assert isinstance(demand_frame, DemandFrame), 'Demand frame expected'
         assert all(
@@ -661,10 +663,12 @@ class KPICalculator:
                     common_cfg.id_quartiere_col_name).min() - tol,
                 values_at_locations.groupby(
                     common_cfg.id_quartiere_col_name).max() + tol
-                          )
+                )
             # sum weighted fractions by neighbourhood
+            # if all nans, report NaN (min_count setting)
             weighted_sums = self.weighted_values[service].groupby(
-                common_cfg.id_quartiere_col_name).sum()
+                common_cfg.id_quartiere_col_name).sum(min_count=1)
+
             # set to NaN value the age groups that have no people or there is
             #  no demand for the service
             weighted_sums[self.ages_totals == 0] = np.nan
@@ -672,15 +676,15 @@ class KPICalculator:
                 service.demand_ages)] = np.nan
             self.quartiere_kpi[service] = (
                 weighted_sums / self.ages_totals).reindex(
-                columns=DemandFrame.OUTPUT_AGES, copy=False)
+                    columns=DemandFrame.OUTPUT_AGES, copy=False)
 
             # check that the weighted mean lies
             # between min and max in the neighbourhood
             for col in self.quartiere_kpi[service].columns:
                 b_good = (self.quartiere_kpi[service][col].between(
                     check_range[0][col],
-                    check_range[1][col]) | self.quartiere_kpi[service][
-                    col].isnull())
+                    check_range[1][col]) | self.quartiere_kpi[
+                        service][col].isnull())
                 assert all(b_good),\
                     ''' -- Unexpected error in mean computation:
                             Service: %s,
@@ -738,5 +742,25 @@ class KPICalculator:
                 service_type.label, self.city, min_level, max_level))
         plt.legend(['Residenti', service_type.label])
         plt.show()
+
+        return None
+
+    def plot_attendance_distributions(self):
+        """
+        Plot estimated attendance distribution and, if available,
+        capacities one as well
+        """
+        for service_type, units in self.evaluator.units_tree.items():
+            values = [u.attendance for u in units]
+            sns.distplot(values, 80)
+            labels = ['Estimated attendance']
+            # try to plot capacities as well
+            capacities = [u.capacity for u in units]
+            if not any(np.isnan(capacities)):
+                sns.distplot(capacities, 80)
+                labels.append('Known capacity')
+            plt.title(service_type)
+            plt.legend(labels)
+            plt.show()
 
         return None
