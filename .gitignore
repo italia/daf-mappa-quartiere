@@ -15,8 +15,12 @@ src/models/__pycache__/
 
 notebooks/\.ipynb_checkpoints/
 
+.vscode/*
+.vscode/settings.json
 # dependencies
 src/visualization/node_modules
+
+node_modules
 
 # misc
 .DS_Store
