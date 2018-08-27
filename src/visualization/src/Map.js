@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import mapboxgl from 'mapbox-gl'
 import { scaleLinear } from 'd3-scale';
-import { range } from 'd3-array';
 import './App.css'
 import BarChart from './BarChart';
 import Dashboard from './Dashboard';
@@ -60,7 +59,7 @@ class Map extends Component {
 	var layers = map.getStyle().layers;
 
         // Find the index of the first symbol layer in the map style
-	self.firstSymbolId;
+	self.firstSymbolId = null;
         for (var i = 0; i < layers.length; i++) {
             if (layers[i].type === 'symbol') {
                 self.firstSymbolId = layers[i].id;

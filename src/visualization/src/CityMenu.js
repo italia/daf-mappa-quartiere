@@ -15,10 +15,10 @@ class CityMenu extends Component {
     };
 
     fetch(params) {
-	return this.cityMenu.map((l) =>{
-				 console.log(l);
-                          return fetch(params.localhost + l.url)
-		.then(response => response.json());})
+	return this.cityMenu.map((l) => {
+            return fetch(params.localhost + l.url)
+		.then(response => response.json())
+	})
     };
 
     get(i) {
