@@ -20,6 +20,7 @@ pipeline {
 	COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); 
         CONTAINERID=$(docker run -d -p 3000:3000 $IMAGE_NAME_MAPPA:$BUILD_NUMBER-$COMMIT_ID);
         sleep 5s;
+        curl -s localhost:3000
         curl -s -I localhost:3000 | grep 200;
         docker stop $(docker ps -a -q); 
         docker rm $(docker ps -a -q)

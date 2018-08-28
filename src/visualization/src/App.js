@@ -52,8 +52,7 @@ class App extends Component {
     
     /*
     writeDashboardFile(jsonLayer) {
-	var m = jsonLayer.map(v => {
-	    
+	var m = jsonLayer.map(v => {	    
             v["DAF1"] = v.P60 - v.P61 - v.P62;
             v["DAF2"] = v.P1 - v.ST14;
             v["DAF3"] = v.P14 + v.P15 - v.P30 - v.P31;
