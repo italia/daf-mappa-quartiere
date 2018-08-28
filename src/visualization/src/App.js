@@ -4,7 +4,7 @@ import CityMenu from './CityMenu';
 import Map from './Map';
 import Dropdown from './Dropdown';
 
-var localhost = "https://mappa-quartiere:4000/";
+var localhost = "http://localhost:4000/";
 
 function getMenuUrl() {
     return localhost + "menu.json";
