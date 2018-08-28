@@ -27,22 +27,6 @@ spec:
         app: mappa-quartiere
     spec:
       containers:
-      - name: mappa-quartiere
-        image: nexus.teamdigitale.test/daf-mappa-quartiere:1.0.0-SNAPSHOT
-        imagePullPolicy: Always
-#        lifecycle:
-#          postStart:
-#            exec:
-#             command: ["/bin/sh", "-c", "cat /etc/extra_hosts >> /etc/hosts"]
-        ports:
-        - name: client
-          containerPort: 3000
-#        securityContext:
-#          privileged: true
-#          runAsUser: 0
-#        volumeMounts:
-#        - name: hosts
-#          mountPath: /etc/extra_hosts
       - name: daf-server
         image: nexus.teamdigitale.test/daf-server:latest
         imagePullPolicy: Always
@@ -59,3 +43,19 @@ spec:
 #      - name: hosts
 #        hostPath:
 #          path: /etc/hosts
+      - name: mappa-quartiere
+              image: nexus.teamdigitale.test/daf-mappa-quartiere:1.0.0-SNAPSHOT
+              imagePullPolicy: Always
+      #        lifecycle:
+      #          postStart:
+      #            exec:
+      #             command: ["/bin/sh", "-c", "cat /etc/extra_hosts >> /etc/hosts"]
+              ports:
+              - name: client
+                containerPort: 3000
+      #        securityContext:
+      #          privileged: true
+      #          runAsUser: 0
+      #        volumeMounts:
+      #        - name: hosts
+      #          mountPath: /etc/extra_hosts
