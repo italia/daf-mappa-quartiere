@@ -123,22 +123,26 @@ class App extends Component {
 */
 
     fetchCityData(city) {
-	var cityMenu = new CityMenu({ menu: this.menu, city: city });
+	var cityMenu = new CityMenu({
+	    menu: this.menu,
+	    city: city
+	});
 
 	var sourceIndex = cityMenu.getIndex({type: "source"});
-	var defaultLayerIndex = cityMenu.getIndex({type: "layer", default: true});
+	var defaultLayerIndex = cityMenu.getIndex({
+	    type: "layer",
+	    default: true
+	});
 	var joinField = this.joinField;
 
 	//fetch source and layer 
 	Promise.all(cityMenu.fetch({localhost: localhost}))
 	    .then((jsons) => {
-		console.log(jsons)
-		var features = jsons[sourceIndex].features;			
+		var features = jsons[sourceIndex].features;
 		var quartieriId1 = features.map((f) => f.properties[joinField]);
-		console.log(quartieriId1)
-//		console.log(quartieriId1.sort())
+		
 		jsons.forEach((layerJson, layerIndex) => {
-		    console.log(layerJson);
+		    
 		    if (layerIndex !== sourceIndex) {
 			var layer = cityMenu.get(layerIndex);
 			
@@ -146,7 +150,6 @@ class App extends Component {
 			if (quartieriId2.length !== quartieriId1.length) {
 			    console.log("Error: the number of neighborhoods in the source file and in the layer file differ!")
 			}
-			console.log(quartieriId2.sort())
 			var mappingId = quartieriId1.map((id) => quartieriId2.indexOf(id));
 			
 			layer.indicators.map((l) => l.id)

@@ -1,7 +1,14 @@
 import React, { Component } from 'react';
 import './App.css';
-import { render } from 'react-dom';
 import { VictoryChart, VictoryTheme, VictoryGroup, VictoryArea, VictoryPolarAxis, VictoryLabel } from 'victory';
+
+function sigFigs(n, sig) {
+    if (n < 10) {
+	var mult = Math.pow(10, sig - Math.floor(Math.log(n) / Math.LN10) - 1);
+	return Math.round(n * mult) / mult;
+    } else
+	return Math.round(n);
+};
 
 class Dashboard extends Component {
     maxima;
@@ -19,15 +26,20 @@ class Dashboard extends Component {
     
     componentDidMount() {
 	this.maxima = this.props.ids
-            .reduce((o, key) =>
-                    ({ ...o, [key]: Math.ceil(Math.max(...this.props.features.map(f => f.properties[key])))}), {});
+            .reduce((o, key) => {
+		var k = Math.max(...this.props.features.map(f => f.properties[key]));
+		k = sigFigs(k, 2);
+                return ({ ...o, [key]: k });
+	    }, {});
     };
     
     componentWillReceiveProps(nextProps) {
 	this.maxima = nextProps.ids
-	    .reduce((o, key) =>
-		    ({ ...o, [key]: Math.ceil(Math.max(...nextProps.features.map(f => f.properties[key])))}), {});
-	
+	    .reduce((o, key) => {
+		var k = Math.max(...nextProps.features.map(f => f.properties[key]));
+		k = sigFigs(k, 2);
+		return ({ ...o, [key]: k });
+	    }, {});
     };
 
     getIndexFromNeighborhood(n) {
@@ -36,7 +48,7 @@ class Dashboard extends Component {
     };
 
     shouldComponentUpdate(nextProps, nextState) {
-	if (this.props.city != nextProps.city)
+	if (this.props.city !== nextProps.city)
 	    return true;
 	if (this.getIndexFromNeighborhood(this.props.neighborhood) !== this.getIndexFromNeighborhood(nextProps.neighborhood))
             return true;
@@ -55,8 +67,6 @@ class Dashboard extends Component {
 		</div>
 	    );
 	}
-	console.log(this.props.ids)
-	console.log(this.maxima)
 	var mydata = [this.props.ids.map((key) => {return {
             x: key,
             y: this.props.neighborhood[key] / this.maxima[key]

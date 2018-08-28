@@ -1,11 +1,8 @@
 import React, { Component } from 'react';
 import './App.css';
-import { format } from 'd3-format';
-import { max, min } from 'd3-array';
+import { max } from 'd3-array';
 import { select } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
-import { transition } from 'd3-transition';
-import { axisBottom } from 'd3-axis';
 import Legend from './Legend';
 
 function sigFigs(n, sig) {
@@ -14,7 +11,7 @@ function sigFigs(n, sig) {
 	return Math.round(n * mult) / mult;
     } else 
 	return Math.round(n);
-}
+};
 
 class BarChart extends Component {
     yScale;
@@ -25,7 +22,7 @@ class BarChart extends Component {
 	this.x = 10;
 	this.y = 30;
 
-	this.barWidth = Math.min(15, Math.max(window.innerHeight / (this.props.data.values.length * 2), 5.5)),
+	this.barWidth = Math.min(15, Math.max(window.innerHeight / (this.props.data.values.length * 2), 5.5));
 
 	this.state = {
 	    city: props.data.city,
