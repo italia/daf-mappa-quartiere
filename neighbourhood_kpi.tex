@@ -44,12 +44,12 @@ We assume that the demand of service $i$ for age group $w$ at district $j$ equal
 \subsection{Supply-demand match modelling}
 From \ref{supply} we know the supply of each unit at each demand location $Q_j$ and from \ref{demand} we know how many people live at $Q_j$. \\
 
-We measure how well supply matches demand using $a_{wi}$, what we call \textit{attendance} at school $i$ (or service unit) for age group $w$: under-served areas have high attendance while well-served areas have low attendance, under the assumption that  at each demand location $Q_j$, residents in each age group will use the service units in the city \textit{proportionally to} (or at least with an increasing law of) the computed service levels \footnote{This excludes the possibility for agents to consider the attendance dynamics in their evaluation. In case we were to deal with interactions, a suitable framing would be a congestion game setting. In a congestion game, players needs to decide how to consume a limited set of resources without the ability to coordinate; they typically get less utility if the resources they decide to use are also chosen by many other players. A common example is choosing the fastest route in a road network.
-The congestion game setup can definitely be solved (at least in an approximate way, see [1]) but requires more detailed inputs about preferences and types in the population.}:
-
+We measure how well supply matches demand using $a_{wi}$, what we call \textit{attendance} at service unit $i$ (in our example school $i$) for age group $w$: 
     \[a_{wi}=\sum_{j=1}^J{\frac{k_{wij}}{\sum_l{k_{wlj}}} \, m_{wj}}.\]
+ Under-served areas have high attendance while well-served areas have low attendance, under the assumption that  at each demand location $Q_j$, residents in each age group will use the service units in the city \textit{proportionally to} (or at least with an increasing law of) the computed service levels.\footnote{This excludes the possibility for agents to consider the attendance dynamics in their evaluation. In case we were to deal with interactions, a suitable framing would be a congestion game setting. In a congestion game, players needs to decide how to consume a limited set of resources without the ability to coordinate; they typically get less utility if the resources they decide to use are also chosen by many other players. A common example is choosing the fastest route in a road network.
+The congestion game setup can definitely be solved (at least in an approximate way, see [1]) but requires more detailed inputs about preferences and types in the population.}
 
-The term $\frac{k_{wij}}{\sum_l{k_{wlj}}}$ is the relative service level at $Q_j$ of unit $i$ when compared to the alternatives that are available at position $Q_j$. \\
+The ratio $\frac{k_{wij}}{\sum_l{k_{wlj}}}$ is the relative service level at $Q_j$ of unit $i$ when compared to the alternatives that are available at position $Q_j$. \\
 For example, if a specific age group at $Q_j$ has 3 alternatives with kernel values of $(0.6, 0.6, 0.8)$, then we will assign $\frac{0.6}{0.6+0.6+0.8}=30\%$ of $m_{wj}$ to unit 1, 30\% to unit 2 and 40\% to unit 3.
 
 By summing over the different age groups, we can get an estimate of the total attendance for each service unit:
@@ -92,7 +92,7 @@ A naive choice is given by the utilitarian welfare function, that corresponds to
 \[v_{w\hat{J}} = \frac{1}{\sum_{j \in \hat{J}} m_{wj}}\sum_{j \in \hat{J}} m_{wj} v_{wj}.
 \]
 
-Alternatives to the utilitarian welfare functionthat are more representative of the inequality levels in the neighbourhood are measures based on Gini, on entropy, or the the Rawlsian function \footnote{ Amartya Sen proposed $\Bar{Y}(1-\text{Gini})$; other similar measures involve Thiel-L index for the distribution.} which defines the social welfare function at the neighbourhood level as the minimum utility level in the neighbourhood
+Alternatives to the utilitarian welfare function that are more representative of the inequality levels in the neighbourhood are measures based on Gini, on entropy, or the the Rawlsian function \footnote{ Amartya Sen proposed $\Bar{Y}(1-\text{Gini})$; other similar measures involve Thiel-L index for the distribution.} which defines the social welfare function at the neighbourhood level as the minimum utility level in the neighbourhood
 \[v^{\text{Rawl}}_{w\hat{J}} = \min_{j \in \hat{J}} \, v_{wj} \]
 thus considering only the worst value in the neighbourhood.
 

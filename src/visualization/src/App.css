@@ -9,7 +9,7 @@
 .App-header {
     background-color: #222;
     height: 40px;
-    width: 1400px;
+    min-width: 1200px;
     padding: 20px;
     color: white;
 }
@@ -111,7 +111,7 @@ a:hover {
     bottom: 0;
     background: rgba(255, 255, 100, 1);
     border-radius: 8px;
-    height: 85vh;
+    height: 90vh;
     width: 300px;
     top: 80px;
     font-size: 18px;
@@ -168,7 +168,7 @@ a:hover {
 #dashboard {
     padding-left: 20px;
     padding-top: 0px;
-    height: 360px;
+    height: 480px;
     width: 300px;
     top: 90px;
     right: 30px;
@@ -180,6 +180,6 @@ a:hover {
 }
 
 h3 {
-    font-size: 18px;
+    font-size: 20px;
     text-align: left;
 }
