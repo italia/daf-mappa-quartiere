@@ -4,7 +4,7 @@ import CityMenu from './CityMenu';
 import Map from './Map';
 import Dropdown from './Dropdown';
 
-var localhost = "https://localhost:4000/public";
+var localhost = "https://localhost:4000/public/";
 
 function getMenuUrl() {
     return localhost + "menu.json";
