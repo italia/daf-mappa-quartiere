@@ -32,7 +32,7 @@ class App extends Component {
     };
 
     componentDidMount() {
-	fetch(getMenuUrl()) //fetch full menu
+	this.fetchMenu() //fetch full menu
             .then((response) => response.json())
 	    .then((menu) => {
 		//set this.menu (the full menu with all cities)
@@ -121,6 +121,10 @@ class App extends Component {
 	}
 */
 
+    fetchMenu() {
+	return fetch(getMenuUrl()); //fetch full menu 
+    };
+    
     fetchCityData(city) {
 	var cityMenu = new CityMenu({
 	    menu: this.menu,
@@ -144,7 +148,7 @@ class App extends Component {
 		    
 		    if (layerIndex !== sourceIndex) {
 			var layer = cityMenu.get(layerIndex);
-			
+			console.log(layer.indicators.map((l) => l.id))		
 			var quartieriId2 = layerJson.map((d) => d[joinField]);
 			if (quartieriId2.length !== quartieriId1.length) {
 			    console.log("Error: the number of neighborhoods in the source file and in the layer file differ!")
@@ -224,6 +228,7 @@ class App extends Component {
 		            sourceIndex={self.state.sourceIndex}
                             layerIndex={self.state.layerIndex}
 	                    features={self.state.features}
+		            localhost={localhost}
 		        />
 		    </div>	
 	         </div>

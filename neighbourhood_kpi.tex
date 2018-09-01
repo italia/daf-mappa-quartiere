@@ -63,12 +63,12 @@ and a different model for the utility function might be used, or the same model 
     
 \subsubsection{Normalization of the utility function}
 
-To compare utilities, we define a constant of proportionality $a_i^{ref}$ so that:
+To compare utilities, we define a constant of proportionality $a_i^{ref}$:
  \[\widetilde{k}_{wij} = \left(\frac{a_i^{ref}}{a_i}\right)k_{wij}\]
-which, depending on the specific service type:
+which, depending on the specific service type we set equal to:
 \begin{enumerate}
-    \item If we have data about service unit capacities (e.g., school capacity or park size), we set it equal to the specific capacity?????.
-    \item If we don't have such data, we set it equal to the \textit{observed mean attendance}. When applying this model to different cities, we use the same reference level for comparable services not to allow for city-specific effects.
+    \item The specific capacity???, if we have data about service unit capacities (e.g., school capacity or park size);
+    \item The \textit{observed mean attendance}, if we don't have such data. When applying this model to different cities, we use the same reference level for comparable services not to allow for city-specific effects.
 \end{enumerate}
 
 As the attendance should rescale the service supply levels within some bounds (e.g., if a pharmacy is used very little, its service supply should not raise indefinitely) we multiply the utility function by a non-decreasing function $f$ of the relative attendance $\frac{\Bar{a}_S}{a_i}$. \\

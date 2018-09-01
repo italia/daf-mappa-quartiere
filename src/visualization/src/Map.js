@@ -12,7 +12,7 @@ class Map extends Component {
     
     constructor(props: Props) {
 	super(props);
-
+	console.log(props)
 	var source = this.getSource(props);
 	var layer = this.getLayer(props);
 	
@@ -22,7 +22,8 @@ class Map extends Component {
 	    layer: layer,
 	    neighborhood: "none",
 	    hoverNeighborhood: "none",
-	    infoElement: "hidden"
+	    infoElement: "hidden",
+	    infoHtml: ""
 	};
 
 	this.onClickBarChart = this.onClickBarChart.bind(this);
@@ -41,7 +42,7 @@ class Map extends Component {
             .sort((a, b) => b.properties[layer.id] - a.properties[layer.id])
             .map((f) => [f.properties[props.joinField], f.properties[layer.id]]);
         layer.colorArray = colorArray(layer.values.map((v) => v[1]), layer.colors);
-
+	layer.active = "mappa";
 	return layer;
     }
 
@@ -162,6 +163,10 @@ class Map extends Component {
     };
 
     shouldComponentUpdate(nextProps, nextState) {
+	console.log(this.state.layer.active)
+        console.log(nextState.layer.active)
+	if (this.state.layer.active !== nextState.layer.active)
+            return true;
 	if (this.props.city !== nextProps.city)
 	    return true;
 
@@ -176,7 +181,7 @@ class Map extends Component {
 
 	if (this.state.infoElement !== nextState.infoElement)
 	    return true;
-
+	
 	return false;
     };
     
@@ -223,8 +228,15 @@ class Map extends Component {
     };
 
     onClickInfo() {
-	this.setState({infoElement: (this.state.infoElement === "hidden") ? "visible" : "hidden"});
-    }
+	fetch(this.props.localhost + this.state.layer.descriptionUrl)
+	.then((response) => response.json())
+            .then((description) => {
+		this.setState({
+		    infoElement: (this.state.infoElement === "hidden") ? "visible" : "hidden",
+		    infoHtml : this.state.layer.description + description.value
+		})
+	    });
+    };
     
     onClickBarChart(d) {	
 	var clicked = d[0];
@@ -232,6 +244,33 @@ class Map extends Component {
 	this.setState({ neighborhood: this.getNeighborhoodFromIndex(clicked) });
     };
 
+    onChangeToggle(active) {
+	console.log("changing to " + active);
+	if (active === "punti") {
+	    if (this.state.layer.points === undefined) {
+		fetch(this.props.localhost + this.state.layer.raw.url)
+		    .then(response => response.json())
+		    .then((points) => {
+			console.log(points);
+			var layer = this.state.layer;
+			layer.active = "punti";
+			layer.points = points;
+			this.setState( {layer: layer} );
+		    });
+	    } else {
+		this.setActiveLayerTo(active);
+	    }
+	} else {
+	    this.setActiveLayerTo(active);
+	}
+    };
+
+    setActiveLayerTo(value) {
+	var layer = this.state.layer;
+	layer.active = value;
+	this.setState( {layer: layer} );
+    };
+    
     getNeighborhoodFromIndex(i) {
 	var joinField = this.props.joinField;
 	return this.props.features
@@ -247,19 +286,34 @@ class Map extends Component {
     };    
 	
     render() {
-	const renderToggle = (layer, i) => {
+	const renderToggle = () => {
+	    if (this.state.layer.raw !== undefined) {
+		return (
+		    <div className='toggle-group absolute top my120 border border--2 border--white bg-white shadow-darken10 z1'>
+		        {["mappa", "punti"].map(renderEachToggle)}
+		    </div>
+		);
+	    } else {
+		return null;
+	    }
+	};
+	
+	const renderEachToggle = (active, i) => {
+	    console.log(this.state.layer)
+	    console.log(active)
             return (
                     <label key={i} className="toggle-container">
-                        <input onChange={() => this.setState({ active: layer })} checked={layer.id === this.state.active.id} name="toggle" type="radio" />
-                        <div className="toggle txt-s py3 toggle--active-white">{layer.label}</div>
+                    <input onChange={this.onChangeToggle(active)} checked={active === this.state.layer.active} name="toggle" type="radio" />
+                        <div className="toggle txt-s py3 toggle--active-white">{active}</div>
                     </label>
             );
         };
+	
 	return (  
-	    <div>
+	    <div>	
                 <div id='mapContainer'
 	            ref={el => this.mapContainer = el}/>
-		
+	        {renderToggle()}
 		<div className='map-overlay'
 	            id='chart'>
 		
@@ -298,7 +352,7 @@ class Map extends Component {
 		<div className="info-overlay"
 	            style={{left: (this.state.infoElement === "hidden") ? "-4000px" : "10px"}}
 	            onClick={this.onClickInfo}>
-	            <div dangerouslySetInnerHTML={{__html: this.state.layer.description}}/>
+	            <div dangerouslySetInnerHTML={{__html: this.state.infoHtml}}/>
                 </div>
 	    </div>	   
 	);
