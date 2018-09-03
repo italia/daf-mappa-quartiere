@@ -4,7 +4,7 @@ import CityMenu from './CityMenu';
 import Map from './Map';
 import Dropdown from './Dropdown';
 
-var host = "http://0.0.0.0:4000/";
+var host = "https://api.daf.teamdigitale.test/mappa/";
 
 class App extends Component { 
     menu = [];
