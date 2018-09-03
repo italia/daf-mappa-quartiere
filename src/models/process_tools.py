@@ -1,5 +1,6 @@
 import json
 import re
+import gc
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -111,7 +112,7 @@ class ModelRunner:
 
         return calculator
 
-    def run(self, attendance_correction_clip=1.4):
+    def run(self, attendance_correction_clip=1.4, b_return_calculators=False):
 
         """Trigger the model computation.
 
@@ -122,8 +123,13 @@ class ModelRunner:
 
         city_calculators = []
         for city in self.cities:
-            city_calculators.append(self._run_for_city(
-                city, attendance_correction_clip))
+            this_calculator = self._run_for_city(
+                city, attendance_correction_clip)
+            if b_return_calculators:
+                city_calculators.append(this_calculator)
+            else:
+                this_calculator = None
+                gc.collect()
 
         return city_calculators
 

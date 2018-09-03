@@ -26,6 +26,6 @@ if __name__ == '__main__':
             'mean_radius': 0.5},
                     }
 
-    runner = ModelRunner(model_settings)
+    runner = ModelRunner(model_settings, cities=None)
 
     runner.run(attendance_correction_clip=common_cfg.demand_correction_clip)

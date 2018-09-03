@@ -17,16 +17,16 @@ from scipy.spatial.distance import cdist
 
 from references import common_cfg, istat_kpi, city_settings
 # enum classes for the model
-from references.city_items import AgeGroup, ServiceType
+from references.city_items import AgeGroup, ServiceType, REFERENCE_ATTENDANCE
 
 GaussianKernel = gaussian_process.kernels.RBF
 
 
-@functools.lru_cache(maxsize=int(1e6))  # cache expensive distance calculation
+@functools.lru_cache(maxsize=int(2**22))  # cache expensive distance
+# calculation
 def compute_distance(point_a, point_b):
     """Get distance in km between two Geopy Points"""
     return geopy.distance.great_circle(point_a, point_b).km
-
 
 # ServiceUnit class
 class ServiceUnit:
@@ -520,12 +520,12 @@ class ServiceEvaluator:
                 loads = (unit_data['Attendance'] / unit_data[
                     'Capacity']).values
             else:
-                # get loads with respect to mean observed level
-                mean_observed = unit_data['Attendance'].mean()
-                warn_text = '\n %s - using observed mean as reference ' + \
-                            'for attendance: %.2f'
-                warnings.warn(warn_text % (service_type.label, mean_observed))
-                loads = unit_data['Attendance'].values / mean_observed
+                # get loads with respect to default attendance level
+                reference_mean = REFERENCE_ATTENDANCE[service_type]
+                warn_text = '\n %s - using reference attendance: %.2f'
+                warnings.warn(warn_text % (
+                    service_type.label, reference_mean))
+                loads = unit_data['Attendance'].values / reference_mean
 
             # this replaces Nan with 0
             np.nan_to_num(loads, copy=False)
