@@ -17,7 +17,7 @@ positions_col = 'Positions'
 
 # Kernel evaluation speedup
 # interaction values below this level will be set to 0
-kernel_value_cutoff = 1e-4
+kernel_value_cutoff = 1e-3
 kernel_start_zero_guess = 1  # initial input for kernel in solving
 
 # Clip level for demand correction:
