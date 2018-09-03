@@ -4,11 +4,7 @@ import CityMenu from './CityMenu';
 import Map from './Map';
 import Dropdown from './Dropdown';
 
-var localhost = "http://0.0.0.0:4000/";
-
-function getMenuUrl() {
-    return localhost + "menu.json";
-};
+var host = "http://0.0.0.0:4000/";
 
 class App extends Component { 
     menu = [];
@@ -23,6 +19,7 @@ class App extends Component {
             cityMenu: [],
 	    cityCategories: [],
 	    features: [],
+	    points: [],
             sourceIndex: -1,
             layerIndex: [-1, -1]
         };
@@ -32,10 +29,10 @@ class App extends Component {
     };
 
     componentDidMount() {
-	this.fetchMenu() //fetch full menu
+	this.fetchMenu() //fetch the whole menu
             .then((response) => response.json())
 	    .then((menu) => {
-		//set this.menu (the full menu with all cities)
+		//set this.menu (the whole menu with all cities)
 		this.menu = menu;
 
 		//set this.cities
@@ -122,34 +119,36 @@ class App extends Component {
 */
 
     fetchMenu() {
-	return fetch(getMenuUrl()); //fetch full menu 
+	return fetch(host + "menu.json"); //fetch full menu 
     };
     
     fetchCityData(city) {
 	var cityMenu = new CityMenu({
 	    menu: this.menu,
-	    city: city
+	    city: city,
+	    host: host
 	});
-
-	var sourceIndex = cityMenu.getIndex({type: "source"});
-	var defaultLayerIndex = cityMenu.getIndex({
-	    type: "layer",
-	    default: true
-	});
-	var joinField = this.joinField;
-
 	//fetch source and layer 
-	Promise.all(cityMenu.fetch({localhost: localhost}))
-	    .then((jsons) => {
-		var features = jsons[sourceIndex].features;
-		var quartieriId1 = features.map((f) => f.properties[joinField]);
+	Promise.all(cityMenu.fetch())
+	    .then((data) => {
+		var sourceIndex = cityMenu.getIndex({type: "source"});
+		var defaultLayerIndex = cityMenu.getIndex({
+		    type: "layer",
+		    default: true
+		});
+		var joinField = this.joinField;
 		
-		jsons.forEach((layerJson, layerIndex) => {
-		    
-		    if (layerIndex !== sourceIndex) {
-			var layer = cityMenu.get(layerIndex);
-			console.log(layer.indicators.map((l) => l.id))		
-			var quartieriId2 = layerJson.map((d) => d[joinField]);
+		var features = data.filter(d => d.index === sourceIndex)[0].json.features;
+		var quartieriId1 = features.map((f) => f.properties[joinField]);
+
+		var points = [];
+		data.forEach((datum) => {
+		    if (datum.layerIndex !== undefined) {
+			points.push(datum)
+		    }
+		    if (datum.index !== undefined && datum.index !== sourceIndex) {
+			var layer = cityMenu.get(datum.index);
+			var quartieriId2 = datum.json.map((d) => d[joinField]);
 			if (quartieriId2.length !== quartieriId1.length) {
 			    console.log("Error: the number of neighborhoods in the source file and in the layer file differ!")
 			}
@@ -158,7 +157,7 @@ class App extends Component {
 			layer.indicators.map((l) => l.id)
 			    .map((id) => 
 				 features.forEach((f, i) => {
-				     var value = layerJson[mappingId[i]][id];
+				     var value = datum.json[mappingId[i]][id];
 				     features[i].properties[id] = (Array.isArray(value)) ? averageArray(value) : value;
 				 })
 				);
@@ -171,27 +170,32 @@ class App extends Component {
 			//  this.writeDashboardFile(jsonLayer)
 		    }
 		});
+		console.log(points)
 		this.setState({
 		    city: city,
                     cityMenu: cityMenu,
 		    cityCategories: cityMenu.getCategories(),
                     features: features,
+		    points: points,
 		    sourceIndex: sourceIndex,
-		    layerIndex: defaultLayerIndex
+		    layerIndex: defaultLayerIndex,
                 });
             });
     };
 
-    changeCity(d, label) {
-        if (this.state.city !== label) {
-            this.fetchCityData(label);
+    changeCity(d, nextCity) {
+	var currentCity = this.state.city;
+        if (currentCity !== nextCity) {
+            this.fetchCityData(nextCity);
         }
     };
     
-    changeLayer(d, label) {
-	var currentLayer = this.state.cityMenu.getLayer(this.state.layerIndex);
-	if (currentLayer.label !== label) {
-	    this.setState({layerIndex: this.state.cityMenu.getIndex({label: label})});
+    changeLayer(d, nextLayerLabel) {
+	var currentLayerIndex = this.state.layerIndex; 
+	var currentLayerLabel = this.state.cityMenu.getLayer(currentLayerIndex).label;
+	if (currentLayerLabel !== nextLayerLabel) {
+	    var nextLayerIndex = this.state.cityMenu.getIndex({label: nextLayerLabel});
+	    this.setState({layerIndex: nextLayerIndex});
         }
     };
 	        
@@ -205,19 +209,20 @@ class App extends Component {
 		    <div className="App-header">
 		        <div style={{ display: "flex", justifyContent: "space-between" }}>
 		            <div>
-		            {self.state.cityCategories
-		                 .map((category, i) => 
-	                              <Dropdown
-				          label={category}
-				          key={'dropdown_' + i}
-				          dropdownContent={self.state.cityMenu.getCategoryMenu(category)}
-				          handleClick={self.changeLayer}/>
-			        )}
+		                {self.state.cityCategories
+		                    .map((category, i) => 
+	                                <Dropdown
+				            label={category}
+				            key={'dropdown_' + i}
+				            dropdownContent={self.state.cityMenu.getCategoryMenu(category)}
+				            handleClick={self.changeLayer}/>
+			            )}
 		            </div>
-
 		            <h2>Mappa dei quartieri di {self.state.city}</h2>
-                
-		            <Dropdown label={"Cambia città"} dropdownContent={self.cities} handleClick={self.changeCity}/>
+		            <Dropdown
+		                label={"Cambia città"}
+		                dropdownContent={self.cities}
+		                handleClick={self.changeCity}/>
 		        </div>
 		    </div>
 		    <div>	            
@@ -228,7 +233,8 @@ class App extends Component {
 		            sourceIndex={self.state.sourceIndex}
                             layerIndex={self.state.layerIndex}
 	                    features={self.state.features}
-		            localhost={localhost}
+		            points={self.state.points}
+		            host={self.host}
 		        />
 		    </div>	
 	         </div>

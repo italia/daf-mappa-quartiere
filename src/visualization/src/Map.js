@@ -12,11 +12,12 @@ class Map extends Component {
     
     constructor(props: Props) {
 	super(props);
-	console.log(props)
+	
 	var source = this.getSource(props);
 	var layer = this.getLayer(props);
 	
 	this.state = {
+	    toggle: "mappa",
 	    city: props.city,
 	    source: source,
 	    layer: layer,
@@ -38,11 +39,13 @@ class Map extends Component {
 
     getLayer(props) {
 	var layer = props.cityMenu.getLayer(props.layerIndex);
+	
         layer.values = props.features
             .sort((a, b) => b.properties[layer.id] - a.properties[layer.id])
             .map((f) => [f.properties[props.joinField], f.properties[layer.id]]);
         layer.colorArray = colorArray(layer.values.map((v) => v[1]), layer.colors);
-	layer.active = "mappa";
+	//layer.active = "mappa";
+	
 	return layer;
     }
 
@@ -89,7 +92,7 @@ class Map extends Component {
             id: 'Quartieri-line',
             type: 'line',
             paint: {'line-opacity': 0.25},
-            source: 'Quartieri'
+            source: 'Quartieri',
         }, self.firstSymbolId);
 	
         map.addLayer({
@@ -118,12 +121,114 @@ class Map extends Component {
             self.setState({ neighborhood: neighborhood });
         });
     };
+
+    addPointsLayer(props) {
+        var self = this;
+        var map = this.map;
+
+        var layers = map.getStyle().layers;
+
+        // Find the index of the first symbol layer in the map style       
+        self.firstSymbolId = null;
+        for (var i = 0; i < layers.length; i++) {
+            if (layers[i].type === 'symbol') {
+                self.firstSymbolId = layers[i].id;
+                break;
+            }
+        }
+
+        map.addLayer({
+            id: 'Quartieri-line',
+            type: 'line',
+            paint: {'line-opacity': 0.25},
+            source: 'Quartieri',
+        }, self.firstSymbolId);
+
+	var layer = this.getLayer(props);
+	
+	var geojson = props.points.filter(p => p.layerIndex[0] === props.layerIndex[0] && p.layerIndex[1] === props.layerIndex[1])[0].json
+	
+	if (layer.raw.capacity !== undefined) {
+	    if (geojson.features.filter((f) => isNaN(f.properties[layer.raw.capacity])).length === 0) {
+		
+		geojson.features.forEach((f) => {
+		    var v = Math.floor(100*f.properties['Affluenza']/f.properties[layer.raw.capacity])/100;
+	
+		    return f.properties['myRatio'] = v;
+		})
+	    }
+	}
+	geojson.features.forEach((f) => f.properties['myRatio'] = f.properties['Affluenza']);
+
+	
+	const stops = (geojson, property) => {
+	    return [[0, 'blue'], [Math.max(...geojson.features.map((f) => f.properties[property])), 'red']];
+	};
+	map.addSource('points', {
+	    type: 'geojson',
+	    data: geojson
+	});
+	if (layer.raw.capacity !== undefined) {			  
+	    map.addLayer({
+		'id': 'points',
+		'geojson': geojson,
+		'geojsonProperty': 'myRatio',
+		'type': 'circle',
+		'radius': layer.raw.radius,
+		'description': layer.raw.description,
+		'capacity': layer.raw.capacity,
+		'source': 'points',
+		'paint': {
+		    'circle-color': {
+			property: 'myRatio',
+			stops: stops(geojson, 'myRatio')
+		    }
+		}
+	    })
+	} else {
+	    map.addLayer({
+		'id': 'points',
+		'geojson': geojson,
+		'geojsonProperty': 'myRatio',       
+		'type': 'circle',
+		'description': layer.raw.description,
+		'source': 'points',
+		'paint': {
+		    'circle-color': {
+			property: 'myRatio',
+			stops: stops(geojson, 'myRatio')
+		    },
+		    'circle-opacity': 1,
+		    'circle-radius': layer.raw.radius,
+		    'circle-stroke-width': 1
+		}
+	    })
+	}
+
+	var popup = new mapboxgl.Popup({
+	    closeButton: false,
+	    closeOnClick: false
+	});
+	
+	map.on('mouseenter', 'points', function(e) {
+	    map.getCanvas().style.cursor = 'pointer';
+	    var coordinates = e.features[0].geometry.coordinates.slice();
+	    var description = layer.raw.description.map((p) => p + ": " + e.features[0].properties[p]).join("<br>");
+	    popup.setLngLat(coordinates)
+		.setHTML(description)
+		.addTo(map);
+	});
+	map.on('mouseleave', 'points', function() {
+	    map.getCanvas().style.cursor = '';
+	    popup.remove();
+	});
+    };
     
     componentWillReceiveProps(nextProps) {
 	if (this.props.city !== nextProps.city || this.props.layerIndex !== nextProps.layerIndex) {
 	    var source = this.getSource(nextProps);
             var layer = this.getLayer(nextProps);
-
+	    
 	    var map = this.map;
 	    
 	    if (this.props.city !== nextProps.city) {
@@ -139,7 +244,11 @@ class Map extends Component {
 		this.addSource(nextProps);
 		this.addLayer(nextProps);
 	    }
-	   
+
+	    if (!map.getLayer(layer)){
+		this.addLayer(nextProps);
+	    }
+	    
 	    map.setPaintProperty('Quartieri',
 				 'fill-color',
 				 {
@@ -148,13 +257,14 @@ class Map extends Component {
 				 });
 
 	    map.setFilter('Quartieri-click', ['==', this.props.joinField, ""]);
-	    
+
 	    this.setState({
+		toggle: "mappa",
 		city: nextProps.city,
 		source: source,
                 layer: layer,
                 neighborhood: "none"
-            });	
+	    });
 	}
     };
 
@@ -162,11 +272,83 @@ class Map extends Component {
 	this.createMap();
     };
 
+    componentWillUpdate(nextProps, nextState){
+	
+	if (this.props.city !== nextProps.city || this.props.layerIndex !== nextProps.layerIndex) {
+	
+	    if (this.map.getLayer("points")) {
+		this.map.removeLayer("points");
+	    }
+	    if (this.map.getSource("points")) {
+                this.map.removeSource("points");
+            }	    
+
+	    var source = this.getSource(nextProps);
+            var layer = this.getLayer(nextProps);
+
+            var map = this.map;
+        
+            if (this.props.city !== nextProps.city) {
+                //clean     
+                map.removeLayer("Quartieri");
+                map.removeLayer("Quartieri-hover");
+                map.removeLayer("Quartieri-line");
+		map.removeLayer("Quartieri-click");
+                map.removeSource("Quartieri");
+
+                map.setCenter(source.center);
+                map.setZoom(source.zoom);
+                this.addSource(nextProps);
+		this.addLayer(nextProps);
+            }
+            map.setPaintProperty('Quartieri',
+                                 'fill-color',
+                                 {
+                                     property: layer.id,
+                                     stops: layer.colorArray.stops
+                                 });
+	    this.map.setPaintProperty('Quartieri','fill-opacity', 1)
+            this.map.setFilter('Quartieri-click', ['==', this.props.joinField, ""]);
+        } else {
+	
+	    if (this.state.toggle !== nextState.toggle) {
+		
+		if (nextState.toggle === "punti") {
+		    
+		    this.map.setPaintProperty('Quartieri','fill-opacity', 0)
+		    this.map.removeLayer("Quartieri-line");
+		    this.addPointsLayer(nextProps);
+		}
+		if (nextState.toggle === "mappa") {
+		    if (this.map.getLayer("points")) {
+			this.map.removeLayer("points");
+		    }
+		    if (this.map.getSource("points")) {
+			this.map.removeSource("points");
+		    }
+		    var layer = this.getLayer(nextProps);
+		    
+		    this.map.removeLayer("Quartieri");
+		    this.map.removeLayer("Quartieri-hover");
+		    this.map.removeLayer("Quartieri-line");
+		    this.map.removeLayer("Quartieri-click");
+		    
+		    this.addLayer(nextProps);
+		    
+		    this.map.setPaintProperty('Quartieri',
+					      'fill-color',
+					      {
+						  property: layer.id,
+						  stops: layer.colorArray.stops
+					      });
+		    this.map.setFilter('Quartieri-click', ['==', this.props.joinField, ""]);
+		}
+	    }
+	}
+    };
+    
     shouldComponentUpdate(nextProps, nextState) {
-	console.log(this.state.layer.active)
-        console.log(nextState.layer.active)
-	if (this.state.layer.active !== nextState.layer.active)
-            return true;
+	
 	if (this.props.city !== nextProps.city)
 	    return true;
 
@@ -181,6 +363,9 @@ class Map extends Component {
 
 	if (this.state.infoElement !== nextState.infoElement)
 	    return true;
+
+	if (this.state.toggle !== nextState.toggle)
+            return true;
 	
 	return false;
     };
@@ -202,7 +387,9 @@ class Map extends Component {
 
 	map.on('load', () => {
 	    //set the language (note: this is not working)
-	    map.setLayoutProperty('country-label-lg', 'text-field', ['get', 'name_it']);
+	    map.setLayoutProperty('country-label-lg',
+				  'text-field',
+				  ['get', 'name_it']);
 
 	    this.addSource(this.props);
 	    this.addLayer(this.props);
@@ -218,7 +405,8 @@ class Map extends Component {
 	
     onHoverBarChart(d) {
 	var hovered = d[0];
-	this.map.setFilter('Quartieri-hover', ['==', this.props.joinField, hovered]);
+	this.map.setFilter('Quartieri-hover',
+			   ['==',this.props.joinField, hovered]);
 	this.setState({ hoverNeighborhood: this.getNeighborhoodFromIndex(hovered) });
     };
 
@@ -228,7 +416,7 @@ class Map extends Component {
     };
 
     onClickInfo() {
-	fetch(this.props.localhost + this.state.layer.descriptionUrl)
+	fetch(this.props.host + this.state.layer.descriptionUrl)
 	.then((response) => response.json())
             .then((description) => {
 		this.setState({
@@ -240,35 +428,9 @@ class Map extends Component {
     
     onClickBarChart(d) {	
 	var clicked = d[0];
-	this.map.setFilter('Quartieri-click', ['==', this.props.joinField, clicked]);
+	this.map.setFilter('Quartieri-click',
+			   ['==', this.props.joinField, clicked]);
 	this.setState({ neighborhood: this.getNeighborhoodFromIndex(clicked) });
-    };
-
-    onChangeToggle(active) {
-	console.log("changing to " + active);
-	if (active === "punti") {
-	    if (this.state.layer.points === undefined) {
-		fetch(this.props.localhost + this.state.layer.raw.url)
-		    .then(response => response.json())
-		    .then((points) => {
-			console.log(points);
-			var layer = this.state.layer;
-			layer.active = "punti";
-			layer.points = points;
-			this.setState( {layer: layer} );
-		    });
-	    } else {
-		this.setActiveLayerTo(active);
-	    }
-	} else {
-	    this.setActiveLayerTo(active);
-	}
-    };
-
-    setActiveLayerTo(value) {
-	var layer = this.state.layer;
-	layer.active = value;
-	this.setState( {layer: layer} );
     };
     
     getNeighborhoodFromIndex(i) {
@@ -298,27 +460,38 @@ class Map extends Component {
 	    }
 	};
 	
-	const renderEachToggle = (active, i) => {
-	    console.log(this.state.layer)
-	    console.log(active)
+	const renderEachToggle = (t, i) => {
             return (
                     <label key={i} className="toggle-container">
-                    <input onChange={this.onChangeToggle(active)} checked={active === this.state.layer.active} name="toggle" type="radio" />
-                        <div className="toggle txt-s py3 toggle--active-white">{active}</div>
+                    <input
+		        onChange={() => this.setState({toggle: t})}
+		        checked={t === this.state.toggle}
+		        name="toggle"
+		        type="radio"
+		    />
+                        <div className="toggle txt-s py3 toggle--active-white">{t}</div>
                     </label>
             );
         };
 	
 	return (  
 	    <div>	
-                <div id='mapContainer'
+                <div
+	            id='mapContainer'
 	            ref={el => this.mapContainer = el}/>
+
 	        {renderToggle()}
-		<div className='map-overlay'
+
+		<div
+	            className='map-overlay'
 	            id='chart'>
 		
-		<i className="fa fa-info-circle" aria-hidden="true" onClick={this.onClickInfo}></i>
-                    <BarChart
+		    <i
+	                className="fa fa-info-circle"
+	                aria-hidden="true"
+	                onClick={this.onClickInfo}/>
+
+		    <BarChart
 	                style={{
 		            width: 350,
 			    height: 500
@@ -334,8 +507,7 @@ class Map extends Component {
                             dataSource: this.state.layer.dataSource,
                             values: this.state.layer.values,
                             colors: this.state.layer.colorArray
-                        }}             
-                    />
+                        }}/>
                 </div>
 	                 
                 <Dashboard
@@ -349,10 +521,12 @@ class Map extends Component {
 	            nameField={this.state.source.nameField}
 		/>
 		
-		<div className="info-overlay"
+		<div
+	            className="info-overlay"
 	            style={{left: (this.state.infoElement === "hidden") ? "-4000px" : "10px"}}
 	            onClick={this.onClickInfo}>
-	            <div dangerouslySetInnerHTML={{__html: this.state.infoHtml}}/>
+	            <div
+	                dangerouslySetInnerHTML={{__html: this.state.infoHtml}}/>
                 </div>
 	    </div>	   
 	);
