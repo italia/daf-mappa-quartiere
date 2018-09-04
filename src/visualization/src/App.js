@@ -234,7 +234,7 @@ class App extends Component {
                             layerIndex={self.state.layerIndex}
 	                    features={self.state.features}
 		            points={self.state.points}
-		            host={self.host}
+		            host={host}
 		        />
 		    </div>	
 	         </div>
