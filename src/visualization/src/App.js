@@ -170,7 +170,6 @@ class App extends Component {
 			//  this.writeDashboardFile(jsonLayer)
 		    }
 		});
-		console.log(points)
 		this.setState({
 		    city: city,
                     cityMenu: cityMenu,
