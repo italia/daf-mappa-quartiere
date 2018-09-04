@@ -4,7 +4,7 @@ import CityMenu from './CityMenu';
 import Map from './Map';
 import Dropdown from './Dropdown';
 
-var host = "https://api.daf.teamdigitale.test/mappa/";
+var host = "http://0.0.0.0:4000/";
 
 class App extends Component { 
     menu = [];
@@ -234,7 +234,7 @@ class App extends Component {
                             layerIndex={self.state.layerIndex}
 	                    features={self.state.features}
 		            points={self.state.points}
-		            host={self.host}
+		            host={host}
 		        />
 		    </div>	
 	         </div>
