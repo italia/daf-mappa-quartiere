@@ -78,15 +78,37 @@ class Dashboard extends Component {
                 y: this.props.hoverNeighborhood[key] / this.maxima[key]
             }}));
         }
+
+	const renderTitle = () => {
+	    if (this.props.hoverNeighborhood.IDquartiere !== this.props.neighborhood.IDquartiere && this.props.hoverNeighborhood !== "none") {
+		return (
+		    <div style={{textAlign: "center"}}>
+		        <h3 style={{color: "red"}}>
+                            {this.props.neighborhood[this.props.nameField]}
+                        </h3>
+                        vs
+                        <h3>
+                            {this.props.hoverNeighborhood[this.props.nameField]}
+                        </h3>
+		     </div>
+		);
+	    } else {
+		return (
+		    <div style={{textAlign: "center"}}>
+		        <h3 style={{color: "red"}}>
+			    {this.props.neighborhood[this.props.nameField]}
+                        </h3>
+		    </div>
+		);
+	    }
+	};
 	
 	return (
 	    <div className='dashboard-overlay' id='dashboard'>
-	        <div>
-		    <h3>
-		        {this.props.neighborhood[this.props.nameField]}
-	            </h3>
-		<div style={{textAlign: "left"}}>
-		        Confronta i diversi indicatori in questo quartiere.
+	       <div>
+		    {renderTitle()}
+		    <div style={{textAlign: "left"}}>
+		        Confronta i diversi indicatori.
 		    </div>
                     <VictoryChart polar 
                         theme={VictoryTheme.material}
