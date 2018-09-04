@@ -6,6 +6,10 @@ import { axisBottom } from 'd3-axis';
 import { scaleLinear } from 'd3-scale';
 
 class Legend extends Component {
+
+    componentDidMount() {
+	this.createLegend();
+    };
     
     createLegend() {
 	//clean
@@ -42,13 +46,13 @@ class Legend extends Component {
 	select(legendContainer)
 	    .append("rect")
 	    .attr("id", "mapLegend")
-	    .attr("width", this.props.style.width / 2)
-	    .attr("height", this.props.style.height / 2)
+	    .attr("width", this.props.style.width / 1.5)
+	    .attr("height", this.props.style.height / 3)
 	    .style("fill", "url(#mapGradient)")
 	    .attr("transform", "translate(20,0)");
 
 	var y = scaleLinear()
-	    .range([this.props.style.width / 2, 0])
+	    .range([this.props.style.width / 1.5, 0])
 	    .domain([maxValue, minValue]);
 
 	var yAxis = axisBottom()
@@ -59,13 +63,14 @@ class Legend extends Component {
 	    .append("g")
 	    .attr("id", "mapAxis")
 	    .attr("class", "axis")
-	    .attr("transform", "translate(20,40)")
+	    .attr("transform", "translate(20,20)")
 	    .call(yAxis);
 	
     };
     
     render() {
 	this.createLegend();
+
         return  <svg className="Legend"
                     ref={el => this.legendContainer = el}
 	            width={this.props.style.width}

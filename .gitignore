@@ -1,4 +1,3 @@
-
 data/raw/istat
 
 notebooks/preprocessing/\.ipynb_checkpoints/
@@ -27,6 +26,12 @@ src/visualization/README.txt
 *.shp
 *.dbf
 *.xml
+
+#ignore latexit output
+*.aux
+*_kpi.log
+*_kpi.synctex.gz
+
 \.idea/
 
 *.pickle

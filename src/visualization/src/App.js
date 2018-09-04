@@ -1,149 +1,55 @@
 import React, { Component } from 'react';
-import { range } from 'd3-array';
-import { scaleLinear } from 'd3-scale';
 import './App.css';
+import CityMenu from './CityMenu';
 import Map from './Map';
-import Button from './Button';
-import Menu from './Menu';
-import MenuObject from './MenuObject';
+import Dropdown from './Dropdown';
 
 var host = "https://api.daf.teamdigitale.it/mappa/";
 
-function getMenuUrl() {
-    return host + "menu.json";
-};
-
-function getDashboardUrl(c) {
-    return host + c + "/Dashboard" + c + ".json";
-};
-
 class App extends Component { 
+    menu = [];
+    cities = [];
+    joinField = "IDquartiere";
     
     constructor(props) {
 	super(props);
-
+	
 	this.state = {
-	    menu: null,
             city: "Milano",
-	    source: "none",
-            layer: "none",
-//	    layerRaw: "none",
-//          layerGrid: "none",
-	    features: null,
-	    dashboard: null
+            cityMenu: [],
+	    cityCategories: [],
+	    features: [],
+	    points: [],
+            sourceIndex: -1,
+            layerIndex: [-1, -1]
         };
 	
 	this.changeCity = this.changeCity.bind(this);
         this.changeLayer = this.changeLayer.bind(this);
-			/*if (defaultLayer.raw !== undefined) {
-			    state.layerRaw = {
-				data: jsons[2],
-				color: defaultLayer.raw.color
-			    };
-			}
-			if (defaultLayer.grid !== undefined) {
-			    if (defaultLayer.raw !== undefined){
-				state.layerGrid = { data: jsons[3] };
-			    } else {
-				state.layerGrid = { data: jsons[2] };
-			    }
-                            state.layerGrid.translate = defaultLayer.grid.translate;
-                            state.layerGrid.scale = defaultLayer.grid.scale;
-                            state.layerGrid.colorRange = defaultLayer.grid.colorRange;
-			    console.log(state.layerGrid)
-                            }			  
-		        if (defaultLayer.raw !== undefined){
-				    fetch(defaultLayer.raw.url)
-					.then(response => response.json())
-					.then(jsonLayerRawData => {	    
-					    this.setState({
-						menu: menu,
-						layer: defaultLayer,
-						source: defaultSource,
-						features: features,
-						layerRaw: {
-						    data: jsonLayerRawData,
-						    color: defaultLayer.raw.color
-						}
-					    });
-					});*/
-	   
     };
 
-    componentDidUpdate() {
-	
-	if (this.state.dashboard === null){
-
-            this.fetchDashboard();
-
-	} else if (this.state.source === "none") {
-
-            var defaultLayer = this.state.menu.getDefaultLayer(this.state.city);
-            var defaultSource = this.state.menu.getDefaultSource(this.state.city, defaultLayer.sourceId);
-            /*if (defaultLayer.raw !== undefined) {             
-              urls.push(defaultLayer.raw.url);                                                                      
-              }                                                                                                                  
-              if (defaultLayer.grid !== undefined) {                                                                                               
-              urls.push(defaultLayer.grid.url);                                                                                                             
-              }*/
-
-            this.fetchSource(defaultSource);
-
-        } else if (this.state.layer ==="none") {
-
-            var defaultLayer = this.state.menu.getDefaultLayer(this.state.city);
-
-            this.fetchLayer(defaultLayer);
-            //Promise.all(urls.map(url => fetch(url).then(response => response.json())))                               
-            //    .then(jsons => {
-	    
-        }
-
-    };
-
-    
     componentDidMount() {
-	
-	if (this.state.menu === null) {
-	    
-            this.fetchMenu();
-	    
-	}
-	
-    };
+	this.fetchMenu() //fetch the whole menu
+            .then((response) => response.json())
+	    .then((menu) => {
+		//set this.menu (the whole menu with all cities)
+		this.menu = menu;
 
-    fetchDashboard() {
-	var url = getDashboardUrl(this.state.city);
-	fetch(url)
-            .then(response => response.json())
-            .then(dashboard => {
-		fetch(dashboard.url)
-		    .then(response => response.json())
-		    .then(json => {
-			dashboard.data = json;
-			
-			this.setState({
-			    dashboard: dashboard
-			})
-		    });
-            });
+		//set this.cities
+	        this.menu.forEach((l) => {
+		    if (this.cities.indexOf(l.city) === -1) {
+			this.cities.push(l.city);
+		    }
+		});
+
+		//fetch city data
+		this.fetchCityData(this.state.city);
+	    });
     };
     
-    fetchSource(source) {
-	return fetch(source.url)
-	    .then(response => response.json())
-	    .then(json => {
-                this.setState({
-                    source: source,
-                    features: json.features
-                });
-            });
-    };
-
     /*
     writeDashboardFile(jsonLayer) {
-	var m = jsonLayer.map(v => {
-	    
+	var m = jsonLayer.map(v => {	    
             v["DAF1"] = v.P60 - v.P61 - v.P62;
             v["DAF2"] = v.P1 - v.ST14;
             v["DAF3"] = v.P14 + v.P15 - v.P30 - v.P31;
@@ -209,184 +115,146 @@ class App extends Component {
 	    DAF25: v.DAF25,
 	    DAF26: v.DAF26	    
         }})))
-	}*/
-
-    fetchLayer(layer) {
-	return fetch(layer.layerUrl)
-	    .then(response => response.json())
-	    .then(jsonLayer => {
-	//	this.writeDashboardFile(jsonLayer)
-		
-		var joinField = this.state.source.joinField;
-                var layerField = layer.id;
-		var features = this.mergeFeatures(this.state.features, jsonLayer, joinField, layerField);
-		var values = features.map((d) => d.properties[layer.id]);
-                layer.colorSet = this.getColorSet(layer, values);
-/*
-		if (layer.raw !== undefined){
-		    fetch(layer.raw.url)
-			.then(response => response.json())
-			.then(jsonLayerRawData => {
-			    this.setState({
-				layer: layer,
-				features: features,
-				layerRaw: {
-				    data: jsonLayerRawData,
-				    color: layer.raw.color
-				}
-			    });
-			});
-			} else {*/
-                this.setState({
-                    layer: layer,
-                    features: features
-                });
-		//layerRaw: "none"  
-            });
-    };
-    
-    getColorSet(layer, values) {
-	values = sample(values, layer.colors.length);
-	return {
-	    stops: values.map((d, i) => [values[i], layer.colors[i]]),
-	    scale: scaleLinear().domain(values).range(layer.colors),
-	    highlight: (layer.highlight === undefined) ? "black" : layer.highlight
-	};
-    };
-    
-    mergeFeatures(features, jsonLayer, joinField, layerField) {
-	
-	var quartieri = jsonLayer.map(d => d[joinField]);
-	
-	features.forEach(d => {
-            var index = quartieri.indexOf(d.properties[joinField]);
-	    var value = jsonLayer[index][layerField];
-	    if (Array.isArray(value)) value = sumArray(value);
-   
-            d.properties[layerField] = value;
-        });
-        features = features
-            .sort((a, b) => b.properties[layerField] - a.properties[layerField]);
-	return features;
-    };
-    	
-    fetchMenu() {
-	var url = getMenuUrl(); 
-        return fetch(url)
-	    .then(response => response.json())
-            .then(json => {
-		this.setState({
-		    menu: new MenuObject({ data: json })
-		});
-	    });
-    };
-    
-    changeCity(d, label) {
-        if (this.state.city !== label) {
-            this.setState({
-		city: label,
-		dashboard: null,
-		layer: "none",
-		source: "none",
-		features: null
-            });
-        }
-    };
-
-    changeLayer(d) {
-        if (this.state.layer.id !== d.id) {
-            this.setState({ layer: d });
-        }
-    };
-	
-    componentWillUpdate(nextProps, nextState) {
-	if (nextState.menu !== this.state.menu) {
-
-	    if (this.state.dashboard === null){
-		this.fetchDashboard();
-	    }
-	    
 	}
+*/
 
-	if (nextState.layer !== this.state.layer) {
-	    
-	    this.fetchLayer(nextState.layer);
-	    
-	} 	
+    fetchMenu() {
+	return fetch(host + "menu.json"); //fetch full menu 
     };
-        
-    render() {	
-	var self = this;
+    
+    fetchCityData(city) {
+	var cityMenu = new CityMenu({
+	    menu: this.menu,
+	    city: city,
+	    host: host
+	});
+	//fetch source and layer 
+	Promise.all(cityMenu.fetch())
+	    .then((data) => {
+		var sourceIndex = cityMenu.getIndex({type: "source"});
+		var defaultLayerIndex = cityMenu.getIndex({
+		    type: "layer",
+		    default: true
+		});
+		var joinField = this.joinField;
+		
+		var features = data.filter(d => d.index === sourceIndex)[0].json.features;
+		var quartieriId1 = features.map((f) => f.properties[joinField]);
 
-	if (this.state.layer === "none") {
+		var points = [];
+		data.forEach((datum) => {
+		    if (datum.layerIndex !== undefined) {
+			points.push(datum)
+		    }
+		    if (datum.index !== undefined && datum.index !== sourceIndex) {
+			var layer = cityMenu.get(datum.index);
+			var quartieriId2 = datum.json.map((d) => d[joinField]);
+			if (quartieriId2.length !== quartieriId1.length) {
+			    console.log("Error: the number of neighborhoods in the source file and in the layer file differ!")
+			}
+			var mappingId = quartieriId1.map((id) => quartieriId2.indexOf(id));
+			
+			layer.indicators.map((l) => l.id)
+			    .map((id) => 
+				 features.forEach((f, i) => {
+				     var value = datum.json[mappingId[i]][id];
+				     features[i].properties[id] = (Array.isArray(value)) ? averageArray(value) : value;
+				 })
+				);
+			//define dataSource if undefined
+			layer.indicators.forEach((l) => {
+			    if (l.dataSource === undefined) {
+				l.dataSource = layer.dataSource;
+			    }
+			})
+			//  this.writeDashboardFile(jsonLayer)
+		    }
+		});
+		console.log(points)
+		this.setState({
+		    city: city,
+                    cityMenu: cityMenu,
+		    cityCategories: cityMenu.getCategories(),
+                    features: features,
+		    points: points,
+		    sourceIndex: sourceIndex,
+		    layerIndex: defaultLayerIndex,
+                });
+            });
+    };
+
+    changeCity(d, nextCity) {
+	var currentCity = this.state.city;
+        if (currentCity !== nextCity) {
+            this.fetchCityData(nextCity);
+        }
+    };
+    
+    changeLayer(d, nextLayerLabel) {
+	var currentLayerIndex = this.state.layerIndex; 
+	var currentLayerLabel = this.state.cityMenu.getLayer(currentLayerIndex).label;
+	if (currentLayerLabel !== nextLayerLabel) {
+	    var nextLayerIndex = this.state.cityMenu.getIndex({label: nextLayerLabel});
+	    this.setState({layerIndex: nextLayerIndex});
+        }
+    };
+	        
+    render() {
+	var self = this;
+	if (self.state.features.length === 0) {
 	    return null;
 	} else {
 	    return (
                 <div className="App">
 		    <div className="App-header">
 		        <div style={{ display: "flex", justifyContent: "space-between" }}>
-		            <Menu
-	                        menu={this.state.menu.getCategories(this.state.city)}
-	                        handleClick={this.changeLayer}/> 
-		            <h2>Mappa dei quartieri di {this.state.city}</h2>
-                
 		            <div>
-		                {this.state.menu.cities.map(city =>
-				      <Button
-				       handleClick={this.changeCity}
-				       label={city}/>)}
+		                {self.state.cityCategories
+		                    .map((category, i) => 
+	                                <Dropdown
+				            label={category}
+				            key={'dropdown_' + i}
+				            dropdownContent={self.state.cityMenu.getCategoryMenu(category)}
+				            handleClick={self.changeLayer}/>
+			            )}
 		            </div>
+		            <h2>Mappa dei quartieri di {self.state.city}</h2>
+		            <Dropdown
+		                label={"Cambia città"}
+		                dropdownContent={self.cities}
+		                handleClick={self.changeCity}/>
 		        </div>
 		    </div>
 		    <div>	            
-		        <Map	                        
-	                    options={{
-		                city: this.state.city,
-		                center: this.state.source.center,
-		                zoom: this.state.source.zoom
-			    }} 
-	                    source={{
-		                type: "FeatureCollection",
-		                features: this.state.features
-			    }}
-	                    layer={{
-		                id: this.state.layer.id,
-	                        label: this.state.layer.label,
-		                dataSource: this.state.layer.dataSource,
-		                headers: [this.state.source.joinField, this.state.layer.id],
-			        values: this.state.features.map(d => [d.properties[self.state.source.joinField], d.properties[self.state.layer.id]]),
-			        colors: this.state.layer.colorSet,
-				description: this.state.layer.description
-		            }}
-	                    joinField={this.state.source.joinField}
-	                    nameField={this.state.source.nameField}
-	                    dashboard={this.state.dashboard}
+		        <Map
+	                    city={self.state.city}
+                            cityMenu={self.state.cityMenu}
+	                    joinField={self.joinField}
+		            sourceIndex={self.state.sourceIndex}
+                            layerIndex={self.state.layerIndex}
+	                    features={self.state.features}
+		            points={self.state.points}
+		            host={host}
 		        />
 		    </div>	
 	         </div>
 	    )
 	}
     };
-}
-
-function sample(values, C) {
-    var min = Math.min(...values),
-        max = Math.max(...values);
-    return [...Array(C).keys()]
-        .map((d) => d * (max - min) / C  + min);
 };
 
-function sumArray(a) {
+function averageArray(a) {
     var sum = 0;
     var l = 0;
     for (var i=0; i<a.length; i++) {
         if (a[i] !== "NaN"){
             l = l + 1;
-	    sum = sum + a[i];
+            sum = sum + a[i];
         }
     }
     return sum / l;
 };
 
 export default App;
+
 
