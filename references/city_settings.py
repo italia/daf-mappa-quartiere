@@ -70,7 +70,7 @@ DEFAULT_CITIES = [
         (10, [12.49, 41.91]),  # zoom level and center for d3
         [ServiceType.School,
          ServiceType.Library,
-         ServiceType.TransportStop,
+         #ServiceType.TransportStop,
          ServiceType.Pharmacy]
         )
     ]

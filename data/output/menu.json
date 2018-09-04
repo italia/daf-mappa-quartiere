@@ -27,31 +27,15 @@
         "indicators" : [
             {
                 "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            },
-            {
-                "category" : "EducazioneCultura",
                 "data_source" : "MIBACT",
                 "id" : "Library",
                 "label" : "Biblioteche"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Bari_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Bari",
-        "id" : "Bari_Salute",
-        "indicators" : [
+            },
             {
-                "category" : "Salute",
-                "data_source" : "Min. Salute",
-                "id" : "Pharmacy",
-                "label" : "Farmacie"
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
             }
         ],
         "sourceId" : "",
@@ -68,6 +52,22 @@
                 "data_source" : "GTFS Comuni",
                 "id" : "TransportStop",
                 "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Bari_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Bari",
+        "id" : "Bari_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
             }
         ],
         "sourceId" : "",
@@ -125,31 +125,15 @@
         "indicators" : [
             {
                 "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            },
-            {
-                "category" : "EducazioneCultura",
                 "data_source" : "MIBACT",
                 "id" : "Library",
                 "label" : "Biblioteche"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Firenze_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Firenze",
-        "id" : "Firenze_Salute",
-        "indicators" : [
+            },
             {
-                "category" : "Salute",
-                "data_source" : "Min. Salute",
-                "id" : "Pharmacy",
-                "label" : "Farmacie"
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
             }
         ],
         "sourceId" : "",
@@ -166,6 +150,22 @@
                 "data_source" : "GTFS Comuni",
                 "id" : "TransportStop",
                 "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Firenze_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Firenze",
+        "id" : "Firenze_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
             }
         ],
         "sourceId" : "",
@@ -223,31 +223,15 @@
         "indicators" : [
             {
                 "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            },
-            {
-                "category" : "EducazioneCultura",
                 "data_source" : "MIBACT",
                 "id" : "Library",
                 "label" : "Biblioteche"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Milano_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Milano",
-        "id" : "Milano_Salute",
-        "indicators" : [
+            },
             {
-                "category" : "Salute",
-                "data_source" : "Min. Salute",
-                "id" : "Pharmacy",
-                "label" : "Farmacie"
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
             }
         ],
         "sourceId" : "",
@@ -264,6 +248,22 @@
                 "data_source" : "GTFS Comuni",
                 "id" : "TransportStop",
                 "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Milano_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Milano",
+        "id" : "Milano_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
             }
         ],
         "sourceId" : "",
@@ -321,31 +321,15 @@
         "indicators" : [
             {
                 "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            },
-            {
-                "category" : "EducazioneCultura",
                 "data_source" : "MIBACT",
                 "id" : "Library",
                 "label" : "Biblioteche"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Roma_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Roma",
-        "id" : "Roma_Salute",
-        "indicators" : [
+            },
             {
-                "category" : "Salute",
-                "data_source" : "Min. Salute",
-                "id" : "Pharmacy",
-                "label" : "Farmacie"
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
             }
         ],
         "sourceId" : "",
@@ -362,6 +346,22 @@
                 "data_source" : "GTFS Comuni",
                 "id" : "TransportStop",
                 "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Roma_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Roma",
+        "id" : "Roma_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
             }
         ],
         "sourceId" : "",
@@ -419,31 +419,15 @@
         "indicators" : [
             {
                 "category" : "EducazioneCultura",
-                "data_source" : "MIUR",
-                "id" : "School",
-                "label" : "Scuole"
-            },
-            {
-                "category" : "EducazioneCultura",
                 "data_source" : "MIBACT",
                 "id" : "Library",
                 "label" : "Biblioteche"
-            }
-        ],
-        "sourceId" : "",
-        "source_id" : "Torino_quartieri",
-        "type" : "layer",
-        "url" : ""
-    },
-    {
-        "city" : "Torino",
-        "id" : "Torino_Salute",
-        "indicators" : [
+            },
             {
-                "category" : "Salute",
-                "data_source" : "Min. Salute",
-                "id" : "Pharmacy",
-                "label" : "Farmacie"
+                "category" : "EducazioneCultura",
+                "data_source" : "MIUR",
+                "id" : "School",
+                "label" : "Scuole"
             }
         ],
         "sourceId" : "",
@@ -460,6 +444,22 @@
                 "data_source" : "GTFS Comuni",
                 "id" : "TransportStop",
                 "label" : "Fermate TPL"
+            }
+        ],
+        "sourceId" : "",
+        "source_id" : "Torino_quartieri",
+        "type" : "layer",
+        "url" : ""
+    },
+    {
+        "city" : "Torino",
+        "id" : "Torino_Salute",
+        "indicators" : [
+            {
+                "category" : "Salute",
+                "data_source" : "Min. Salute",
+                "id" : "Pharmacy",
+                "label" : "Farmacie"
             }
         ],
         "sourceId" : "",

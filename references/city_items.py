@@ -156,6 +156,12 @@ class ServiceType(Enum):
     def all(cls):
         return [g for g in cls]
 
+# Reference attendance values for services without real attendance data
+REFERENCE_ATTENDANCE = {
+    ServiceType.TransportStop: 200,
+    ServiceType.Pharmacy: 5000,
+    ServiceType.Library: 7500,
+    }
 
 # test utility
 def get_random_pos(n_positions):

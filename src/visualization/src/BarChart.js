@@ -22,7 +22,7 @@ class BarChart extends Component {
 	this.x = 10;
 	this.y = 30;
 
-	this.barWidth = Math.min(15, Math.max(window.innerHeight / (this.props.data.values.length * 2), 5.5));
+	this.barWidth = Math.min(15, Math.max(window.innerHeight / (this.props.data.values.length * 2), 6.5));
 
 	this.state = {
 	    city: props.data.city,
@@ -84,9 +84,9 @@ class BarChart extends Component {
 	select(chartContainer)
 	    .selectAll("rect.tooltip" + classCallback())
 	    .data(this.props.data.values)   
-	    .attr("x", (d) =>  this.x + this.yScale(d[1]) + 60) 
+	    .attr("x", (d) =>  this.x + this.yScale(d[1]) + 40) 
 	    .attr("y",  (d, i) => this.y + (i + 0.5) * this.barWidth - 1.2 / 2 * size)
-	    .attr("width", (d) => (sigFigs(d[1], 2).toString().length + 1) * size * 0.7)
+	    .attr("width", (d) => (sigFigs(d[1], 2).toString().length + 1) * size * 0.7 + 10)
 	    .attr("height", size)
 	    .style("fill", colorCallback)
 	    .style("fill-opacity", "1")
@@ -107,7 +107,7 @@ class BarChart extends Component {
             .selectAll("text.tooltip" + classCallback())
             .data(this.props.data.values)
             .attr("text-anchor", "left")
-            .attr("x", d => this.x + this.yScale(d[1]) + 60 + size * 0.7)
+            .attr("x", d => this.x + this.yScale(d[1]) + 45 + size * 0.7)
             .attr("y", (d, i) => this.y + 0.3 * size + (i + 0.5) * this.barWidth)
             .text(d => sigFigs(d[1], 2))
             .style("visibility", visibilityCallback)
@@ -130,7 +130,7 @@ class BarChart extends Component {
             .data(this.props.data.values)
 	    .attr("x1", d => this.x + this.yScale(d[1]))
             .attr("y1", (d, i) => this.y + (i + 0.5) * this.barWidth)
-            .attr("x2", d => this.x + 60 + this.yScale(d[1]))
+            .attr("x2", d => this.x + 50 + this.yScale(d[1]))
             .attr("y2", (d, i) => this.y + (i + 0.5) * this.barWidth)
 	    .style("stroke", colorCallback)
 	    .style("stroke-width", "1.5px")
@@ -151,7 +151,7 @@ class BarChart extends Component {
             .append("text")
 	    .attr("class", "dataSource")
             .attr("x", 50)
-            .attr("y", this.barWidth * (this.props.data.values.length + 2))
+            .attr("y", this.barWidth * (this.props.data.values.length + 7))
 	    .text("Sorgente dati: " + this.props.data.dataSource);
 
     };
@@ -170,7 +170,7 @@ class BarChart extends Component {
 	    .append("text")
 	    .attr("id", "property")
 	    .attr("x", 20)
-	    .attr("y", 60 + this.barWidth * 2);
+	    .attr("y", 50 + this.barWidth * 2);
 	
 	select(chartContainer)
 	    .selectAll("rect.bar")

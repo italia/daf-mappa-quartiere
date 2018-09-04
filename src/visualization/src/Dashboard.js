@@ -85,7 +85,7 @@ class Dashboard extends Component {
 		    <h3>
 		        {this.props.neighborhood[this.props.nameField]}
 	            </h3>
-		<div style={{fontSize: "12px", textAlign: "left"}}>
+		<div style={{textAlign: "left"}}>
 		        Confronta i diversi indicatori in questo quartiere.
 		    </div>
                     <VictoryChart polar 
@@ -104,7 +104,7 @@ class Dashboard extends Component {
                             return (
                                 <VictoryPolarAxis key={i} dependentAxis
                                     style={{
-                                        axisLabel: { padding: 10 },
+                                        axisLabel: { padding: 25 },
                                         axis: { stroke: "none" },
                                         grid: { stroke: "grey", strokeWidth: 0.25, opacity: 0.5 }
                                     }}
@@ -113,7 +113,7 @@ class Dashboard extends Component {
                                     }
                                     labelPlacement="perpendicular"
                                     axisValue={i + 1} label={this.props.labels[i]}
-                                    tickFormat={(t) => Math.ceil(t * this.maxima[key])}
+                                tickFormat={(t) => sigFigs(t * this.maxima[key], 2)}
                                     tickValues={[0.25, 0.5, 0.75]}
                                 />
                             );
