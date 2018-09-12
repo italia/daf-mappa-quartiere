@@ -12,18 +12,13 @@ WORKDIR /src/visualization
 RUN npm i
 
 # Build for production.
-#RUN npm run build --production
+RUN npm run build --production
 
 # Install `serve` to run the application.
 RUN npm install -g serve
 
-CMD ["npm", "start"]
-
 # Tell Docker about the port we'll run on.
 EXPOSE 3000
 
-# Tell Docker about the port we'll run on.
-#EXPOSE 3000
-
 # Set the command to start the node server.
-#CMD serve -l 3000 -s build
+CMD serve -l 3000 -s build
