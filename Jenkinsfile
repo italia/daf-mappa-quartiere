@@ -34,7 +34,7 @@ pipeline {
         curl -s localhost:3000
         curl -s -I localhost:3000 | grep 200;
         docker stop $(docker ps -a -q);
-        // docker rm $(docker ps -a -q)
+        docker rm $(docker ps -a -q)
   '''
         }
       }
