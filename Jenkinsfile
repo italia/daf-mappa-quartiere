@@ -1,8 +1,8 @@
 pipeline {
   agent any
   environment {
-    NEXUS_TEST = 'nexus.teamdigitale.test/daf-server'
-    NEXUS_PROD = 'nexus.daf.teamdigitale.it/daf-server'
+    NEXUS_TEST = 'nexus.teamdigitale.test/daf-mappa-quartiere'
+    NEXUS_PROD = 'nexus.daf.teamdigitale.it/daf-mappa-quartiere'
   }
   stages {
     stage('Build test') {
