@@ -15,7 +15,7 @@ pipeline {
       }
     }
     stage('Build prod') {
-      when { not { branch 'production' } }
+      when { branch 'production' }
       steps {
         script {
           slackSend (message: "BUILD START: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' CHECK THE RESULT ON: https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere /activity")
@@ -24,6 +24,7 @@ pipeline {
       }
     }
     stage('Test test') {
+      when { not { branch 'production' } }
       steps {
         script {
           sh '''
@@ -56,12 +57,13 @@ pipeline {
     stage('Publish test') {
       when { branch 'test' }
       steps {
-        sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $NEXUS_PROD:$BUILD_NUMBER-$COMMIT_ID'
+        sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $NEXUS_TEST:$BUILD_NUMBER-$COMMIT_ID'
         sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $NEXUS_TEST:$BUILD_NUMBER-$COMMIT_ID'
       }
     }
     stage('Publish prod') {
       when { branch 'production' }
+      agent { label 'prod' }
       steps {
         sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker push $NEXUS_PROD:$BUILD_NUMBER-$COMMIT_ID'
         sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker rmi $NEXUS_PROD:$BUILD_NUMBER-$COMMIT_ID'
@@ -69,24 +71,24 @@ pipeline {
     }
     stage('Deploy test') {
       steps {
-            sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
+        sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
               sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl apply -f mappa-quartiere1.yaml --validate=false'''
-            slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere/activity")
-        }
+        slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere/activity")
       }
     }
-    stage('Deploy prod') {
-      steps {
-            sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
+  stage('Deploy prod') {
+    when { branch 'production' }
+    agent { label 'prod' }
+    steps {
+      sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
               sed "s#image: nexus.daf.teamdigitale.it/daf-mappa.*#image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl apply -f mappa-quartiere1.yaml --validate=false'''
-            slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere/activity")
-        }
-      }
+      slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere/activity")
     }
   }
-  post {
-    failure {
-      slackSend (color: '#ff0000', message: "FAIL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere/activity")
-    }
+}
+post {
+  failure {
+    slackSend (color: '#ff0000', message: "FAIL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere/activity")
   }
+}
 }
