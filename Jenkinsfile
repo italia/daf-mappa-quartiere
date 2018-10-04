@@ -34,7 +34,7 @@ pipeline {
         curl -s localhost:3000
         curl -s -I localhost:3000 | grep 200;
         docker stop $(docker ps -a -q);
-        docker rm $(docker ps -a -q)
+        // docker rm $(docker ps -a -q)
   '''
         }
       }
@@ -70,6 +70,7 @@ pipeline {
       }
     }
     stage('Deploy test') {
+      when { branch 'test' }
       steps {
         sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
               sed "s#image: nexus.teamdigitale.test/daf-mappa.*#image: nexus.teamdigitale.test/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl apply -f mappa-quartiere1.yaml --validate=false'''
