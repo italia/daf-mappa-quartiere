@@ -20,7 +20,7 @@ pipeline {
       steps {
         script {
           slackSend (message: "BUILD START: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' CHECK THE RESULT ON: https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere/activity")
-          sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $NEXUS_PROD:$BUILD_NUMBER-$COMMIT_ID'
+          sh 'COMMIT_ID=$(echo ${GIT_COMMIT} | cut -c 1-6); docker build . -t $NEXUS_PROD:$BUILD_NUMBER-$COMMIT_ID --network host'
         }
       }
     }
