@@ -83,7 +83,7 @@ pipeline {
     agent { label 'prod' }
     steps {
       sh ''' COMMIT_ID=$(echo ${GIT_COMMIT}|cut -c 1-6);
-              sed "s#image: nexus.daf.teamdigitale.it/daf-mappa.*#image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl --kubeconfig= '/home/centos/.kube/config.teamdigitale-production' apply -f mappa-quartiere1.yaml --validate=false'''
+              sed "s#image: nexus.daf.teamdigitale.it/daf-mappa.*#image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:$BUILD_NUMBER-$COMMIT_ID#" mappa-quartiere.yaml > mappa-quartiere1.yaml ;kubectl --kubeconfig='/home/centos/.kube/config.teamdigitale-production' apply -f mappa-quartiere1.yaml --validate=false'''
       slackSend (color: '#00FF00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' https://cd.daf.teamdigitale.it/blue/organizations/jenkins/daf-mappa-quartiere/activity")
     }
   }
