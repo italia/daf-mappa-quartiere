@@ -30,10 +30,6 @@ spec:
       - name: mappa-quartiere
         image: nexus.daf.teamdigitale.it/daf-mappa-quartiere:1.0.0-SNAPSHOT
         imagePullPolicy: Always
-#        lifecycle:
-#          postStart:
-#            exec:
-#             command: ["/bin/sh", "-c", "cat /etc/extra_hosts >> /etc/hosts"]
         ports:
         - name: client
           containerPort: 3000
@@ -44,7 +40,7 @@ spec:
 #        - name: hosts
 #          mountPath: /etc/extra_hosts
       - name: daf-server
-        image: nexus.daf.teamdigitale.it/daf-server:1.0.0-SNAPSHOT
+        image: nexus.daf.teamdigitale.it/daf-server:latest
         imagePullPolicy: Always
 #        lifecycle:
 #          postStart:
