@@ -34,7 +34,6 @@ gensim==3.1.0
 geopandas==0.3.0
 geopy==1.11.0
 googlemaps==2.5.1
-GPy==1.8.5
 gtfstk==9.2.3
 h5py==2.7.1
 hdijupyterutils==0.12.5
