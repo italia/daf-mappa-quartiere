@@ -19,7 +19,7 @@ codicefiscale==0.9
 configparser==3.5.0
 constantly==15.1.0
 coverage==4.4.2
-cryptography==2.3
+cryptography==3.2
 cssselect==1.0.1
 cycler==0.10.0
 dask==0.16.1
