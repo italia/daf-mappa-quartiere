@@ -25,7 +25,7 @@ cycler==0.10.0
 dask==2021.10.0
 decorator==4.2.1
 descartes==1.1.0
-distributed==1.20.2
+distributed==2021.10.0
 entrypoints==0.2.3
 Fiona==1.7.10
 Flask==0.12.3
